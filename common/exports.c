@@ -34,6 +34,12 @@ void jumptable_init (void)
 	gd->jt[XF_install_hdlr] = (void *) irq_install_handler;
 	gd->jt[XF_free_hdlr] = (void *) irq_free_handler;
 #endif	/* I386 || PPC */
+#ifdef CONFIG_MARVELL
+        gd->jt[XF_calloc] = (void *) calloc;
+        gd->jt[XF_realloc] = (void *) realloc;
+	gd->jt[XF_memalign] = (void *) memalign;
+	gd->jt[XF_mvGetRtcSec] = (void *) mvGetRtcSec;
+#endif
 #if defined(CONFIG_CMD_I2C)
 	gd->jt[XF_i2c_write] = (void *) i2c_write;
 	gd->jt[XF_i2c_read] = (void *) i2c_read;

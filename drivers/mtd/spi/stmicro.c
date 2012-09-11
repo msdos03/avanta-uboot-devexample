@@ -32,7 +32,7 @@
 #include <spi_flash.h>
 
 #include "spi_flash_internal.h"
-
+/*#define debug(fmt,args...)  printf(fmt ,##args) */
 /* M25Pxx-specific commands */
 #define CMD_M25PXX_WREN		0x06	/* Write Enable */
 #define CMD_M25PXX_WRDI		0x04	/* Write Disable */
@@ -52,15 +52,23 @@
 #define STM_ID_M25P40		0x13
 #define STM_ID_M25P64		0x17
 #define STM_ID_M25P80		0x14
-#define STM_ID_M25P128		0x18
-
+ 
 #define STMICRO_SR_WIP		(1 << 0)	/* Write-in-Progress */
+#ifdef	MV88F6601
+#define STM_ID_M25Q128		0x18	/* for A-MC */
+#define STM_PROTECT_ALL		0x5C
+#else
+#define STM_ID_M25P128		0x18    /* for KW2  */
+#define STM_PROTECT_ALL		0x1C
+#endif
+#define STM_SRWD			0x80
 
 struct stmicro_spi_flash_params {
 	u8 idcode1;
 	u16 page_size;
 	u16 pages_per_sector;
 	u16 nr_sectors;
+	u8 addr_cycles;
 	const char *name;
 };
 
@@ -82,6 +90,7 @@ static const struct stmicro_spi_flash_params stmicro_spi_flash_table[] = {
 		.page_size = 256,
 		.pages_per_sector = 256,
 		.nr_sectors = 32,
+		.addr_cycles = 3,
 		.name = "M25P16",
 	},
 	{
@@ -89,6 +98,7 @@ static const struct stmicro_spi_flash_params stmicro_spi_flash_table[] = {
 		.page_size = 256,
 		.pages_per_sector = 256,
 		.nr_sectors = 4,
+		.addr_cycles = 3,
 		.name = "M25P20",
 	},
 	{
@@ -96,6 +106,7 @@ static const struct stmicro_spi_flash_params stmicro_spi_flash_table[] = {
 		.page_size = 256,
 		.pages_per_sector = 256,
 		.nr_sectors = 64,
+		.addr_cycles = 3,
 		.name = "M25P32",
 	},
 	{
@@ -103,6 +114,7 @@ static const struct stmicro_spi_flash_params stmicro_spi_flash_table[] = {
 		.page_size = 256,
 		.pages_per_sector = 256,
 		.nr_sectors = 8,
+		.addr_cycles = 3,
 		.name = "M25P40",
 	},
 	{
@@ -110,6 +122,7 @@ static const struct stmicro_spi_flash_params stmicro_spi_flash_table[] = {
 		.page_size = 256,
 		.pages_per_sector = 256,
 		.nr_sectors = 128,
+		.addr_cycles = 3,
 		.name = "M25P64",
 	},
 	{
@@ -117,14 +130,26 @@ static const struct stmicro_spi_flash_params stmicro_spi_flash_table[] = {
 		.page_size = 256,
 		.pages_per_sector = 256,
 		.nr_sectors = 16,
+		.addr_cycles = 3,
 		.name = "M25P80",
 	},
 	{
+#ifdef MV88F6601
+		.idcode1 = STM_ID_M25Q128,
+		.page_size = 256,
+		.pages_per_sector = 256,
+		.nr_sectors = 256,
+ 		.addr_cycles = 3,
+		.name = "M25Q128",
+#else
 		.idcode1 = STM_ID_M25P128,
 		.page_size = 256,
 		.pages_per_sector = 1024,
 		.nr_sectors = 64,
+ 		.addr_cycles = 3,
 		.name = "M25P128",
+
+#endif
 	},
 };
 
@@ -168,18 +193,30 @@ static int stmicro_read_fast(struct spi_flash *flash,
 	struct stmicro_spi_flash *stm = to_stmicro_spi_flash(flash);
 	unsigned long page_addr;
 	unsigned long page_size;
-	u8 cmd[5];
+	u8 cmd[6];
 
 	page_size = stm->params->page_size;
 	page_addr = offset / page_size;
 
 	cmd[0] = CMD_READ_ARRAY_FAST;
+	switch  (stm->params->addr_cycles) {
+	case 4:
+		cmd[1] = page_addr >> 16;
+		cmd[2] = page_addr >> 8;
+		cmd[3] = page_addr;
+		cmd[4] = offset % page_size;
+		cmd[5] = 0x00;
+		break;
+	case 3:
+	default:
 	cmd[1] = page_addr >> 8;
 	cmd[2] = page_addr;
 	cmd[3] = offset % page_size;
 	cmd[4] = 0x00;
+		break;
+	}
 
-	return spi_flash_read_common(flash, cmd, sizeof(cmd), buf, len);
+	return spi_flash_read_common(flash, cmd, stm->params->addr_cycles + 2, buf, len);
 }
 
 static int stmicro_write(struct spi_flash *flash,
@@ -192,7 +229,7 @@ static int stmicro_write(struct spi_flash *flash,
 	size_t chunk_len;
 	size_t actual;
 	int ret;
-	u8 cmd[4];
+	u8 cmd[5];
 
 	page_size = stm->params->page_size;
 	page_addr = offset / page_size;
@@ -209,13 +246,24 @@ static int stmicro_write(struct spi_flash *flash,
 		chunk_len = min(len - actual, page_size - byte_addr);
 
 		cmd[0] = CMD_M25PXX_PP;
+		switch  (stm->params->addr_cycles) {
+		case 4:
+			cmd[1] = page_addr >> 16;
+			cmd[2] = page_addr >> 8;
+			cmd[3] = page_addr;
+			cmd[4] = byte_addr;
+			break;
+		case 3:
+		default:
 		cmd[1] = page_addr >> 8;
 		cmd[2] = page_addr;
 		cmd[3] = byte_addr;
+			break;
+		}
 
 		debug
-		    ("PP: 0x%p => cmd = { 0x%02x 0x%02x%02x%02x } chunk_len = %d\n",
-		     buf + actual, cmd[0], cmd[1], cmd[2], cmd[3], chunk_len);
+		    ("PP: 0x%p => cmd = { 0x%02x 0x%02x%02x%02x%02x } chunk_len = %d\n",
+		     buf + actual, cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], chunk_len);
 
 		ret = spi_flash_cmd(flash->spi, CMD_M25PXX_WREN, NULL, 0);
 		if (ret < 0) {
@@ -223,7 +271,7 @@ static int stmicro_write(struct spi_flash *flash,
 			break;
 		}
 
-		ret = spi_flash_cmd_write(flash->spi, cmd, 4,
+		ret = spi_flash_cmd_write(flash->spi, cmd, stm->params->addr_cycles + 1,
 					  buf + actual, chunk_len);
 		if (ret < 0) {
 			debug("SF: STMicro Page Program failed\n");
@@ -251,9 +299,9 @@ int stmicro_erase(struct spi_flash *flash, u32 offset, size_t len)
 {
 	struct stmicro_spi_flash *stm = to_stmicro_spi_flash(flash);
 	unsigned long sector_size;
-	size_t actual;
+	size_t current;
 	int ret;
-	u8 cmd[4];
+	u8 cmd[5];
 
 	/*
 	 * This function currently uses sector erase only.
@@ -264,24 +312,43 @@ int stmicro_erase(struct spi_flash *flash, u32 offset, size_t len)
 	sector_size = stm->params->page_size * stm->params->pages_per_sector;
 
 	if (offset % sector_size || len % sector_size) {
-		debug("SF: Erase offset/length not multiple of sector size\n");
+		printf("SF: Erase offset/length not multiple of sector size\n");
 		return -1;
 	}
 
 	len /= sector_size;
 	cmd[0] = CMD_M25PXX_SE;
+	switch  (stm->params->addr_cycles) {
+	case 3:
+	default:
 	cmd[2] = 0x00;
+	case 4:
 	cmd[3] = 0x00;
+		cmd[4] = 0x00;
+		break;
+	}
 
 	ret = spi_claim_bus(flash->spi);
 	if (ret) {
-		debug("SF: Unable to claim SPI bus\n");
+		printf("SF: Unable to claim SPI bus\n");
 		return ret;
 	}
 
 	ret = 0;
-	for (actual = 0; actual < len; actual++) {
-		cmd[1] = (offset / sector_size) + actual;
+	for (current = 0; current < len; current++) {
+		switch (stm->params->addr_cycles) {
+		case 3:
+		default:
+		cmd[1] = (offset>>16) + ((sector_size>>16) * current);
+			break;
+		case 4:
+			cmd[1] = (offset>>24) + ((sector_size>>24) * current);
+			cmd[2] = (offset>>16) + ((sector_size>>16) * current);
+			break;
+		}
+
+		debug ("Erase => cmd = { 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x } current sector = %d\n",
+		       cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], current);
 
 		ret = spi_flash_cmd(flash->spi, CMD_M25PXX_WREN, NULL, 0);
 		if (ret < 0) {
@@ -289,7 +356,7 @@ int stmicro_erase(struct spi_flash *flash, u32 offset, size_t len)
 			break;
 		}
 
-		ret = spi_flash_cmd_write(flash->spi, cmd, 4, NULL, 0);
+		ret = spi_flash_cmd_write(flash->spi, cmd,  stm->params->addr_cycles + 1, NULL, 0);
 		if (ret < 0) {
 			debug("SF: STMicro page erase failed\n");
 			break;
@@ -308,6 +375,52 @@ int stmicro_erase(struct spi_flash *flash, u32 offset, size_t len)
 	spi_release_bus(flash->spi);
 	return ret;
 }
+#ifdef CONFIG_SPI_FLASH_PROTECTION
+static int stmicro_protect(struct spi_flash *flash, int enable)
+{
+	//struct stmicro_spi_flash *stm = to_stmicro_spi_flash(flash);
+	int ret;
+	u8 cmd[2];
+
+	ret = spi_claim_bus(flash->spi);
+	if (ret) {
+		debug("SF: Unable to claim SPI bus\n");
+		return ret;
+	}
+
+	ret = 0;
+
+	cmd[0] = CMD_M25PXX_WRSR;
+	if (enable == 1)
+		cmd[1] = STM_SRWD | STM_PROTECT_ALL;
+	else
+		cmd[1] = STM_SRWD;
+
+	ret = spi_flash_cmd(flash->spi, CMD_M25PXX_WREN, NULL, 0);
+	if (ret < 0) {
+		debug("SF: Enabling Write failed\n");
+		return ret;
+	}
+
+	ret = spi_flash_cmd_write(flash->spi, cmd, 2, NULL, 0);
+	if (ret < 0) {
+		debug("SF: STMicro Write Status Register failed\n");
+		return ret;
+	}
+
+	ret = stmicro_wait_ready(flash, SPI_FLASH_PROG_TIMEOUT);
+	if (ret < 0) {
+		debug("SF: STMicro page programming timed out\n");
+		return ret;
+	}
+
+/*	debug("SF: STMicro: Successfully Write Status Register %u bytes @ 0x%x\n",
+	      len, offset);
+*/
+	spi_release_bus(flash->spi);
+	return ret;
+}
+#endif
 
 struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 * idcode)
 {
@@ -323,7 +436,7 @@ struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 * idcode)
 	}
 
 	if (i == ARRAY_SIZE(stmicro_spi_flash_table)) {
-		debug("SF: Unsupported STMicro ID %02x\n", idcode[1]);
+		printf("SF: Unsupported STMicro ID %02x\n", idcode[1]);
 		return NULL;
 	}
 
@@ -340,10 +453,13 @@ struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 * idcode)
 	stm->flash.write = stmicro_write;
 	stm->flash.erase = stmicro_erase;
 	stm->flash.read = stmicro_read_fast;
+#ifdef CONFIG_SPI_FLASH_PROTECTION
+	stm->flash.protect = stmicro_protect;
+#endif
 	stm->flash.size = params->page_size * params->pages_per_sector
 	    * params->nr_sectors;
 
-	debug("SF: Detected %s with page size %u, total %u bytes\n",
+	printf("SF: Detected %s with page size %u, total %u bytes\n",
 	      params->name, params->page_size, stm->flash.size);
 
 	return &stm->flash;

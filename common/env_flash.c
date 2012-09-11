@@ -248,6 +248,19 @@ int  env_init(void)
 	if (crc32(0, env_ptr->data, ENV_SIZE) == env_ptr->crc) {
 		gd->env_addr  = (ulong)&(env_ptr->data);
 		gd->env_valid = 1;
+#if 0
+#ifdef CONFIG_MARVELL
+        mvMPPConfigToSPI();
+        if (crc32(0, env_ptr->data, ENV_SIZE) == env_ptr->crc) {
+            gd->env_addr  = (ulong)&(env_ptr->data);
+            gd->env_valid = 1;
+        mvMPPConfigToDefault();
+#else
+        if (crc32(0, env_ptr->data, ENV_SIZE) == env_ptr->crc) {
+            gd->env_addr  = (ulong)&(env_ptr->data);
+            gd->env_valid = 1;
+#endif
+#endif
 		return(0);
 	}
 

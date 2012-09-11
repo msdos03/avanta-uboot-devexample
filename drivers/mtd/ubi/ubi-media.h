@@ -307,7 +307,8 @@ struct ubi_vid_hdr {
 #define UBI_LAYOUT_VOLUME_COMPAT UBI_COMPAT_REJECT
 
 /* The maximum number of volumes per one UBI device */
-#define UBI_MAX_VOLUMES 128
+/* in u-boot, MAX supported VOLUMES is : */
+#define UBI_MAX_VOLUMES 16 
 
 /* The maximum volume name length */
 #define UBI_VOL_NAME_MAX 127

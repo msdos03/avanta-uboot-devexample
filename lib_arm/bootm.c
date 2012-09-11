@@ -35,7 +35,8 @@ DECLARE_GLOBAL_DATA_PTR;
     defined (CONFIG_SERIAL_TAG) || \
     defined (CONFIG_REVISION_TAG) || \
     defined (CONFIG_VFD) || \
-    defined (CONFIG_LCD)
+    defined (CONFIG_LCD) || \
+    defined (CONFIG_MARVELL_TAG)
 static void setup_start_tag (bd_t *bd);
 
 # ifdef CONFIG_SETUP_MEMORY_TAGS
@@ -52,6 +53,11 @@ static void setup_end_tag (bd_t *bd);
 # if defined (CONFIG_VFD) || defined (CONFIG_LCD)
 static void setup_videolfb_tag (gd_t *gd);
 # endif
+
+#if defined (CONFIG_MARVELL_TAG)
+extern void mvEgigaStrToMac( char *source , char *dest );
+static void setup_marvell_tag(void);
+#endif
 
 static struct tag *params;
 #endif /* CONFIG_SETUP_MEMORY_TAGS || CONFIG_CMDLINE_TAG || CONFIG_INITRD_TAG */
@@ -89,7 +95,8 @@ int do_bootm_linux(int flag, int argc, char *argv[], bootm_headers_t *images)
     defined (CONFIG_SERIAL_TAG) || \
     defined (CONFIG_REVISION_TAG) || \
     defined (CONFIG_LCD) || \
-    defined (CONFIG_VFD)
+    defined (CONFIG_VFD) || \
+    defined (CONFIG_MARVELL_TAG)
 	setup_start_tag (bd);
 #ifdef CONFIG_SERIAL_TAG
 	setup_serial_tag (&params);
@@ -109,6 +116,12 @@ int do_bootm_linux(int flag, int argc, char *argv[], bootm_headers_t *images)
 #endif
 #if defined (CONFIG_VFD) || defined (CONFIG_LCD)
 	setup_videolfb_tag ((gd_t *) gd);
+#endif
+#if defined (CONFIG_MARVELL_TAG)
+        /* Linux open port doesn't support the Marvell TAG */
+	char *env = getenv("mainlineLinux");
+	if(!env || ((strcmp(env,"no") == 0) ||  (strcmp(env,"No") == 0)))
+	    setup_marvell_tag ();
 #endif
 	setup_end_tag (bd);
 #endif
@@ -138,7 +151,8 @@ int do_bootm_linux(int flag, int argc, char *argv[], bootm_headers_t *images)
     defined (CONFIG_SERIAL_TAG) || \
     defined (CONFIG_REVISION_TAG) || \
     defined (CONFIG_LCD) || \
-    defined (CONFIG_VFD)
+    defined (CONFIG_VFD) || \
+    defined (CONFIG_MARVELL_TAG)
 static void setup_start_tag (bd_t *bd)
 {
 	params = (struct tag *) bd->bi_boot_params;
@@ -237,6 +251,113 @@ static void setup_videolfb_tag (gd_t *gd)
 	params = tag_next (params);
 }
 #endif /* CONFIG_VFD || CONFIG_LCD */
+#if defined(CONFIG_MARVELL_TAG)
+
+extern unsigned int mvBoardIdGet(void);	
+extern void mvBoardModuleConfigGet(u32 *modConfig);
+
+static void setup_marvell_tag (void)
+{
+	char *env;
+	char temp[20];
+	int i;
+	unsigned int boardId;
+	u32 modCfg;
+
+	params->hdr.tag = ATAG_MARVELL;
+	params->hdr.size = tag_size (tag_mv_uboot);
+
+	params->u.mv_uboot.uboot_version = VER_NUM;
+	if(strcmp(getenv("nandEcc"), "4bit") == 0)
+		params->u.mv_uboot.nand_ecc = 4;
+	else if(strcmp(getenv("nandEcc"), "1bit") == 0)
+		params->u.mv_uboot.nand_ecc = 1;
+
+	boardId = mvBoardIdGet();
+	params->u.mv_uboot.uboot_version |= boardId;
+	params->u.mv_uboot.tclk = CONFIG_SYS_TCLK;
+	params->u.mv_uboot.sysclk = CONFIG_SYS_BUS_CLK;
+	
+#if defined(MV78XX0)
+	/* Dual CPU Firmware load address */
+	env = getenv("fw_image_base");
+	if(env)
+		params->u.mv_uboot.fw_image_base = simple_strtoul(env, NULL, 16);
+	else
+		params->u.mv_uboot.fw_image_base = 0;
+
+	/* Dual CPU Firmware size */
+	env = getenv("fw_image_size");
+	if(env)
+		params->u.mv_uboot.fw_image_size = simple_strtoul(env, NULL, 16);
+	else
+		params->u.mv_uboot.fw_image_size = 0;
+#endif
+
+#if defined(MV_INCLUDE_USB)
+	extern unsigned int mvCtrlUsbMaxGet(void);
+
+	for (i = 0 ; i < mvCtrlUsbMaxGet(); i++)
+	{
+		sprintf( temp, "usb%dMode", i);
+		env = getenv(temp);
+		if((!env) || (strcmp(env,"Host") == 0 ) || (strcmp(env,"host") == 0) )
+			params->u.mv_uboot.isUsbHost |= (1 << i);
+		else
+			params->u.mv_uboot.isUsbHost &= ~(1 << i);	
+	}
+#endif /*#if defined(MV_INCLUDE_USB)*/
+#if defined(MV_INCLUDE_GIG_ETH) || defined(MV_INCLUDE_UNM_ETH)
+	extern unsigned int mvCtrlEthMaxPortGet(void);
+	extern int mvMacStrToHex(const char* macStr, unsigned char* macHex);
+
+	for (i = 0 ;i < 4;i++)
+	{
+		memset(params->u.mv_uboot.macAddr[i], 0, sizeof(params->u.mv_uboot.macAddr[i]));
+		params->u.mv_uboot.mtu[i] = 0; 
+	}
+
+	for (i = 0 ;i < mvCtrlEthMaxPortGet();i++)
+	{
+/* only on RD-6281-A egiga0 defined as eth1 */
+#if defined (RD_88F6281A)
+		sprintf( temp,(i==0 ? "eth1addr" : "ethaddr"));
+#else
+		sprintf( temp,(i ? "eth%daddr" : "ethaddr"), i);
+# endif
+#if defined(MV_KW2)
+		if(i == 2)
+			sprintf(temp, "mv_pon_addr");
+#endif
+
+		env = getenv(temp);
+		if (env)
+			mvMacStrToHex(env, (unsigned char*)params->u.mv_uboot.macAddr[i]);
+
+/* only on RD-6281-A egiga0 defined as eth1 */
+#if defined (RD_88F6281A)
+		sprintf( temp,(i==0 ? "eth1mtu" : "ethmtu"));
+#else
+		sprintf( temp,(i ? "eth%dmtu" : "ethmtu"), i);
+# endif
+		env = getenv(temp);
+		if (env)
+			params->u.mv_uboot.mtu[i] = simple_strtoul(env, NULL, 10); 
+	}
+#endif /* (MV_INCLUDE_GIG_ETH) || defined(MV_INCLUDE_UNM_ETH) */
+
+	/* Set Board modules configuration */
+
+#ifdef DB_88F6500
+	mvBoardModuleConfigGet(&modCfg);
+#else
+	modCfg = (u32)-1;
+#endif
+	params->u.mv_uboot.board_module_config = modCfg;
+
+	params = tag_next (params);
+}
+#endif
 
 #ifdef CONFIG_SERIAL_TAG
 void setup_serial_tag (struct tag **tmp)

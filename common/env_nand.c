@@ -163,14 +163,28 @@ int env_init(void)
  */
 int writeenv(size_t offset, u_char *buf)
 {
-	size_t end = offset + CONFIG_ENV_RANGE;
-	size_t amount_saved = 0;
-	size_t blocksize, len;
+	uint64_t end = offset + CONFIG_ENV_RANGE;
+	uint64_t amount_saved = 0;
+	uint64_t blocksize, len;
 
 	u_char *char_ptr;
 
 	blocksize = nand_info[0].erasesize;
 	len = min(blocksize, CONFIG_ENV_SIZE);
+
+#if defined(CONFIG_SKIP_BAD_BLOCK)
+	uint64_t offset_from_start = 0;
+	int i = 0;
+	while(i * blocksize < nand_info[0].size) {
+		if (!nand_block_isbad(&nand_info[0], offset_from_start))
+			offset_from_start += blocksize;
+		if (offset_from_start >= CONFIG_ENV_OFFSET)
+			break;
+		i++;
+	}
+	if (offset < offset_from_start)
+		offset = offset_from_start;
+#endif
 
 	while (amount_saved < CONFIG_ENV_SIZE && offset < end) {
 		if (nand_block_isbad(&nand_info[0], offset)) {
@@ -198,7 +212,7 @@ int saveenv(void)
 	env_ptr->flags++;
 
 	nand_erase_options.length = CONFIG_ENV_RANGE;
-	nand_erase_options.quiet = 0;
+	nand_erase_options.quiet = 1;
 	nand_erase_options.jffs2 = 0;
 	nand_erase_options.scrub = 0;
 
@@ -237,45 +251,66 @@ int saveenv(void)
 	nand_erase_options_t nand_erase_options;
 
 	nand_erase_options.length = CONFIG_ENV_RANGE;
-	nand_erase_options.quiet = 0;
+	nand_erase_options.quiet = 1;
 	nand_erase_options.jffs2 = 0;
 	nand_erase_options.scrub = 0;
 	nand_erase_options.offset = CONFIG_ENV_OFFSET;
-
+	
 	if (CONFIG_ENV_RANGE < CONFIG_ENV_SIZE)
 		return 1;
-	puts ("Erasing Nand...\n");
-	if (nand_erase_opts(&nand_info[0], &nand_erase_options))
+	printf("Erasing 0x%x - 0x%x:",CONFIG_ENV_OFFSET, CONFIG_ENV_OFFSET + CONFIG_ENV_RANGE);
+	if (nand_erase_opts(&nand_info[0], &nand_erase_options)) {
+		printf("\t\t[Failed]\n");
 		return 1;
-
-	puts ("Writing to Nand... ");
+	}
+	printf("\t\t[Done]\n");
+	puts ("Writing to Nand:");
 	if (writeenv(CONFIG_ENV_OFFSET, (u_char *) env_ptr)) {
-		puts("FAILED!\n");
+		printf("\t\t[Failed]\n");
 		return 1;
 	}
 
-	puts ("done\n");
+	printf("\t\t[Done]\n");
 	return ret;
 }
 #endif /* CONFIG_ENV_OFFSET_REDUND */
 #endif /* CMD_SAVEENV */
-
+#if defined(CONFIG_MARVELL)
+uint nandEnvBase;
+#endif
 int readenv (size_t offset, u_char * buf)
 {
-	size_t end = offset + CONFIG_ENV_RANGE;
-	size_t amount_loaded = 0;
-	size_t blocksize, len;
+	uint64_t end = offset + CONFIG_ENV_RANGE;
+	uint64_t amount_loaded = 0;
+	uint64_t blocksize, len;
 
 	u_char *char_ptr;
 
 	blocksize = nand_info[0].erasesize;
 	len = min(blocksize, CONFIG_ENV_SIZE);
 
+#if defined(CONFIG_SKIP_BAD_BLOCK)
+	uint64_t offset_from_start = 0;
+	int i = 0;
+	while(i * blocksize < nand_info[0].size) {
+		if (!nand_block_isbad(&nand_info[0], offset_from_start))
+			offset_from_start += blocksize;
+		if (offset_from_start >= CONFIG_ENV_OFFSET)
+			break;
+		i++;
+	}
+	if (offset < offset_from_start)
+		offset = offset_from_start;
+#endif
+
 	while (amount_loaded < CONFIG_ENV_SIZE && offset < end) {
 		if (nand_block_isbad(&nand_info[0], offset)) {
 			offset += blocksize;
 		} else {
 			char_ptr = &buf[amount_loaded];
+#if defined(CONFIG_MARVELL)
+			nandEnvBase = offset;
+#endif
 			if (nand_read(&nand_info[0], offset, &len, char_ptr))
 				return 1;
 			offset += blocksize;

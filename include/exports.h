@@ -29,6 +29,12 @@ int ustrtoul(const char *cp, char **endp, unsigned int base);
 #ifdef CONFIG_HAS_UID
 void forceenv (char *varname, char *varvalue);
 #endif
+#ifdef CONFIG_MARVELL
+void *realloc(void*, size_t);
+void *calloc(size_t, size_t);
+void *memalign(size_t, size_t);
+u32 mvGetRtcSec(void);
+#endif
 #if defined(CONFIG_CMD_I2C)
 int i2c_write (uchar, uint, int , uchar* , int);
 int i2c_read (uchar, uint, int , uchar* , int);

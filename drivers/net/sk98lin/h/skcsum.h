@@ -2,14 +2,15 @@
  *
  * Name:	skcsum.h
  * Project:	GEnesis - SysKonnect SK-NET Gigabit Ethernet (SK-98xx)
- * Version:	$Revision: 1.9 $
- * Date:	$Date: 2001/02/06 11:21:39 $
+ * Version:	$Revision: 2.3 $
+ * Date:	$Date: 2005/12/14 16:11:27 $
  * Purpose:	Store/verify Internet checksum in send/receive packets.
  *
  ******************************************************************************/
 
 /******************************************************************************
  *
+ *	LICENSE:
  *	(C)Copyright 1998-2001 SysKonnect GmbH.
  *
  *	This program is free software; you can redistribute it and/or modify
@@ -18,48 +19,7 @@
  *	(at your option) any later version.
  *
  *	The information in this file is provided "AS IS" without warranty.
- *
- ******************************************************************************/
-
-/******************************************************************************
- *
- * History:
- *
- *	$Log: skcsum.h,v $
- *	Revision 1.9  2001/02/06 11:21:39  rassmann
- *	Editorial changes.
- *
- *	Revision 1.8  2001/02/06 11:15:36  rassmann
- *	Supporting two nets on dual-port adapters.
- *
- *	Revision 1.7  2000/06/29 13:17:05  rassmann
- *	Corrected reception of a packet with UDP checksum == 0 (which means there
- *	is no UDP checksum).
- *
- *	Revision 1.6  2000/02/28 12:33:44  cgoos
- *	Changed C++ style comments to C style.
- *
- *	Revision 1.5  2000/02/21 12:10:05  cgoos
- *	Fixed license comment.
- *
- *	Revision 1.4  2000/02/21 11:08:37  cgoos
- *	Merged changes back into common source.
- *
- *	Revision 1.1  1999/07/26 14:47:49  mkarl
- *	changed from common source to windows specific source
- *	added return SKCS_STATUS_IP_CSUM_ERROR_UDP and
- *	SKCS_STATUS_IP_CSUM_ERROR_TCP to pass the NidsTester
- *	changes for Tx csum offload
- *
- *	Revision 1.2  1998/09/04 12:16:34  mhaveman
- *	Checked in for Stephan to allow compilation.
- *	-Added definition SK_CSUM_EVENT_CLEAR_PROTO_STATS to clear statistic
- *	-Added prototype for SkCsEvent()
- *
- *	Revision 1.1  1998/09/01 15:36:53  swolf
- *	initial revision
- *
- *	01-Sep-1998 sw	Created.
+ *	/LICENSE
  *
  ******************************************************************************/
 
@@ -130,7 +90,7 @@
  *	SKCS_STATUS_UDP_CSUM_ERROR - UDP checksum error (IP checksum ok).
  *	SKCS_STATUS_TCP_CSUM_OK - IP and TCP checksum ok.
  *	SKCS_STATUS_UDP_CSUM_OK - IP and UDP checksum ok.
- *	SKCS_STATUS_IP_CSUM_OK_NO_UDP - IP checksum OK and no UDP checksum.
+ *	SKCS_STATUS_IP_CSUM_OK_NO_UDP - IP checksum OK and no UDP checksum. 
  */
 #ifndef SKCS_OVERWRITE_STATUS	/* User overwrite? */
 #define SKCS_STATUS	int	/* Define status type. */
@@ -199,9 +159,7 @@ typedef struct s_CsProtocolStatistics {
 typedef struct s_Csum {
 	/* Enabled receive SK_PROTO_XXX bit flags. */
 	unsigned ReceiveFlags[SK_MAX_NETS];
-#ifdef TX_CSUM
 	unsigned TransmitFlags[SK_MAX_NETS];
-#endif /* TX_CSUM */
 
 	/* The protocol statistics structure; one per supported protocol. */
 	SKCS_PROTO_STATS ProtoStats[SK_MAX_NETS][SKCS_NUM_PROTOCOLS];
@@ -226,11 +184,11 @@ typedef struct s_CsPacketInfo {
 
 /* function prototypes ********************************************************/
 
-#ifndef SkCsCalculateChecksum
+#ifndef SK_CS_CALCULATE_CHECKSUM
 extern unsigned SkCsCalculateChecksum(
 	void		*pData,
 	unsigned	Length);
-#endif
+#endif /* SK_CS_CALCULATE_CHECKSUM */
 
 extern int SkCsEvent(
 	SK_AC		*pAc,

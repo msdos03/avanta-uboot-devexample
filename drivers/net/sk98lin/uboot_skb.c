@@ -24,19 +24,31 @@
  */
 
 #include <config.h>
+
+#ifdef CONFIG_SK98
+
 #include <common.h>
 #include "u-boot_compat.h"
 
-#define MAX_SKB		50
+#define MAX_SKB		128
 
-static struct sk_buff *sk_table[MAX_SKB];
+struct sk_buff *sk_table[MAX_SKB];
 
+unsigned int skbAlloc=0,skbFree=0;
+/*unsigned int cntrMalloc=0,cntrFree=0;
+unsigned int indxMalloc=0,indxFree=0;
+*/
 
+extern int tftpCount;
 struct sk_buff * alloc_skb(u32 size, int dummy)
 {
 	int i;
 	struct sk_buff * ret = NULL;
 
+	if(0)/*if(tftpCount == 2)*/
+	{
+		printf("alloc_skb , size=%d\n",size);
+	}
 	for (i = 0; i < MAX_SKB; i++)
 	{
 		if (sk_table[i])
@@ -75,9 +87,19 @@ struct sk_buff * alloc_skb(u32 size, int dummy)
 		ret = sk_table[i];
 	}
 
+	if(0)/*if(tftpCount == 2)*/
+	{
+		printf("alloc_skb , i=%d sk_table[i]=0x%x sk_table[i]->data=0x%x\n",i, (unsigned int)sk_table[i], (unsigned int)sk_table[i]->data);
+	}
+
+
 	if (! ret)
 	{
 		printf("Unable to allocate skb!\n");
+	}
+	else
+	{
+		skbAlloc++;;
 	}
 
 	return ret;
@@ -87,12 +109,23 @@ void dev_kfree_skb_any(struct sk_buff *skb)
 {
 	int i;
 
+	if(0)/*if(tftpCount == 2)*/
+	{
+		printf("dev_kfree_skb_any , skb=0x%x\n",(unsigned int)skb);
+	}
+
+
 	for (i = 0; i < MAX_SKB; i++)
 	{
 		if (sk_table[i] != skb)
 		{
 			continue;
 		}
+		if(0)/*if(tftpCount == 2)*/
+		{
+			printf("dev_kfree_skb_any , i=%d sk_table[i]=0x%x sk_table[i]->data=0x%x\n",i,(unsigned int)skb,(unsigned int)skb->data_unaligned);
+		}
+
 
 		free(skb->data_unaligned);
 		free(skb);
@@ -103,6 +136,10 @@ void dev_kfree_skb_any(struct sk_buff *skb)
 	if (i == MAX_SKB)
 	{
 		printf("SKB allocation error!\n");
+	}
+	else
+	{
+		skbFree++;
 	}
 }
 
@@ -115,3 +152,8 @@ void skb_put(struct sk_buff *skb, unsigned int len)
 {
 	skb->len+=len;
 }
+
+
+
+
+#endif /* CONFIG_SK98 */

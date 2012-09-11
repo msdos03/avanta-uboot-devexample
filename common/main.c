@@ -397,6 +397,12 @@ void main_loop (void)
 
 	debug ("### main_loop: bootcmd=\"%s\"\n", s ? s : "<UNDEFINED>");
 
+#if defined (CONFIG_MARVELL) && (defined(MV_88F6183) || defined(MV_88F6183L))
+	/* 6183 UART work around - need incase uart pin's left unconnected */
+	if (tstc())
+		(void) getc();  /* consume input	*/
+#endif
+
 	if (bootdelay >= 0 && s && !abortboot (bootdelay)) {
 # ifdef CONFIG_AUTOBOOT_KEYED
 		int prev = disable_ctrlc(1);	/* disable Control C checking */
@@ -1361,6 +1367,19 @@ int run_command (const char *cmd, int flag)
 			rc = -1;	/* no command at all */
 			continue;
 		}
+
+#ifdef CONFIG_MARVELL
+        if(enaMonExt()){
+                if ((cmdtp = find_cmd(argv[0])) == NULL) {
+                        int i;
+                        argv[argc+1]= NULL;
+                        for(i = argc; i > 0; i--){
+                                argv[i] = argv[i-1];}
+                        argv[0] = "FSrun";
+                        argc++;
+                }
+        }
+#endif
 
 		/* Look up command in command table */
 		if ((cmdtp = find_cmd(argv[0])) == NULL) {

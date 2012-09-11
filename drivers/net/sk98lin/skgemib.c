@@ -2,15 +2,17 @@
  *
  * Name:	skgemib.c
  * Project:	GEnesis, PCI Gigabit Ethernet Adapter
- * Version:	$Revision: 1.7 $
- * Date:	$Date: 2002/12/16 09:04:34 $
+ * Version:	$Revision: 2.9 $
+ * Date:	$Date: 2005/12/21 09:49:48 $
  * Purpose:	Private Network Management Interface Management Database
  *
  ****************************************************************************/
 
 /******************************************************************************
  *
- *	(C)Copyright 2002 SysKonnect GmbH.
+ *	LICENSE:
+ *	(C)Copyright 1998-2002 SysKonnect GmbH.
+ *	(C)Copyright 2002-2003 Marvell.
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -18,39 +20,12 @@
  *	(at your option) any later version.
  *
  *	The information in this file is provided "AS IS" without warranty.
+ *	/LICENSE
  *
  ******************************************************************************/
-
-/*****************************************************************************
- *
- * History:
- *
- *	$Log: skgemib.c,v $
- *	Revision 1.7  2002/12/16 09:04:34  tschilli
- *	Code for VCT handling added.
- *
- *	Revision 1.6  2002/08/09 15:40:21  rwahl
- *	Editorial change (renamed ConfSpeedCap).
- *
- *	Revision 1.5  2002/08/09 11:05:34  rwahl
- *	Added oid handling for link speed cap.
- *
- *	Revision 1.4  2002/08/09 09:40:27  rwahl
- *	Added support for NDIS OID_PNP_xxx.
- *
- *	Revision 1.3  2002/07/17 19:39:54  rwahl
- *	Added handler for OID_SKGE_SPEED_MODE & OID_SKGE_SPEED_STATUS.
- *
- *	Revision 1.2  2002/05/22 08:59:00  rwahl
- *	- static functions only for release build.
- *	- Source file must be included.
- *
- *	Revision 1.1  2002/05/22 08:12:42  rwahl
- *	Initial version.
- *
- ****************************************************************************/
-
 #include <config.h>
+ 
+#ifdef CONFIG_SK98
 
 /*
  * PRIVATE OID handler function prototypes
@@ -102,7 +77,19 @@ PNMI_STATIC int Vct(SK_AC *pAC, SK_IOC IoC, int action, SK_U32 Id,
 PNMI_STATIC int PowerManagement(SK_AC *pAC, SK_IOC IoC, int action, SK_U32 Id,
 	char *pBuf, unsigned int *pLen, SK_U32 Instance,
 	unsigned int TableIndex, SK_U32 NetIndex);
-#endif
+#endif /* SK_POWER_MGMT */
+
+#ifdef SK_DIAG_SUPPORT
+PNMI_STATIC int DiagActions(SK_AC *pAC, SK_IOC IoC, int action, SK_U32 Id,
+	char *pBuf, unsigned int *pLen, SK_U32 Instance,
+	unsigned int TableIndex, SK_U32 NetIndex);
+#endif /* SK_DIAG_SUPPORT */
+
+#ifdef SK_ASF
+PNMI_STATIC int Asf(SK_AC *pAC, SK_IOC IoC, int action, SK_U32 Id,
+    char *pBuf, unsigned int *pLen, SK_U32 Instance,
+    unsigned int TableIndex, SK_U32 NetIndex);
+#endif /* SK_ASF */
 
 
 /* defines *******************************************************************/
@@ -268,6 +255,190 @@ PNMI_STATIC const SK_PNMI_TAB_ENTRY IdTable[] = {
 		0,
 		SK_PNMI_RW, PowerManagement, 0},
 #endif /* SK_POWER_MGMT */
+#ifdef SK_DIAG_SUPPORT
+	{OID_SKGE_DIAG_MODE,
+		0,
+		0,
+		0,
+		SK_PNMI_RW, DiagActions, 0},
+#endif /* SK_DIAG_SUPPORT */
+#ifdef SK_ASF
+    {OID_SKGE_ASF,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_STORE_CONFIG,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_ENA,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_RETRANS,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_RETRANS_INT,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_HB_ENA,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_HB_INT,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_WD_ENA,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_WD_TIME,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_IP_SOURCE,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_MAC_SOURCE,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_IP_DEST,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_MAC_DEST,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_COMMUNITY_NAME,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_RSP_ENA,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_RETRANS_COUNT_MIN,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_RETRANS_COUNT_MAX,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_RETRANS_INT_MIN,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_RETRANS_INT_MAX,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_HB_INT_MIN,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_HB_INT_MAX,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_WD_TIME_MIN,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_WD_TIME_MAX,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_HB_CAP,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_WD_TIMER_RES,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_GUID,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_KEY_OP,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_KEY_ADM,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_KEY_GEN,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_CAP,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_PAR_1,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_OVERALL_OID,
+        0,
+        0,
+        0,
+        SK_PNMI_RW, Asf, 0},
+    {OID_SKGE_ASF_FWVER_OID,
+        0,
+        0,
+        0,
+        SK_PNMI_RO, Asf, 0},
+    {OID_SKGE_ASF_ACPI_OID,
+        0,
+        0,
+        0,
+        SK_PNMI_RO, Asf, 0},
+    {OID_SKGE_ASF_SMBUS_OID,
+        0,
+        0,
+        0,
+        SK_PNMI_RO, Asf, 0},
+#endif /* SK_ASF */
 	{OID_SKGE_MDB_VERSION,
 		1,
 		0,
@@ -318,7 +489,7 @@ PNMI_STATIC const SK_PNMI_TAB_ENTRY IdTable[] = {
 		sizeof(SK_PNMI_VPD),
 		SK_PNMI_OFF(Vpd) + SK_PNMI_VPD_OFF(VpdAction),
 		SK_PNMI_RW, Vpd, 0},
-	{OID_SKGE_PORT_NUMBER,
+	{OID_SKGE_PORT_NUMBER,		
 		1,
 		0,
 		SK_PNMI_MAI_OFF(PortNumber),
@@ -338,6 +509,16 @@ PNMI_STATIC const SK_PNMI_TAB_ENTRY IdTable[] = {
 		0,
 		SK_PNMI_MAI_OFF(DriverVersion),
 		SK_PNMI_RO, General, 0},
+	{OID_SKGE_DRIVER_RELDATE,
+		1,
+		0,
+		SK_PNMI_MAI_OFF(DriverReleaseDate),
+		SK_PNMI_RO, General, 0},
+	{OID_SKGE_DRIVER_FILENAME,
+		1,
+		0,
+		SK_PNMI_MAI_OFF(DriverFileName),
+		SK_PNMI_RO, General, 0},
 	{OID_SKGE_HW_DESCR,
 		1,
 		0,
@@ -352,6 +533,21 @@ PNMI_STATIC const SK_PNMI_TAB_ENTRY IdTable[] = {
 		1,
 		0,
 		SK_PNMI_MAI_OFF(Chipset),
+		SK_PNMI_RO, General, 0},
+	{OID_SKGE_CHIPID,
+		1,
+		0,
+		SK_PNMI_MAI_OFF(ChipId),
+		SK_PNMI_RO, General, 0},
+	{OID_SKGE_RAMSIZE,
+		1,
+		0,
+		SK_PNMI_MAI_OFF(RamSize),
+		SK_PNMI_RO, General, 0},
+	{OID_SKGE_VAUXAVAIL,
+		1,
+		0,
+		SK_PNMI_MAI_OFF(VauxAvail),
 		SK_PNMI_RO, General, 0},
 	{OID_SKGE_ACTION,
 		1,
@@ -858,6 +1054,18 @@ PNMI_STATIC const SK_PNMI_TAB_ENTRY IdTable[] = {
 		sizeof(SK_PNMI_CONF),
 		SK_PNMI_OFF(Conf) + SK_PNMI_CNF_OFF(ConfConnector),
 		SK_PNMI_RO, MacPrivateConf, 0},
+	{OID_SKGE_PHY_TYPE,
+		SK_PNMI_MAC_ENTRIES,
+		sizeof(SK_PNMI_CONF),
+		SK_PNMI_OFF(Conf) + SK_PNMI_CNF_OFF(ConfPhyType),
+		SK_PNMI_RO, MacPrivateConf, 0},
+#ifdef SK_PHY_LP_MODE
+		{OID_SKGE_PHY_LP_MODE,
+		SK_PNMI_MAC_ENTRIES,
+		sizeof(SK_PNMI_CONF),
+		SK_PNMI_OFF(Conf) + SK_PNMI_CNF_OFF(ConfPhyMode),
+		SK_PNMI_RW, MacPrivateConf, 0},
+#endif	
 	{OID_SKGE_LINK_CAP,
 		SK_PNMI_MAC_ENTRIES,
 		sizeof(SK_PNMI_CONF),
@@ -1053,4 +1261,15 @@ PNMI_STATIC const SK_PNMI_TAB_ENTRY IdTable[] = {
 		0,
 		0,
 		SK_PNMI_RO, Vct, 0},
+	{OID_SKGE_VCT_CAPABILITIES,
+		0,
+		0,
+		0,
+		SK_PNMI_RO, Vct, 0},
+	{OID_SKGE_BOARDLEVEL,
+		0,
+		0,
+		0,
+		SK_PNMI_RO, General, 0},
 };
+#endif

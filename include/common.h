@@ -446,7 +446,9 @@ int	checkicache   (void);
 int	checkdcache   (void);
 void	upmconfig     (unsigned int, unsigned int *, unsigned int);
 ulong	get_tbclk     (void);
+#ifndef CONFIG_MARVELL
 void	reset_cpu     (ulong addr);
+#endif
 #if defined (CONFIG_OF_LIBFDT) && defined (CONFIG_OF_BOARD_SETUP)
 void ft_cpu_setup(void *blob, bd_t *bd);
 #ifdef CONFIG_PCI

@@ -449,38 +449,6 @@ static inline ino_t parent_ino(struct dentry *dentry)
 	return res;
 }
 
-/* linux/include/linux/bitops.h */
-
-#define BIT_MASK(nr)		(1UL << ((nr) % BITS_PER_LONG))
-#define BIT_WORD(nr)		((nr) / BITS_PER_LONG)
-
-/* linux/include/asm-generic/bitops/non-atomic.h */
-
-/**
- * __set_bit - Set a bit in memory
- * @nr: the bit to set
- * @addr: the address to start counting from
- *
- * Unlike set_bit(), this function is non-atomic and may be reordered.
- * If it's called on the same region of memory simultaneously, the effect
- * may be that only one operation succeeds.
- */
-static inline void __set_bit(int nr, volatile unsigned long *addr)
-{
-	unsigned long mask = BIT_MASK(nr);
-	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
-
-	*p  |= mask;
-}
-
-static inline void __clear_bit(int nr, volatile unsigned long *addr)
-{
-	unsigned long mask = BIT_MASK(nr);
-	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
-
-	*p &= ~mask;
-}
-
 /* debug.c */
 
 #define DEFINE_SPINLOCK(...)
@@ -2172,7 +2140,4 @@ int ubifs_decompress(const void *buf, int len, void *out, int *out_len,
 /* todo: Move these to a common U-Boot header */
 int lzo1x_decompress_safe(const unsigned char *in, size_t in_len,
 			  unsigned char *out, size_t *out_len);
-
-int zunzip(void *dst, int dstlen, unsigned char *src, unsigned long *lenp,
-						int stoponerr, int offset);
 #endif /* !__UBIFS_H__ */

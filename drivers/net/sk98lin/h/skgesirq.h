@@ -1,124 +1,40 @@
 /******************************************************************************
  *
  * Name:	skgesirq.h
- * Project:	GEnesis, PCI Gigabit Ethernet Adapter
- * Version:	$Revision: 1.26 $
- * Date:	$Date: 2002/10/14 09:52:36 $
- * Purpose:	SK specific Gigabit Ethernet special IRQ functions
+ * Project:	Gigabit Ethernet Adapters, Common Modules
+ * Version:	$Revision: 2.5 $
+ * Date:	$Date: 2005/12/14 16:11:35 $
+ * Purpose:	Gigabit Ethernet special IRQ functions
  *
  ******************************************************************************/
 
 /******************************************************************************
  *
- *	(C)Copyright 1998-2002 SysKonnect GmbH.
+ *	LICENSE:
+ *	(C)Copyright 1998-2002 SysKonnect.
+ *	(C)Copyright 2002-2005 Marvell.
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
  *	the Free Software Foundation; either version 2 of the License, or
  *	(at your option) any later version.
- *
  *	The information in this file is provided "AS IS" without warranty.
- *
- ******************************************************************************/
-
-/******************************************************************************
- *
- * History:
- *	$Log: skgesirq.h,v $
- *	Revision 1.26  2002/10/14 09:52:36  rschmidt
- *	Added SKERR_SIRQ_E023 and SKERR_SIRQ_E023 for GPHY (Yukon)
- *	Editorial changes
- *
- *	Revision 1.25  2002/07/15 18:15:52  rwahl
- *	Editorial changes.
- *
- *	Revision 1.24  2002/07/15 15:39:21  rschmidt
- *	Corrected define for SKERR_SIRQ_E022
- *	Editorial changes
- *
- *	Revision 1.23  2002/04/25 11:09:45  rschmidt
- *	Removed declarations for SkXmInitPhy(), SkXmRxTxEnable()
- *	Editorial changes
- *
- *	Revision 1.22  2000/11/09 11:30:10  rassmann
- *	WA: Waiting after releasing reset until BCom chip is accessible.
- *
- *	Revision 1.21  2000/10/18 12:22:40  cgoos
- *	Added workaround for half duplex hangup.
- *
- *	Revision 1.20  1999/12/06 10:00:44  cgoos
- *	Added SET event for role.
- *
- *	Revision 1.19  1999/11/22 13:58:26  cgoos
- *	Changed license header to GPL.
- *
- *	Revision 1.18  1999/05/19 07:32:59  cgoos
- *	Changes for 1000Base-T.
- *
- *	Revision 1.17  1999/03/12 13:29:31  malthoff
- *	Move Autonegotiation Error Codes to skgeinit.h.
- *
- *	Revision 1.16  1999/03/08 10:11:28  gklug
- *	add: AutoNegDone return codes
- *
- *	Revision 1.15  1998/11/18 13:20:53  gklug
- *	add: different timeouts for active and non-active links
- *
- *	Revision 1.14  1998/11/04 07:18:14  cgoos
- *	Added prototype for SkXmRxTxEnable.
- *
- *	Revision 1.13  1998/10/21 05:52:23  gklug
- *	add: parameter DoLoop to InitPhy function
- *
- *	Revision 1.12  1998/10/19 06:45:03  cgoos
- *	Added prototype for SkXmInitPhy.
- *
- *	Revision 1.11  1998/10/15 14:34:10  gklug
- *	add: WA_TIME is 500 msec
- *
- *	Revision 1.10  1998/10/14 14:49:41  malthoff
- *	Remove err log defines E021 and E022. They are
- *	defined in skgeinit.h now.
- *
- *	Revision 1.9  1998/10/14 14:00:39  gklug
- *	add: error logs for init phys
- *
- *	Revision 1.8  1998/10/14 05:44:05  gklug
- *	add: E020
- *
- *	Revision 1.7  1998/10/02 06:24:58  gklug
- *	add: error messages
- *
- *	Revision 1.6  1998/10/01 07:54:45  gklug
- *	add: PNMI debug module
- *
- *	Revision 1.5  1998/09/28 13:36:31  malthoff
- *	Move the bit definitions for Autonegotiation
- *	and Flow Control to skgeinit.h.
- *
- *	Revision 1.4  1998/09/15 12:29:34  gklug
- *	add: error logs
- *
- *	Revision 1.3  1998/09/03 13:54:02  gklug
- *	add: function prototypes
- *
- *	Revision 1.2  1998/09/03 10:24:36  gklug
- *	add: Events send by PNMI
- *	add: parameter definition for Flow Control etc.
- *
- *	Revision 1.1  1998/08/27 11:50:27  gklug
- *	initial revision
- *
+ *	/LICENSE
  *
  ******************************************************************************/
 
 #ifndef _INC_SKGESIRQ_H_
 #define _INC_SKGESIRQ_H_
 
+/* Define return codes of SkGePortCheckUp and CheckShort */
+#define SK_HW_PS_NONE		0	/* No action needed */
+#define SK_HW_PS_RESTART	1	/* Restart needed */
+#define SK_HW_PS_LINK		2	/* Link Up actions needed */
+
 /*
  * Define the Event the special IRQ/INI module can handle
  */
-#define SK_HWEV_WATIM			1	/* Timeout for WA errata #2 XMAC */
+#define SK_HWEV_WATIM			1	/* Timeout for WA Errata #2 XMAC */
 #define SK_HWEV_PORT_START		2	/* Port Start Event by RLMT */
 #define SK_HWEV_PORT_STOP		3	/* Port Stop Event by RLMT */
 #define SK_HWEV_CLEAR_STAT		4	/* Clear Statistics by PNMI */
@@ -129,10 +45,10 @@
 #define SK_HWEV_SET_SPEED		9	/* Set Link Speed by PNMI */
 #define SK_HWEV_HALFDUP_CHK		10	/* Half Duplex Hangup Workaround */
 
-#define SK_WA_ACT_TIME		(5000000L)	/* 5 sec */
-#define SK_WA_INA_TIME		(100000L)	/* 100 msec */
+#define SK_WA_ACT_TIME		1000000UL	/* 1000 msec (1 sec) */
+#define SK_WA_INA_TIME		 100000UL	/*  100 msec */
 
-#define SK_HALFDUP_CHK_TIME	(10000L)	/* 10 msec */
+#define SK_HALFDUP_CHK_TIME	  10000UL	/*   10 msec */
 
 /*
  * Define the error numbers and messages
@@ -160,9 +76,9 @@
 #define SKERR_SIRQ_E011		(SKERR_SIRQ_E010+1)
 #define SKERR_SIRQ_E011MSG	"CHECK failure XA2"
 #define SKERR_SIRQ_E012		(SKERR_SIRQ_E011+1)
-#define SKERR_SIRQ_E012MSG	"unexpected IRQ Master error"
+#define SKERR_SIRQ_E012MSG	"Unexpected IRQ Master error"
 #define SKERR_SIRQ_E013		(SKERR_SIRQ_E012+1)
-#define SKERR_SIRQ_E013MSG	"unexpected IRQ Status error"
+#define SKERR_SIRQ_E013MSG	"Unexpected IRQ Status error"
 #define SKERR_SIRQ_E014		(SKERR_SIRQ_E013+1)
 #define SKERR_SIRQ_E014MSG	"Parity error on RAM (read)"
 #define SKERR_SIRQ_E015		(SKERR_SIRQ_E014+1)
@@ -185,10 +101,37 @@
 #define SKERR_SIRQ_E023MSG	"Auto-negotiation error"
 #define SKERR_SIRQ_E024		(SKERR_SIRQ_E023+1)
 #define SKERR_SIRQ_E024MSG	"FIFO overflow error"
+#define SKERR_SIRQ_E025		(SKERR_SIRQ_E024+1)
+#define SKERR_SIRQ_E025MSG	"2 Pair Downshift detected"
+#define SKERR_SIRQ_E026		(SKERR_SIRQ_E025+1)
+#define SKERR_SIRQ_E026MSG	"Uncorrectable PCI Express error"
+#define SKERR_SIRQ_E027		(SKERR_SIRQ_E026+1)
+#define SKERR_SIRQ_E027MSG	"PCI Bus Abort detected"
+#define SKERR_SIRQ_E028		(SKERR_SIRQ_E027+1)
+#define SKERR_SIRQ_E028MSG	"Parity error on RAM 1 (read)"
+#define SKERR_SIRQ_E029		(SKERR_SIRQ_E028+1)
+#define SKERR_SIRQ_E029MSG	"Parity error on RAM 1 (write)"
+#define SKERR_SIRQ_E030		(SKERR_SIRQ_E029+1)
+#define SKERR_SIRQ_E030MSG	"Parity error on RAM 2 (read)"
+#define SKERR_SIRQ_E031		(SKERR_SIRQ_E030+1)
+#define SKERR_SIRQ_E031MSG	"Parity error on RAM 2 (write)"
+#define SKERR_SIRQ_E032		(SKERR_SIRQ_E031+1)
+#define SKERR_SIRQ_E032MSG	"TCP segmentation error async. queue 1"
+#define SKERR_SIRQ_E033		(SKERR_SIRQ_E032+1)
+#define SKERR_SIRQ_E033MSG	"TCP segmentation error sync. queue 1"
+#define SKERR_SIRQ_E034		(SKERR_SIRQ_E033+1)
+#define SKERR_SIRQ_E034MSG	"TCP segmentation error async. queue 2"
+#define SKERR_SIRQ_E035		(SKERR_SIRQ_E034+1)
+#define SKERR_SIRQ_E035MSG	"TCP segmentation error sync. queue 2"
+#define SKERR_SIRQ_E036		(SKERR_SIRQ_E035+1)
+#define SKERR_SIRQ_E036MSG	"CHECK failure polling unit"
 
 extern void SkGeSirqIsr(SK_AC *pAC, SK_IOC IoC, SK_U32 Istatus);
 extern int  SkGeSirqEvent(SK_AC *pAC, SK_IOC IoC, SK_U32 Event, SK_EVPARA Para);
 extern void SkHWLinkUp(SK_AC *pAC, SK_IOC IoC, int Port);
 extern void SkHWLinkDown(SK_AC *pAC, SK_IOC IoC, int Port);
+extern void SkGeYuSirqIsr(SK_AC *pAC, SK_IOC IoC, SK_U32 Istatus);
+extern void SkYuk2SirqIsr(SK_AC *pAC, SK_IOC IoC, SK_U32 Istatus);
 
 #endif	/* _INC_SKGESIRQ_H_ */
+

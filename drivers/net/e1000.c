@@ -45,8 +45,11 @@ tested on both gig copper and gig fiber boards
 #include "e1000.h"
 
 #define TOUT_LOOP   100000
-
-#define virt_to_bus(devno, v)	pci_virt_to_mem(devno, (void *) (v))
+#if defined(CONFIG_MARVELL)
+	#define virt_to_bus(devno, v)	(v)
+#else
+	#define virt_to_bus(devno, v)	pci_virt_to_mem(devno, (void *) (v))
+#endif
 #define bus_to_phys(devno, a)	pci_mem_to_phys(devno, a)
 #define mdelay(n)	udelay((n)*1000)
 

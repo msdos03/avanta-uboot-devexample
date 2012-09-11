@@ -1,329 +1,25 @@
 /******************************************************************************
  *
  * Name:	skgeinit.h
- * Project:	GEnesis, PCI Gigabit Ethernet Adapter
- * Version:	$Revision: 1.75 $
- * Date:	$Date: 2003/02/05 13:36:39 $
+ * Project:	Gigabit Ethernet Adapters, Common Modules
+ * Version:	$Revision: 2.51 $
+ * Date:	$Date: 2006/04/05 13:37:16 $
  * Purpose:	Structures and prototypes for the GE Init Module
  *
  ******************************************************************************/
 
 /******************************************************************************
  *
- *	(C)Copyright 1998-2003 SysKonnect GmbH.
+ *	LICENSE:
+ *	(C)Copyright 1998-2002 SysKonnect.
+ *	(C)Copyright 2002-2006 Marvell.
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
  *	the Free Software Foundation; either version 2 of the License, or
  *	(at your option) any later version.
- *
  *	The information in this file is provided "AS IS" without warranty.
- *
- ******************************************************************************/
-
-/******************************************************************************
- *
- * History:
- *
- *	$Log: skgeinit.h,v $
- *	Revision 1.75  2003/02/05 13:36:39  rschmidt
- *	Added define SK_FACT_78	for YUKON's Host Clock of 78.12 MHz
- *	Editorial changes
- *
- *	Revision 1.74  2003/01/28 09:39:16  rschmidt
- *	Added entry GIYukonLite in s_GeInit structure
- *	Editorial changes
- *
- *	Revision 1.73  2002/11/15 12:47:25  rschmidt
- *	Replaced error message SKERR_HWI_E024 for Cable Diagnostic with
- *	Rx queue error in SkGeStopPort().
- *
- *	Revision 1.72  2002/11/12 17:08:35  rschmidt
- *	Added entries for Cable Diagnostic to Port structure
- *	Added entries GIPciSlot64 and GIPciClock66 in s_GeInit structure
- *	Added error message for Cable Diagnostic
- *	Added prototypes for SkGmCableDiagStatus()
- *	Editorial changes
- *
- *	Revision 1.71  2002/10/21 11:26:10  mkarl
- *	Changed interface of SkGeInitAssignRamToQueues().
- *
- *	Revision 1.70  2002/10/14 08:21:32  rschmidt
- *	Changed type of GICopperType, GIVauxAvail to SK_BOOL
- *	Added entry PRxOverCnt to Port structure
- *	Added entry GIYukon32Bit in s_GeInit structure
- *	Editorial changes
- *
- *	Revision 1.69  2002/10/09 16:57:15  mkarl
- *	Added some constants and macros for SkGeInitAssignRamToQueues().
- *
- *	Revision 1.68  2002/09/12 08:58:51  rwahl
- *	Retrieve counters needed for XMAC errata workarounds directly because
- *	PNMI returns corrected counter values (e.g. #10620).
- *
- *	Revision 1.67  2002/08/16 14:40:30  rschmidt
- *	Added entries GIGenesis and GICopperType in s_GeInit structure
- *	Added prototypes for SkMacHashing()
- *	Editorial changes
- *
- *	Revision 1.66  2002/08/12 13:27:21  rschmidt
- *	Added defines for Link speed capabilities
- *	Added entry PLinkSpeedCap to Port structure
- *	Added entry GIVauxAvail in s_GeInit structure
- *	Added prototypes for SkMacPromiscMode()
- *	Editorial changes
- *
- *	Revision 1.65  2002/08/08 15:46:18  rschmidt
- *	Added define SK_PHY_ACC_TO for PHY access timeout
- *	Added define SK_XM_RX_HI_WM for XMAC Rx High Watermark
- *	Added define SK_MIN_TXQ_SIZE for Min RAM Buffer Tx Queue Size
- *	Added entry PhyId1 to Port structure
- *
- *	Revision 1.64  2002/07/23 16:02:56  rschmidt
- *	Added entry GIWolOffs in s_GeInit struct (HW-Bug in YUKON 1st rev.)
- *	Added prototypes for: SkGePhyRead(), SkGePhyWrite()
- *
- *	Revision 1.63  2002/07/18 08:17:38  rwahl
- *	Corrected definitions for SK_LSPEED_xxx & SK_LSPEED_STAT_xxx.
- *
- *	Revision 1.62  2002/07/17 18:21:55  rwahl
- *	Added SK_LSPEED_INDETERMINATED define.
- *
- *	Revision 1.61  2002/07/17 17:16:03  rwahl
- *	- MacType now member of GIni struct.
- *	- Struct alignment to 32bit.
- *	- Editorial change.
- *
- *	Revision 1.60  2002/07/15 18:23:39  rwahl
- *	Added GeMacFunc to GE Init structure.
- *	Added prototypes for SkXmUpdateStats(), SkGmUpdateStats(),
- *	  SkXmMacStatistic(), SkGmMacStatistic(), SkXmResetCounter(),
- *	  SkGmResetCounter(), SkXmOverflowStatus(), SkGmOverflowStatus().
- *	Added defines for current link speed state.
- *	Added ERRMSG defintions for MacUpdateStat() & MacStatistics().
- *
- *	Revision 1.59  2002/07/15 15:40:22  rschmidt
- *	Added entry PLinkSpeedUsed to Port structure
- *	Editorial changes
- *
- *	Revision 1.58  2002/06/10 09:36:30  rschmidt
- *	Editorial changes.
- *
- *	Revision 1.57  2002/06/05 08:18:00  rschmidt
- *	Corrected alignment in Port Structure
- *	Added new prototypes for GMAC
- *	Editorial changes
- *
- *	Revision 1.56  2002/04/25 11:38:12  rschmidt
- *	Added defines for Link speed values
- *	Added defines for Loopback parameters for MAC and PHY
- *	Removed entry PRxCmd from Port structure
- *	Added entry PLinkSpeed to Port structure
- *	Added entries GIChipId and GIChipRev to GE Init structure
- *	Removed entry GIAnyPortAct from GE Init structure
- *	Added prototypes for: SkMacInit(), SkMacInitPhy(),
- *	SkMacRxTxDisable(), SkMacSoftRst(), SkMacHardRst(), SkMacIrq(),
- *	SkMacIrqDisable(), SkMacFlushTxFifo(), SkMacFlushRxFifo(),
- *	SkMacAutoNegDone(), SkMacAutoNegLipaPhy(), SkMacSetRxTxEn(),
- *	SkXmPhyRead(), SkXmPhyRead(), SkGmPhyWrite(), SkGmPhyWrite();
- *	Removed prototypes for static functions in SkXmac2.c
- *	Editorial changes
- *
- *	Revision 1.55  2002/02/26 15:24:53  rwahl
- *	Fix: no link with manual configuration (#10673). The previous fix for
- *	#10639 was removed. So for RLMT mode = CLS the RLMT may switch to
- *	misconfigured port. It should not occur for the other RLMT modes.
- *
- *	Revision 1.54  2002/01/18 16:52:52  rwahl
- *	Editorial corrections.
- *
- *	Revision 1.53  2001/11/20 09:19:58  rwahl
- *	Reworked bugfix #10639 (no dependency to RLMT mode).
- *
- *	Revision 1.52  2001/10/26 07:52:23  afischer
- *	Port switching bug in `check local link` mode
- *
- *	Revision 1.51  2001/02/09 12:26:38  cgoos
- *	Inserted #ifdef DIAG for half duplex workaround timer.
- *
- *	Revision 1.50  2001/02/07 07:56:40  rassmann
- *	Corrected copyright.
- *
- *	Revision 1.49  2001/01/31 15:32:18  gklug
- *	fix: problem with autosensing an SR8800 switch
- *	add: counter for autoneg timeouts
- *
- *	Revision 1.48  2000/11/09 11:30:10  rassmann
- *	WA: Waiting after releasing reset until BCom chip is accessible.
- *
- *	Revision 1.47  2000/10/18 12:22:40  cgoos
- *	Added workaround for half duplex hangup.
- *
- *	Revision 1.46  2000/08/10 11:28:00  rassmann
- *	Editorial changes.
- *	Preserving 32-bit alignment in structs for the adapter context.
- *
- *	Revision 1.45  1999/11/22 13:56:19  cgoos
- *	Changed license header to GPL.
- *
- *	Revision 1.44  1999/10/26 07:34:15  malthoff
- *	The define SK_LNK_ON has been lost in v1.41.
- *
- *	Revision 1.43  1999/10/06 09:30:16  cgoos
- *	Changed SK_XM_THR_JUMBO.
- *
- *	Revision 1.42  1999/09/16 12:58:26  cgoos
- *	Changed SK_LED_STANDY macro to be independent of HW link sync.
- *
- *	Revision 1.41  1999/07/30 06:56:14  malthoff
- *	Correct comment for SK_MS_STAT_UNSET.
- *
- *	Revision 1.40  1999/05/27 13:38:46  cgoos
- *	Added SK_BMU_TX_WM.
- *	Made SK_BMU_TX_WM and SK_BMU_RX_WM user-definable.
- *	Changed XMAC Tx treshold to max. values.
- *
- *	Revision 1.39  1999/05/20 14:35:26  malthoff
- *	Remove prototypes for SkGeLinkLED().
- *
- *	Revision 1.38  1999/05/19 11:59:12  cgoos
- *	Added SK_MS_CAP_INDETERMINATED define.
- *
- *	Revision 1.37  1999/05/19 07:32:33  cgoos
- *	Changes for 1000Base-T.
- *	LED-defines for HWAC_LINK_LED macro.
- *
- *	Revision 1.36  1999/04/08 14:00:24  gklug
- *	add:Port struct field PLinkResCt
- *
- *	Revision 1.35  1999/03/25 07:43:07  malthoff
- *	Add error string for SKERR_HWI_E018MSG.
- *
- *	Revision 1.34  1999/03/12 16:25:57  malthoff
- *	Remove PPollRxD and PPollTxD.
- *	Add SKERR_HWI_E017MSG. and SK_DPOLL_MAX.
- *
- *	Revision 1.33  1999/03/12 13:34:41  malthoff
- *	Add Autonegotiation error codes.
- *	Change defines for parameter Mode in SkXmSetRxCmd().
- *	Replace __STDC__ by SK_KR_PROTO.
- *
- *	Revision 1.32  1999/01/25 14:40:20  mhaveman
- *	Added new return states for the virtual management port if multiple
- *	ports are active but differently configured.
- *
- *	Revision 1.31  1998/12/11 15:17:02  gklug
- *	add: Link partnet autoneg states : Unknown Manual and Auto-negotiation
- *
- *	Revision 1.30  1998/12/07 12:17:04  gklug
- *	add: Link Partner auto-negotiation flag
- *
- *	Revision 1.29  1998/12/01 10:54:42  gklug
- *	add: variables for XMAC Errata
- *
- *	Revision 1.28  1998/12/01 10:14:15  gklug
- *	add: PIsave saves the Interrupt status word
- *
- *	Revision 1.27  1998/11/26 15:24:52  mhaveman
- *	Added link status states SK_LMODE_STAT_AUTOHALF and
- *	SK_LMODE_STAT_AUTOFULL which are used by PNMI.
- *
- *	Revision 1.26  1998/11/26 14:53:01  gklug
- *	add:autoNeg Timeout variable
- *
- *	Revision 1.25  1998/11/26 08:58:50  gklug
- *	add: Link Mode configuration (AUTO Sense mode)
- *
- *	Revision 1.24  1998/11/24 13:30:27  gklug
- *	add: PCheckPar to port struct
- *
- *	Revision 1.23  1998/11/18 13:23:26  malthoff
- *	Add SK_PKT_TO_MAX.
- *
- *	Revision 1.22  1998/11/18 13:19:54  gklug
- *	add: PPrevShorts and PLinkBroken to port struct for WA XMAC Errata #C1
- *
- *	Revision 1.21  1998/10/26 08:02:57  malthoff
- *	Add GIRamOffs.
- *
- *	Revision 1.20  1998/10/19 07:28:37  malthoff
- *	Add prototype for SkGeInitRamIface().
- *
- *	Revision 1.19  1998/10/14 14:47:48  malthoff
- *	SK_TIMER should not be defined for Diagnostics.
- *	Add SKERR_HWI_E015MSG and SKERR_HWI_E016MSG.
- *
- *	Revision 1.18  1998/10/14 14:00:03  gklug
- *	add: timer to port struct for workaround of Errata #2
- *
- *	Revision 1.17  1998/10/14 11:23:09  malthoff
- *	Add prototype for SkXmAutoNegDone().
- *	Fix SkXmSetRxCmd() prototype statement.
- *
- *	Revision 1.16  1998/10/14 05:42:29  gklug
- *	add: HWLinkUp flag to Port struct
- *
- *	Revision 1.15  1998/10/09 08:26:33  malthoff
- *	Rename SK_RB_ULPP_B to SK_RB_LLPP_B.
- *
- *	Revision 1.14  1998/10/09 07:11:13  malthoff
- *	bug fix: SK_FACT_53 is 85 not 117.
- *	Rework time out init values.
- *	Add GIPortUsage and corresponding defines.
- *	Add some error log messages.
- *
- *	Revision 1.13  1998/10/06 14:13:14  malthoff
- *	Add prototype for SkGeLoadLnkSyncCnt().
- *
- *	Revision 1.12  1998/10/05 11:29:53  malthoff
- *	bug fix: A comment was not closed.
- *
- *	Revision 1.11  1998/10/05 08:01:59  malthoff
- *	Add default Timeout- Threshold- and
- *	Watermark constants. Add QRam start and end
- *	variables. Also add vars to store the polling
- *	mode and receive command. Add new Error Log
- *	Messages and function prototypes.
- *
- *	Revision 1.10  1998/09/28 13:34:48  malthoff
- *	Add mode bits for LED functions.
- *	Move Autoneg and Flow Ctrl bits from shgesirq.h
- *	Add the required Error Log Entries
- *	and Function Prototypes.
- *
- *	Revision 1.9  1998/09/16 14:38:41  malthoff
- *	Rework the SK_LNK_xxx defines.
- *	Add error log message defines.
- *	Add prototypes for skxmac2.c
- *
- *	Revision 1.8  1998/09/11 05:29:18  gklug
- *	add: init state of a port
- *
- *	Revision 1.7  1998/09/08 08:35:52  gklug
- *	add: defines of the Init Levels
- *
- *	Revision 1.6  1998/09/03 13:48:42  gklug
- *	add: Link strati, capabilities to Port struct
- *
- *	Revision 1.5  1998/09/03 13:30:59  malthoff
- *	Add SK_LNK_BLINK and SK_LNK_PERM.
- *
- *	Revision 1.4  1998/09/03 09:55:31  malthoff
- *	Add constants for parameters Dir and RstMode
- *	when calling SkGeStopPort().
- *	Rework the prototype section.
- *	Add Queue Address offsets PRxQOff, PXsQOff, and PXaQOff.
- *	Remove Ioc with IoC.
- *
- *	Revision 1.3  1998/08/19 09:11:54  gklug
- *	fix: struct are removed from c-source (see CCC)
- *	add: typedefs for all structs
- *
- *	Revision 1.2  1998/07/28 12:38:26  malthoff
- *	The prototypes got the parameter 'IoC'.
- *
- *	Revision 1.1  1998/07/23 09:50:24  malthoff
- *	Created.
+ *	/LICENSE
  *
  ******************************************************************************/
 
@@ -335,6 +31,8 @@ extern "C" {
 #endif	/* __cplusplus */
 
 /* defines ********************************************************************/
+
+#define SK_TEST_VAL		0x11335577UL
 
 /* modifying Link LED behaviour (used with SkGeLinkLED()) */
 #define SK_LNK_OFF		LED_OFF
@@ -360,17 +58,20 @@ extern "C" {
 #define SK_LED_TST	2
 
 /* Counter and Timer constants, for a host clock of 62.5 MHz */
-#define SK_XMIT_DUR		0x002faf08L		/*  50 ms */
-#define SK_BLK_DUR		0x01dcd650L		/* 500 ms */
+#define SK_XMIT_DUR		0x002faf08UL	/*  50 ms */
+#define SK_BLK_DUR		0x01dcd650UL	/* 500 ms */
 
-#define SK_DPOLL_DEF	0x00ee6b28L		/* 250 ms at 62.5 MHz */
+#define SK_DPOLL_DEF	0x00ee6b28UL	/* 250 ms at 62.5 MHz (Genesis) */
+#define SK_DPOLL_DEF_Y2	0x0000124fUL	/*  75 us (Yukon-2) */
 
-#define SK_DPOLL_MAX	0x00ffffffL		/* 268 ms at 62.5 MHz */
-										/* 215 ms at 78.12 MHz */
+#define SK_DPOLL_MAX	0x00ffffffUL	/* 268 ms at 62.5 MHz */
+										/* 215 ms at 78.12 MHz (Yukon) */
 
 #define SK_FACT_62		100			/* is given in percent */
-#define SK_FACT_53		 85         /* on GENESIS:	53.12 MHz */
+#define SK_FACT_53		 85			/* on GENESIS:	53.12 MHz */
 #define SK_FACT_78		125			/* on YUKON:	78.12 MHz */
+#define SK_FACT_100		161			/* on YUKON-FE:	100 MHz */
+#define SK_FACT_125		202			/* on YUKON-EC:	125 MHz */
 
 /* Timeout values */
 #define SK_MAC_TO_53	72			/* MAC arbiter timeout */
@@ -385,11 +86,23 @@ extern "C" {
 #define SK_RB_LLPP_S	(10 * 1024)	/* Lower Level for small Queues */
 #define SK_RB_LLPP_B	(16 * 1024)	/* Lower Level for big Queues */
 
+/* Threshold values for Yukon-EC Ultra */
+#define SK_ECU_ULPP		0x0080	/* Upper Pause Threshold (multiples of 8) */
+#define SK_ECU_LLPP		0x0060	/* Lower Pause Threshold (multiples of 8) */
+#define SK_ECU_AE_THR	0x0180	/* Almost Empty Threshold */
+#define SK_ECU_TXFF_LEV	0x01a0	/* Tx BMU FIFO Level */
+
 #ifndef SK_BMU_RX_WM
-#define SK_BMU_RX_WM	0x600		/* BMU Rx Watermark */
+#define SK_BMU_RX_WM		0x600	/* BMU Rx Watermark */
 #endif
+
 #ifndef SK_BMU_TX_WM
-#define SK_BMU_TX_WM	0x600		/* BMU Tx Watermark */
+#define SK_BMU_TX_WM		0x600	/* BMU Tx Watermark */
+#endif
+
+/* performance sensitive drivers should set this define to 0x80 */
+#ifndef SK_BMU_RX_WM_PEX
+#define SK_BMU_RX_WM_PEX	0x600	/* BMU Rx Watermark for PEX */
 #endif
 
 /* XMAC II Rx High Watermark */
@@ -401,36 +114,30 @@ extern "C" {
 #define SK_XM_THR_MULL	0x01fb		/* .. for multiple link usage */
 #define SK_XM_THR_JUMBO	0x03fc		/* .. for jumbo frame usage */
 
-/* values for GIPortUsage */
+/* values for PortUsage */
 #define SK_RED_LINK		1		/* redundant link usage */
 #define SK_MUL_LINK		2		/* multiple link usage */
 #define SK_JUMBO_LINK	3		/* driver uses jumbo frames */
 
 /* Minimum RAM Buffer Rx Queue Size */
-#define SK_MIN_RXQ_SIZE	16		/* 16 kB */
+#define SK_MIN_RXQ_SIZE	(((pAC)->GIni.GIYukon2) ? 10 : 16)		/* 10/16 kB */
 
 /* Minimum RAM Buffer Tx Queue Size */
-#define SK_MIN_TXQ_SIZE	16		/* 16 kB */
+#define SK_MIN_TXQ_SIZE	(((pAC)->GIni.GIYukon2) ? 10 : 16)		/* 10/16 kB */
 
-/* Queue Size units */
-#define QZ_UNITS		0x7
+/* Queue Size units (Genesis/Yukon) */
+#define QZ_UNITS		7
 #define QZ_STEP			8
+
+/* Queue Size units (Yukon-2) */
+#define QZ_STEP_Y2		1
 
 /* Percentage of queue size from whole memory */
 /* 80 % for receive */
-#define RAM_QUOTA_RX	80L
-/* 0% for sync transfer */
-#define	RAM_QUOTA_SYNC	0L
+#define RAM_QUOTA_RX	80
+/*  0 % for sync transfer */
+#define RAM_QUOTA_SYNC	0
 /* the rest (20%) is taken for async transfer */
-
-/* Get the rounded queue size in Bytes in 8k steps */
-#define ROUND_QUEUE_SIZE(SizeInBytes)					\
-	((((unsigned long) (SizeInBytes) + (QZ_STEP*1024L)-1) / 1024) &	\
-	~(QZ_STEP-1))
-
-/* Get the rounded queue size in KBytes in 8k steps */
-#define ROUND_QUEUE_SIZE_KB(Kilobytes) \
-	ROUND_QUEUE_SIZE((Kilobytes) * 1024L)
 
 /* Types of RAM Buffer Queues */
 #define SK_RX_SRAM_Q	1	/* small receive queue */
@@ -470,11 +177,11 @@ extern "C" {
 
 
 /* Link Speed Capabilities */
-#define SK_LSPEED_CAP_AUTO			(1<<0)	/* Automatic resolution */
-#define SK_LSPEED_CAP_10MBPS		(1<<1)	/* 10 Mbps */
-#define SK_LSPEED_CAP_100MBPS		(1<<2)	/* 100 Mbps */
-#define SK_LSPEED_CAP_1000MBPS		(1<<3)	/* 1000 Mbps */
-#define SK_LSPEED_CAP_INDETERMINATED (1<<4) /* indeterminated */
+#define SK_LSPEED_CAP_AUTO			BIT_0S	/* Automatic resolution */
+#define SK_LSPEED_CAP_10MBPS		BIT_1S	/* 10 Mbps */
+#define SK_LSPEED_CAP_100MBPS		BIT_2S	/* 100 Mbps */
+#define SK_LSPEED_CAP_1000MBPS		BIT_3S	/* 1000 Mbps */
+#define SK_LSPEED_CAP_INDETERMINATED BIT_4S /* indeterminated */
 
 /* Link Speed Parameter */
 #define SK_LSPEED_AUTO				1	/* Automatic resolution */
@@ -486,17 +193,17 @@ extern "C" {
 /* Link Speed Current State */
 #define SK_LSPEED_STAT_UNKNOWN		1
 #define SK_LSPEED_STAT_10MBPS		2
-#define SK_LSPEED_STAT_100MBPS		3
+#define SK_LSPEED_STAT_100MBPS 		3
 #define SK_LSPEED_STAT_1000MBPS		4
 #define SK_LSPEED_STAT_INDETERMINATED 5
 
 
 /* Link Capability Parameter */
-#define SK_LMODE_CAP_HALF		(1<<0)	/* Half Duplex Mode */
-#define SK_LMODE_CAP_FULL		(1<<1)	/* Full Duplex Mode */
-#define SK_LMODE_CAP_AUTOHALF	(1<<2)	/* AutoHalf Duplex Mode */
-#define SK_LMODE_CAP_AUTOFULL	(1<<3)	/* AutoFull Duplex Mode */
-#define SK_LMODE_CAP_INDETERMINATED (1<<4) /* indeterminated */
+#define SK_LMODE_CAP_HALF		BIT_0S	/* Half Duplex Mode */
+#define SK_LMODE_CAP_FULL		BIT_1S	/* Full Duplex Mode */
+#define SK_LMODE_CAP_AUTOHALF	BIT_2S	/* AutoHalf Duplex Mode */
+#define SK_LMODE_CAP_AUTOFULL	BIT_3S	/* AutoFull Duplex Mode */
+#define SK_LMODE_CAP_INDETERMINATED BIT_4S /* indeterminated */
 
 /* Link Mode Current State */
 #define SK_LMODE_STAT_UNKNOWN	1	/* Unknown Duplex Mode */
@@ -507,7 +214,7 @@ extern "C" {
 #define SK_LMODE_STAT_INDETERMINATED 6	/* indeterminated */
 
 /* Flow Control Mode Parameter (and capabilities) */
-#define SK_FLOW_MODE_NONE		1	/* No Flow-Control */
+#define SK_FLOW_MODE_NONE		1	/* No Flow Control */
 #define SK_FLOW_MODE_LOC_SEND	2	/* Local station sends PAUSE */
 #define SK_FLOW_MODE_SYMMETRIC	3	/* Both stations may send PAUSE */
 #define SK_FLOW_MODE_SYM_OR_REM	4	/* Both stations may send PAUSE or
@@ -523,10 +230,10 @@ extern "C" {
 #define SK_FLOW_STAT_INDETERMINATED 5	/* indeterminated */
 
 /* Master/Slave Mode Capabilities */
-#define SK_MS_CAP_AUTO		(1<<0)	/* Automatic resolution */
-#define SK_MS_CAP_MASTER	(1<<1)	/* This station is master */
-#define SK_MS_CAP_SLAVE		(1<<2)	/* This station is slave */
-#define SK_MS_CAP_INDETERMINATED (1<<3)	/* indeterminated */
+#define SK_MS_CAP_AUTO		BIT_0S	/* Automatic resolution */
+#define SK_MS_CAP_MASTER	BIT_1S	/* This station is master */
+#define SK_MS_CAP_SLAVE		BIT_2S	/* This station is slave */
+#define SK_MS_CAP_INDETERMINATED BIT_3S	/* indeterminated */
 
 /* Set Master/Slave Mode Parameter (and capabilities) */
 #define SK_MS_MODE_AUTO		1	/* Automatic resolution */
@@ -536,30 +243,30 @@ extern "C" {
 
 /* Master/Slave Status Parameter */
 #define SK_MS_STAT_UNSET	1	/* The M/S status is not set */
-#define SK_MS_STAT_MASTER	2	/* This station is Master */
-#define SK_MS_STAT_SLAVE	3	/* This station is Dlave */
+#define SK_MS_STAT_MASTER	2	/* This station is master */
+#define SK_MS_STAT_SLAVE	3	/* This station is slave */
 #define SK_MS_STAT_FAULT	4	/* M/S resolution failed */
 #define SK_MS_STAT_INDETERMINATED 5	/* indeterminated */
 
-/* parameter 'Mode' when calling SkXmSetRxCmd() */
-#define SK_STRIP_FCS_ON		(1<<0)	/* Enable  FCS stripping of Rx frames */
-#define SK_STRIP_FCS_OFF	(1<<1)	/* Disable FCS stripping of Rx frames */
-#define SK_STRIP_PAD_ON		(1<<2)	/* Enable  pad byte stripping of Rx fr */
-#define SK_STRIP_PAD_OFF	(1<<3)	/* Disable pad byte stripping of Rx fr */
-#define SK_LENERR_OK_ON		(1<<4)	/* Don't chk fr for in range len error */
-#define SK_LENERR_OK_OFF	(1<<5)	/* Check frames for in range len error */
-#define SK_BIG_PK_OK_ON		(1<<6)	/* Don't set Rx Error bit for big frames */
-#define SK_BIG_PK_OK_OFF	(1<<7)	/* Set Rx Error bit for big frames */
-#define SK_SELF_RX_ON		(1<<8)	/* Enable  Rx of own packets */
-#define SK_SELF_RX_OFF		(1<<9)	/* Disable Rx of own packets */
+/* parameter 'Mode' when calling SkMacSetRxCmd() */
+#define SK_STRIP_FCS_ON		BIT_0S	/* Enable  FCS stripping of Rx frames */
+#define SK_STRIP_FCS_OFF	BIT_1S	/* Disable FCS stripping of Rx frames */
+#define SK_STRIP_PAD_ON		BIT_2S	/* Enable  pad byte stripping of Rx fr */
+#define SK_STRIP_PAD_OFF	BIT_3S	/* Disable pad byte stripping of Rx fr */
+#define SK_LENERR_OK_ON		BIT_4S	/* Don't chk fr for in range len error */
+#define SK_LENERR_OK_OFF	BIT_5S	/* Check frames for in range len error */
+#define SK_BIG_PK_OK_ON		BIT_6S	/* Don't set Rx Error bit for big frames */
+#define SK_BIG_PK_OK_OFF	BIT_7S	/* Set Rx Error bit for big frames */
+#define SK_SELF_RX_ON		BIT_8S	/* Enable  Rx of own packets */
+#define SK_SELF_RX_OFF		BIT_9S	/* Disable Rx of own packets */
 
 /* parameter 'Para' when calling SkMacSetRxTxEn() */
-#define SK_MAC_LOOPB_ON		(1<<0)	/* Enable  MAC Loopback Mode */
-#define SK_MAC_LOOPB_OFF	(1<<1)	/* Disable MAC Loopback Mode */
-#define SK_PHY_LOOPB_ON		(1<<2)	/* Enable  PHY Loopback Mode */
-#define SK_PHY_LOOPB_OFF	(1<<3)	/* Disable PHY Loopback Mode */
-#define SK_PHY_FULLD_ON		(1<<4)	/* Enable  GMII Full Duplex */
-#define SK_PHY_FULLD_OFF	(1<<5)	/* Disable GMII Full Duplex */
+#define SK_MAC_LOOPB_ON		BIT_0S	/* Enable  MAC Loopback Mode */
+#define SK_MAC_LOOPB_OFF	BIT_1S	/* Disable MAC Loopback Mode */
+#define SK_PHY_LOOPB_ON		BIT_2S	/* Enable  PHY Loopback Mode */
+#define SK_PHY_LOOPB_OFF	BIT_3S	/* Disable PHY Loopback Mode */
+#define SK_PHY_FULLD_ON		BIT_4S	/* Enable  GMII Full Duplex */
+#define SK_PHY_FULLD_OFF	BIT_5S	/* Disable GMII Full Duplex */
 
 /* States of PState */
 #define SK_PRT_RESET	0	/* the port is reset */
@@ -567,8 +274,27 @@ extern "C" {
 #define SK_PRT_INIT		2	/* the port is initialized */
 #define SK_PRT_RUN		3	/* the port has an active link */
 
+/* PHY power down modes */
+#define PHY_PM_OPERATIONAL_MODE		0	/* PHY operational mode */
+#define PHY_PM_DEEP_SLEEP			1	/* Coma mode --> minimal power */
+#define PHY_PM_IEEE_POWER_DOWN		2	/* IEEE 22.2.4.1.5 compl. power down */
+#define PHY_PM_ENERGY_DETECT		3	/* Energy detect */
+#define PHY_PM_ENERGY_DETECT_PLUS	4	/* Energy detect plus */
+
+/* PCI Bus Types */
+#define SK_PCI_BUS		BIT_0S		/* normal PCI bus */
+#define SK_PCIX_BUS		BIT_1S		/* PCI-X bus */
+#define SK_PEX_BUS		BIT_2S		/* PCI-Express bus */
+
 /* Default receive frame limit for Workaround of XMAC Errata */
 #define SK_DEF_RX_WA_LIM	SK_CONSTU64(100)
+
+/* values for GILedBlinkCtrl (LED Blink Control) */
+#define SK_ACT_LED_BLINK	BIT_0S	/* Active LED blinking */
+#define SK_DUP_LED_NORMAL	BIT_1S	/* Duplex LED normal */
+#define SK_LED_LINK100_ON	BIT_2S	/* Link 100M LED on */
+#define SK_DUAL_LED_ACT_LNK	BIT_3S	/* Dual LED ACT/LNK configuration */
+#define SK_LED_LINK_MUX_P60	BIT_4S	/* Link LED muxed to pin 60 */
 
 /* Link Partner Status */
 #define SK_LIPA_UNKNOWN	0	/* Link partner is in unknown state */
@@ -581,18 +307,174 @@ extern "C" {
 /* Max. Auto-neg. timeouts before link detection in sense mode is reset */
 #define SK_MAX_ANEG_TO	10	/* Max. 10 times the sense mode is reset */
 
+
+/******************************************************************************
+ *
+ * HW_FEATURE() macro
+ */
+
+/* DWORD 0: Features */
+#define HWF_FORCE_AUTO_NEG		0x04000000UL	/* Force Auto-Negotiation */
+#define HWF_CLK_GATING_ENABLE	0x02000000UL	/* Enable Clock Gating */
+#define HWF_RED_CORE_CLK_SUP	0x01000000UL	/* Reduced Core Clock supp. */
+#define HWF_SYNC_TX_SUP			0x00800000UL	/* Synch. Tx Queue available */
+#define HWF_SINGLE_PORT_DEVICE	0x00400000UL	/* Device has only one LAN IF */
+#define HWF_JUMBO_FRAMES_SUP	0x00200000UL	/* Jumbo Frames supported */
+#define HWF_TX_TCP_CSUM_SUP		0x00100000UL	/* TCP Tx checksum supported */
+#define HWF_TX_UDP_CSUM_SUP		0x00080000UL	/* UDP Tx checksum supported */
+#define HWF_RX_CSUM_SUP			0x00040000UL	/* RX checksum supported */
+#define HWF_TCP_SEGM_SUP		0x00020000UL	/* TCP segmentation supported */
+#define HWF_RSS_HASH_SUP		0x00010000UL	/* RSS Hash supported */
+#define HWF_PORT_VLAN_SUP		0x00008000UL	/* VLAN can be config per port*/
+#define HWF_ROLE_PARAM_SUP		0x00004000UL	/* Role parameter supported */
+#define HWF_LOW_PMODE_SUP		0x00002000UL	/* Low Power Mode supported */
+#define HWF_ENERGIE_DEMO_SUP	0x00001000UL	/* Energy Detect mode supp. */
+#define HWF_SPEED1000_SUP		0x00000800UL	/* Line Speed 1000 supported */
+#define HWF_SPEED100_SUP		0x00000400UL	/* Line Speed 100 supported */
+#define HWF_SPEED10_SUP			0x00000200UL	/* Line Speed 10 supported */
+#define HWF_AUTONEGSENSE_SUP	0x00000100UL	/* Autoneg Sense supported */
+#define HWF_PHY_LOOPB_MD_SUP	0x00000080UL	/* PHY loopback mode supp. */
+#define HWF_ASF_SUP				0x00000040UL	/* ASF support possible */
+#define HWF_QS_STEPS_1KB		0x00000020UL	/* The Rx/Tx queues can be */
+												/* configured with 1 kB res. */
+#define HWF_OWN_RAM_PER_PORT	0x00000010UL	/* Each port has a separate */
+												/* RAM buffer */
+#define HWF_MIN_LED_IF			0x00000008UL	/* Minimal LED interface */
+												/* (e.g. for Yukon-EC) */
+#define HWF_LIST_ELEMENTS_USED	0x00000004UL	/* HW uses list elements */
+												/* (otherwise desc. are used) */
+#define HWF_GMAC_INSIDE			0x00000002UL	/* Device contains GMAC */
+#define HWF_TWSI_PRESENT		0x00000001UL	/* TWSI sensor bus present */
+
+/*-RMV- DWORD 1: Deviations */
+#define HWF_WA_DEV_4200			0x10200000UL	/*-RMV- 4.200 (D3 Blue Screen)*/
+#define HWF_WA_DEV_4185CS		0x10100000UL	/*-RMV- 4.185 (ECU 100 CS cal)*/
+#define HWF_WA_DEV_4185			0x10080000UL	/*-RMV- 4.185 (ECU Tx h check)*/
+#define HWF_WA_DEV_4167			0x10040000UL	/*-RMV- 4.167 (Rx OvSize Hang)*/
+#define HWF_WA_DEV_4152			0x10020000UL	/*-RMV- 4.152 (RSS issue) */
+#define HWF_WA_DEV_4115			0x10010000UL	/*-RMV- 4.115 (Rx MAC FIFO) */
+#define HWF_WA_DEV_4109			0x10008000UL	/*-RMV- 4.109 (BIU hang) */
+#define HWF_WA_DEV_483			0x10004000UL	/*-RMV- 4.83 (Rx TCP wrong) */
+#define HWF_WA_DEV_479			0x10002000UL	/*-RMV- 4.79 (Rx BMU hang II) */
+#define HWF_WA_DEV_472			0x10001000UL	/*-RMV- 4.72 (GPHY2 MDC clk) */
+#define HWF_WA_DEV_463			0x10000800UL	/*-RMV- 4.63 (Rx BMU hang I) */
+#define HWF_WA_DEV_427			0x10000400UL	/*-RMV- 4.27 (Tx Done Rep) */
+#define HWF_WA_DEV_42			0x10000200UL	/*-RMV- 4.2 (pref unit burst) */
+#define HWF_WA_DEV_46			0x10000100UL	/*-RMV- 4.6 (CPU crash II) */
+#define HWF_WA_DEV_43_418		0x10000080UL	/*-RMV- 4.3 & 4.18 (PCI unexp */
+												/*-RMV- compl&Stat BMU deadl) */
+#define HWF_WA_DEV_420			0x10000040UL	/*-RMV- 4.20 (Status BMU ov) */
+#define HWF_WA_DEV_423			0x10000020UL	/*-RMV- 4.23 (TCP Segm Hang) */
+#define HWF_WA_DEV_424			0x10000010UL	/*-RMV- 4.24 (MAC reg overwr) */
+#define HWF_WA_DEV_425			0x10000008UL	/*-RMV- 4.25 (Magic packet */
+												/*-RMV- with odd offset) */
+#define HWF_WA_DEV_428			0x10000004UL	/*-RMV- 4.28 (Poll-U &BigEndi)*/
+#define HWF_WA_FIFO_FLUSH_YLA0	0x10000002UL	/*-RMV- dis Rx GMAC FIFO Flush*/
+												/*-RMV- for Yu-L Rev. A0 only */
+#define HWF_WA_COMA_MODE		0x10000001UL	/*-RMV- Coma Mode WA req */
+
+/* DWORD 2: still unused */
+/* DWORD 3: still unused */
+
+
+/*
+ * HW_FEATURE()	-	returns whether the feature is serviced or not
+ */
+#define HW_FEATURE(pAC, ReqFeature) \
+	(((pAC)->GIni.HwF.Features[((ReqFeature) & 0x30000000UL) >> 28] &\
+	 ((ReqFeature) & 0x0fffffffUL)) != 0)
+
+#define HW_FEAT_LIST	0
+#define HW_DEV_LIST		1
+
+#define SET_HW_FEATURE_MASK(pAC, List, OffMaskValue, OnMaskValue) {	\
+	if ((List) == HW_FEAT_LIST || (List) == HW_DEV_LIST) {			\
+		(pAC)->GIni.HwF.OffMask[List] = (OffMaskValue);				\
+		(pAC)->GIni.HwF.OnMask[List] = (OnMaskValue);				\
+	}																\
+}
+
+/* driver access macros for GIni structure ***********************************/
+
+#define CHIP_ID_YUKON_2(pAC)		((pAC)->GIni.GIYukon2)
+
+#define HW_SYNC_TX_SUPPORTED(pAC)						\
+		((pAC)->GIni.GIChipId != CHIP_ID_YUKON_EC &&	\
+		 (pAC)->GIni.GIChipId != CHIP_ID_YUKON_FE &&	\
+		 (pAC)->GIni.GIChipId != CHIP_ID_YUKON_EC_U)
+
+#define HW_MS_TO_TICKS(pAC, MsTime) \
+	((MsTime) * (62500L/100) * (pAC)->GIni.GIHstClkFact)
+
+#if 0
+/* still under construction */
+#define HW_IS_SINGLE_PORT(pAC)		((pAC)->GIni.GIMacsFound == 1)
+#define HW_NUMBER_OF_PORTS(pAC)		((pAC)->GIni.GIMacsFound)
+
+#define HW_TX_UDP_CSUM_SUPPORTED(pAC) \
+	((((pAC)->GIni.GIChipId >= CHIP_ID_YUKON) && ((pAC)->GIni.GIChipRev != 0))
+
+#define HW_DEFAULT_LINESPEED(pAC)	\
+	((!(pAC)->GIni.GIGenesis && (pAC)->GIni.GICopperType) ? \
+	SK_LSPEED_AUTO : SK_LSPEED_1000MBPS)
+
+#define HW_ROLE_PARAM_SUPPORTED(pAC)	((pAC)->GIni.GICopperType)
+
+#define HW_SPEED1000_SUPPORTED(pAC, Port)		\
+	 ((pAC)->GIni.GP[Port].PLinkSpeedCap & SK_LSPEED_CAP_1000MBPS)
+
+#define HW_SPEED100_SUPPORTED(pAC, Port)		\
+	 ((pAC)->GIni.GP[Port].PLinkSpeedCap & SK_LSPEED_CAP_100MBPS)
+
+#define HW_SPEED10_SUPPORTED(pAC, Port)		\
+	 ((pAC)->GIni.GP[Port].PLinkSpeedCap & SK_LSPEED_CAP_10MBPS)
+
+#define HW_AUTONEGSENSE_SUPPORTED(pAC)	((pAC)->GIni.GP[0].PhyType==SK_PHY_XMAC)
+
+#define HW_FREQ_TO_CARD_TICKS(pAC, AdapterClkSpeed, Freq) \
+	(((AdapterClkSpeed / 100) * (pAC)->GIni.GIHstClkFact) / Freq)
+
+#define HW_IS_LINK_UP(pAC, Port)		((pAC)->GIni.GP[Port].PHWLinkUp)
+#define HW_LINK_SPEED_USED(pAC, Port)	((pAC)->GIni.GP[Port].PLinkSpeedUsed)
+#define HW_RAM_SIZE(pAC)				((pAC)->GIni.GIRamSize)
+
+#define HW_PHY_LP_MODE_SUPPORTED(pAC)	(pAC0->???
+#define HW_ASF_ACTIVE(pAC)				???
+#define RAWIO_OUT32(pAC, pAC->RegIrqMask, pAC->GIni.GIValIrqMask)...
+
+/* macro to check whether Tx checksum is supported */
+#define HW_TX_CSUM_SUPPORTED(pAC)	((pAC)->GIni.GIChipId != CHIP_ID_GENESIS)
+
+BMU_UDP_CHECK : BMU_TCP_CHECK;
+
+/* macro for - Own Bit mirrored to DWORD7 (Yukon LP receive descriptor) */
+#endif /* 0 */
+
+
 /* structures *****************************************************************/
+
+/*
+ * HW Feature structure
+ */
+typedef struct s_HwFeatures {
+	SK_U32	Features[4];	/* Feature list */
+	SK_U32	OffMask[4];		/* Off Mask */
+	SK_U32	OnMask[4];		/* On Mask */
+} SK_HW_FEATURES;
 
 /*
  * MAC specific functions
  */
 typedef struct s_GeMacFunc {
-	int  (*pFnMacUpdateStats)(SK_AC *pAC, SK_IOC IoC, unsigned int Port);
-	int  (*pFnMacStatistic)(SK_AC *pAC, SK_IOC IoC, unsigned int Port,
-							SK_U16 StatAddr, SK_U32 *pVal);
-	int  (*pFnMacResetCounter)(SK_AC *pAC, SK_IOC IoC, unsigned int Port);
-	int  (*pFnMacOverflow)(SK_AC *pAC, SK_IOC IoC, unsigned int Port,
-						   SK_U16 IStatus, SK_U64 *pVal);
+	int	(*pFnMacUpdateStats)(SK_AC *, SK_IOC, unsigned int);
+	int	(*pFnMacStatistic)(SK_AC *, SK_IOC, unsigned int, SK_U16, SK_U32 SK_FAR *);
+	int	(*pFnMacResetCounter)(SK_AC *, SK_IOC, unsigned int);
+	int	(*pFnMacOverflow)(SK_AC *, SK_IOC, unsigned int, SK_U16, SK_U64 SK_FAR *);
+	void (*pSkGeSirqIsr)(SK_AC *, SK_IOC, SK_U32);
+#ifdef SK_DIAG
+	int	(*pFnMacPhyRead)(SK_AC *, SK_IOC, int, int, SK_U16 SK_FAR *);
+	int	(*pFnMacPhyWrite)(SK_AC *, SK_IOC, int, int, SK_U16);
+#endif /* SK_DIAG */
 } SK_GEMACFUNC;
 
 /*
@@ -602,8 +484,8 @@ typedef	struct s_GePort {
 #ifndef SK_DIAG
 	SK_TIMER	PWaTimer;	/* Workaround Timer */
 	SK_TIMER	HalfDupChkTimer;
-#endif /* SK_DIAG */
-	SK_U32	PPrevShorts;	/* Previous short Counter checking */
+#endif /* !SK_DIAG */
+	SK_U32	PPrevShorts;	/* Previous Short Counter checking */
 	SK_U32	PPrevFcs;		/* Previous FCS Error Counter checking */
 	SK_U64	PPrevRx;		/* Previous RxOk Counter checking */
 	SK_U64	PRxLim;			/* Previous RxOk Counter checking */
@@ -625,12 +507,14 @@ typedef	struct s_GePort {
 	int		PXsQOff;		/* Synchronous Tx Queue Address Offset */
 	int		PXaQOff;		/* Asynchronous Tx Queue Address Offset */
 	int		PhyType;		/* PHY used on this port */
+	int		PState;			/* Port status (reset, stop, init, run) */
+	int		PPortUsage;		/* Driver Port Usage */
 	SK_U16	PhyId1;			/* PHY Id1 on this port */
 	SK_U16	PhyAddr;		/* MDIO/MDC PHY address */
 	SK_U16	PIsave;			/* Saved Interrupt status word */
 	SK_U16	PSsave;			/* Saved PHY status word */
+	SK_U16	PGmANegAdv;		/* Saved GPhy AutoNegAdvertisment register */
 	SK_BOOL	PHWLinkUp;		/* The hardware Link is up (wiring) */
-	SK_BOOL	PState;			/* Is port initialized ? */
 	SK_BOOL	PLinkBroken;	/* Is Link broken ? */
 	SK_BOOL	PCheckPar;		/* Do we check for parity errors ? */
 	SK_BOOL	HalfDupTimerActive;
@@ -638,7 +522,7 @@ typedef	struct s_GePort {
 	SK_U8	PLinkModeConf;	/* Link Mode configured */
 	SK_U8	PLinkMode;		/* Link Mode currently used */
 	SK_U8	PLinkModeStatus;/* Link Mode Status */
-	SK_U8	PLinkSpeedCap;	/* Link Speed Capabilities(10/100/1000 Mbps) */
+	SK_U8	PLinkSpeedCap;	/* Link Speed Capabilities (10/100/1000 Mbps) */
 	SK_U8	PLinkSpeed;		/* configured Link Speed (10/100/1000 Mbps) */
 	SK_U8	PLinkSpeedUsed;	/* current Link Speed (10/100/1000 Mbps) */
 	SK_U8	PFlowCtrlCap;	/* Flow Control Capabilities */
@@ -647,11 +531,21 @@ typedef	struct s_GePort {
 	SK_U8	PMSCap;			/* Master/Slave Capabilities */
 	SK_U8	PMSMode;		/* Master/Slave Mode */
 	SK_U8	PMSStatus;		/* Master/Slave Status */
-	SK_U8	PAutoNegFail;	/* Auto-negotiation fail flag */
+	SK_BOOL	PAutoNegFail;	/* Auto-negotiation fail flag */
 	SK_U8	PLipaAutoNeg;	/* Auto-negotiation possible with Link Partner */
 	SK_U8	PCableLen;		/* Cable Length */
 	SK_U8	PMdiPairLen[4];	/* MDI[0..3] Pair Length */
 	SK_U8	PMdiPairSts[4];	/* MDI[0..3] Pair Diagnostic Status */
+	SK_U8	PPhyPowerState;	/* PHY current power state */
+	int		PMacColThres;	/* MAC Collision Threshold */
+	int		PMacJamLen;		/* MAC Jam length */
+	int		PMacJamIpgVal;	/* MAC Jam IPG */
+	int		PMacJamIpgData;	/* MAC IPG Jam to Data */
+	int		PMacBackOffLim;	/* MAC Back-off Limit */
+	int		PMacDataBlind;	/* MAC Data Blinder */
+	int		PMacIpgData;	/* MAC Data IPG */
+	SK_U16	PMacAddr[3];	/* MAC address */
+	SK_BOOL PMacLimit4;		/* reset collision counter and backoff algorithm */
 } SK_GEPORT;
 
 /*
@@ -659,26 +553,41 @@ typedef	struct s_GePort {
  * (has to be included in the adapter context)
  */
 typedef	struct s_GeInit {
+	int			GIChipId;		/* Chip Identification Number */
+	int			GIChipRev;		/* Chip Revision Number */
 	SK_U8		GIPciHwRev;		/* PCI HW Revision Number */
-	SK_U8		GIChipId;		/* Chip Identification Number */
-	SK_U8		GIChipRev;		/* Chip Revision Number */
+	SK_U8		GIPciBus;		/* PCI Bus Type (PCI / PCI-X / PCI-Express) */
+	SK_U8		GIPciMode;		/* PCI / PCI-X Mode @ Clock */
+	SK_U8		GIPexWidth;		/* PCI-Express Negotiated Link Width */
 	SK_BOOL		GIGenesis;		/* Genesis adapter ? */
+	SK_BOOL		GIYukon;		/* YUKON family (1 and 2) */
+	SK_BOOL		GIYukonLite;	/* YUKON-Lite chip */
+	SK_BOOL		GIYukon2;		/* YUKON-2 chip (-XL, -EC or -FE) */
+	SK_U8		GIConTyp;		/* Connector Type */
+	SK_U8		GIPmdTyp;		/* PMD Type */
 	SK_BOOL		GICopperType;	/* Copper Type adapter ? */
 	SK_BOOL		GIPciSlot64;	/* 64-bit PCI Slot */
 	SK_BOOL		GIPciClock66;	/* 66 MHz PCI Clock */
 	SK_BOOL		GIVauxAvail;	/* VAUX available (YUKON) */
 	SK_BOOL		GIYukon32Bit;	/* 32-Bit YUKON adapter */
-	SK_BOOL		GIYukonLite;	/* YUKON-Lite chip */
+	SK_BOOL		GIAsfEnabled;	/* ASF subsystem enabled */
+	SK_BOOL		GIAsfRunning;	/* ASF subsystem running */
+	SK_U16		GILedBlinkCtrl;	/* LED Blink Control */
 	int			GIMacsFound;	/* Number of MACs found on this adapter */
 	int			GIMacType;		/* MAC Type used on this adapter */
-	int			GIHstClkFact;	/* Host Clock Factor (62.5 / HstClk * 100) */
-	int			GIPortUsage;	/* Driver Port Usage */
+	int			GIChipCap;		/* Adapter's Capabilities */
+	int			GIHwResInfo;	/* HW Resources / Application Information */
+	int			GIHstClkFact;	/* Host Clock Factor (HstClk / 62.5 * 100) */
 	int			GILevel;		/* Initialization Level completed */
 	int			GIRamSize;		/* The RAM size of the adapter in kB */
 	int			GIWolOffs;		/* WOL Register Offset (HW-Bug in Rev. A) */
 	SK_U32		GIRamOffs;		/* RAM Address Offset for addr calculation */
 	SK_U32		GIPollTimerVal;	/* Descr. Poll Timer Init Val (HstClk ticks) */
+	SK_U32		GIValIrqMask;	/* Value for Interrupt Mask */
+	SK_U32		GIValHwIrqMask;	/* Value for HWE Interrupt Mask */
+	SK_U32		GITimeStampCnt;	/* Time Stamp High Counter (YUKON only) */
 	SK_GEPORT	GP[SK_MAX_MACS];/* Port Dependent Information */
+	SK_HW_FEATURES HwF;			/* HW Features struct */
 	SK_GEMACFUNC GIFunc;		/* MAC depedent functions */
 } SK_GEINIT;
 
@@ -696,7 +605,7 @@ typedef	struct s_GeInit {
 #define SKERR_HWI_E005		(SKERR_HWI_E004+1)
 #define SKERR_HWI_E005MSG	"SkGeInitPort(): cannot init running ports"
 #define SKERR_HWI_E006		(SKERR_HWI_E005+1)
-#define SKERR_HWI_E006MSG	"SkGeMacInit(): PState does not match HW state"
+#define SKERR_HWI_E006MSG	"SkGeInit() called with illegal Chip Id"
 #define SKERR_HWI_E007		(SKERR_HWI_E006+1)
 #define SKERR_HWI_E007MSG	"SkXmInitDupMd() called with invalid Dup Mode"
 #define SKERR_HWI_E008		(SKERR_HWI_E007+1)
@@ -712,11 +621,11 @@ typedef	struct s_GeInit {
 #define SKERR_HWI_E013		(SKERR_HWI_E012+1)
 #define SKERR_HWI_E013MSG	"SkGeInitPort(): cfg changed for running queue"
 #define SKERR_HWI_E014		(SKERR_HWI_E013+1)
-#define SKERR_HWI_E014MSG	"SkGeInitPort(): unknown GIPortUsage specified"
+#define SKERR_HWI_E014MSG	"SkGeInitPort(): unknown PortUsage specified"
 #define SKERR_HWI_E015		(SKERR_HWI_E014+1)
-#define SKERR_HWI_E015MSG	"Illegal Link mode parameter"
+#define SKERR_HWI_E015MSG	"Illegal Link Mode parameter"
 #define SKERR_HWI_E016		(SKERR_HWI_E015+1)
-#define SKERR_HWI_E016MSG	"Illegal Flow control mode parameter"
+#define SKERR_HWI_E016MSG	"Illegal Flow Control Mode parameter"
 #define SKERR_HWI_E017		(SKERR_HWI_E016+1)
 #define SKERR_HWI_E017MSG	"Illegal value specified for GIPollTimerVal"
 #define SKERR_HWI_E018		(SKERR_HWI_E017+1)
@@ -726,15 +635,19 @@ typedef	struct s_GeInit {
 #define SKERR_HWI_E020		(SKERR_HWI_E019+1)
 #define SKERR_HWI_E020MSG	"Illegal Master/Slave parameter"
 #define SKERR_HWI_E021		(SKERR_HWI_E020+1)
-#define	SKERR_HWI_E021MSG	"MacUpdateStats(): cannot update statistic counter"
-#define	SKERR_HWI_E022		(SKERR_HWI_E021+1)
-#define	SKERR_HWI_E022MSG	"MacStatistic(): illegal statistic base address"
+#define SKERR_HWI_E021MSG	"MacUpdateStats(): cannot update statistic counter"
+#define SKERR_HWI_E022		(SKERR_HWI_E021+1)
+#define SKERR_HWI_E022MSG	"MacStatistic(): illegal statistic base address"
 #define SKERR_HWI_E023		(SKERR_HWI_E022+1)
 #define SKERR_HWI_E023MSG	"SkGeInitPort(): Transmit Queue Size too small"
 #define SKERR_HWI_E024		(SKERR_HWI_E023+1)
 #define SKERR_HWI_E024MSG	"FATAL: SkGeStopPort() does not terminate (Rx)"
 #define SKERR_HWI_E025		(SKERR_HWI_E024+1)
-#define SKERR_HWI_E025MSG	""
+#define SKERR_HWI_E025MSG	"Link Partner not Auto-Neg. able"
+#define SKERR_HWI_E026		(SKERR_HWI_E025+1)
+#define SKERR_HWI_E026MSG	"PEX negotiated Link width not max."
+#define SKERR_HWI_E027		(SKERR_HWI_E026+1)
+#define SKERR_HWI_E027MSG	""
 
 /* function prototypes ********************************************************/
 
@@ -743,6 +656,24 @@ typedef	struct s_GeInit {
 /*
  * public functions in skgeinit.c
  */
+extern void SkGePortVlan(
+	SK_AC	*pAC,
+	SK_IOC	IoC,
+	int		Port,
+	SK_BOOL Enable);
+
+extern void SkGeRxRss(
+	SK_AC	*pAC,
+	SK_IOC	IoC,
+	int		Port,
+	SK_BOOL	Enable);
+
+extern void SkGeRxCsum(
+	SK_AC	*pAC,
+	SK_IOC	IoC,
+	int		Port,
+	SK_BOOL Enable);
+
 extern void	SkGePollRxD(
 	SK_AC	*pAC,
 	SK_IOC	IoC,
@@ -807,8 +738,21 @@ extern void	SkGeInitRamIface(
 
 extern int	SkGeInitAssignRamToQueues(
 	SK_AC	*pAC,
-	int		ActivePort,
+	int		Port,
 	SK_BOOL	DualNet);
+
+extern void	DoInitRamQueue(
+	SK_AC	*pAC,
+	SK_IOC	IoC,
+	int		QuIoOffs,
+	SK_U32	QuStartAddr,
+	SK_U32	QuEndAddr,
+	int		QuType);
+
+extern int	SkYuk2RestartRxBmu(
+	SK_AC	*pAC,
+	SK_IOC	IoC,
+	int		Port);
 
 /*
  * public functions in skxmac2.c
@@ -824,6 +768,11 @@ extern void	SkMacSoftRst(
 	int		Port);
 
 extern void	SkMacHardRst(
+	SK_AC	*pAC,
+	SK_IOC	IoC,
+	int		Port);
+
+extern void	SkMacClearRst(
 	SK_AC	*pAC,
 	SK_IOC	IoC,
 	int		Port);
@@ -875,13 +824,13 @@ extern void	SkMacAutoNegLipaPhy(
 	int		Port,
 	SK_U16	IStatus);
 
-extern void  SkMacSetRxTxEn(
+extern void	SkMacSetRxTxEn(
 	SK_AC	*pAC,
 	SK_IOC	IoC,
 	int		Port,
 	int		Para);
 
-extern int  SkMacRxTxEnable(
+extern int	SkMacRxTxEnable(
 	SK_AC	*pAC,
 	SK_IOC	IoC,
 	int		Port);
@@ -898,42 +847,28 @@ extern void	SkMacHashing(
 	int		Port,
 	SK_BOOL	Enable);
 
-extern void	SkXmPhyRead(
+extern int	SkXmPhyRead(
 	SK_AC	*pAC,
 	SK_IOC	IoC,
 	int		Port,
 	int		Addr,
-	SK_U16	*pVal);
+	SK_U16	SK_FAR *pVal);
 
-extern void	SkXmPhyWrite(
-	SK_AC	*pAC,
-	SK_IOC	IoC,
-	int		Port,
-	int		Addr,
-	SK_U16	Val);
-
-extern void	SkGmPhyRead(
-	SK_AC	*pAC,
-	SK_IOC	IoC,
-	int		Port,
-	int		Addr,
-	SK_U16	*pVal);
-
-extern void	SkGmPhyWrite(
+extern int	SkXmPhyWrite(
 	SK_AC	*pAC,
 	SK_IOC	IoC,
 	int		Port,
 	int		Addr,
 	SK_U16	Val);
 
-extern void	SkGePhyRead(
+extern int	SkGmPhyRead(
 	SK_AC	*pAC,
 	SK_IOC	IoC,
 	int		Port,
 	int		Addr,
-	SK_U16	*pVal);
+	SK_U16	SK_FAR *pVal);
 
-extern void	SkGePhyWrite(
+extern int	SkGmPhyWrite(
 	SK_AC	*pAC,
 	SK_IOC	IoC,
 	int		Port,
@@ -978,14 +913,14 @@ extern int SkXmMacStatistic(
 	SK_IOC	IoC,
 	unsigned int Port,
 	SK_U16	StatAddr,
-	SK_U32	*pVal);
+	SK_U32	SK_FAR *pVal);
 
 extern int SkGmMacStatistic(
 	SK_AC	*pAC,
 	SK_IOC	IoC,
 	unsigned int Port,
 	SK_U16	StatAddr,
-	SK_U32	*pVal);
+	SK_U32	SK_FAR *pVal);
 
 extern int SkXmResetCounter(
 	SK_AC	*pAC,
@@ -1001,15 +936,15 @@ extern int SkXmOverflowStatus(
 	SK_AC	*pAC,
 	SK_IOC	IoC,
 	unsigned int Port,
-	SK_U16  IStatus,
-	SK_U64	*pStatus);
+	SK_U16	IStatus,
+	SK_U64	SK_FAR *pStatus);
 
 extern int SkGmOverflowStatus(
 	SK_AC	*pAC,
 	SK_IOC	IoC,
 	unsigned int Port,
 	SK_U16	MacStatus,
-	SK_U64	*pStatus);
+	SK_U64	SK_FAR *pStatus);
 
 extern int SkGmCableDiagStatus(
 	SK_AC	*pAC,
@@ -1017,7 +952,34 @@ extern int SkGmCableDiagStatus(
 	int		Port,
 	SK_BOOL	StartTest);
 
+#ifdef SK_PHY_LP_MODE
+extern int SkGmEnterLowPowerMode(
+	SK_AC	*pAC,
+	SK_IOC	IoC,
+	int		Port,
+	SK_U8	Mode);
+
+extern int SkGmLeaveLowPowerMode(
+	SK_AC	*pAC,
+	SK_IOC	IoC,
+	int		Port);
+#endif /* SK_PHY_LP_MODE */
+
 #ifdef SK_DIAG
+extern void	SkGePhyRead(
+	SK_AC	*pAC,
+	SK_IOC	IoC,
+	int		Port,
+	int		Addr,
+	SK_U16	*pVal);
+
+extern void	SkGePhyWrite(
+	SK_AC	*pAC,
+	SK_IOC	IoC,
+	int		Port,
+	int		Addr,
+	SK_U16	Val);
+
 extern void	SkMacSetRxCmd(
 	SK_AC	*pAC,
 	SK_IOC	IoC,
@@ -1057,32 +1019,36 @@ extern int	SkGeInitPort();
 extern void	SkGeXmitLED();
 extern void	SkGeInitRamIface();
 extern int	SkGeInitAssignRamToQueues();
+extern void	SkGePortVlan();
+extern void	SkGeRxCsum();
+extern void	SkGeRxRss();
+extern void	DoInitRamQueue();
+extern int	SkYuk2RestartRxBmu();
 
 /*
  * public functions in skxmac2.c
  */
-extern void SkMacRxTxDisable();
+extern void	SkMacRxTxDisable();
 extern void	SkMacSoftRst();
 extern void	SkMacHardRst();
-extern void SkMacInitPhy();
-extern int  SkMacRxTxEnable();
-extern void SkMacPromiscMode();
-extern void SkMacHashing();
-extern void SkMacIrqDisable();
+extern void	SkMacClearRst();
+extern void	SkMacInitPhy();
+extern int	SkMacRxTxEnable();
+extern void	SkMacPromiscMode();
+extern void	SkMacHashing();
+extern void	SkMacIrqDisable();
 extern void	SkMacFlushTxFifo();
 extern void	SkMacFlushRxFifo();
 extern void	SkMacIrq();
 extern int	SkMacAutoNegDone();
 extern void	SkMacAutoNegLipaPhy();
-extern void SkMacSetRxTxEn();
-extern void	SkGePhyRead();
-extern void	SkGePhyWrite();
+extern void	SkMacSetRxTxEn();
 extern void	SkXmInitMac();
-extern void	SkXmPhyRead();
-extern void	SkXmPhyWrite();
+extern int	SkXmPhyRead();
+extern int	SkXmPhyWrite();
 extern void	SkGmInitMac();
-extern void	SkGmPhyRead();
-extern void	SkGmPhyWrite();
+extern int	SkGmPhyRead();
+extern int	SkGmPhyWrite();
 extern void	SkXmClrExactAddr();
 extern void	SkXmInitDupMd();
 extern void	SkXmInitPauseMd();
@@ -1096,18 +1062,25 @@ extern int	SkGmResetCounter();
 extern int	SkXmOverflowStatus();
 extern int	SkGmOverflowStatus();
 extern int	SkGmCableDiagStatus();
+#ifdef SK_PHY_LP_MODE
+extern int	SkGmEnterLowPowerMode();
+extern int	SkGmLeaveLowPowerMode();
+#endif /* SK_PHY_LP_MODE */
 
 #ifdef SK_DIAG
+extern void	SkGePhyRead();
+extern void	SkGePhyWrite();
 extern void	SkMacSetRxCmd();
 extern void	SkMacCrcGener();
 extern void	SkMacTimeStamp();
 extern void	SkXmSendCont();
 #endif /* SK_DIAG */
 
-#endif	/* SK_KR_PROTO */
+#endif /* SK_KR_PROTO */
 
 #ifdef __cplusplus
 }
-#endif	/* __cplusplus */
+#endif /* __cplusplus */
 
-#endif	/* __INC_SKGEINIT_H_ */
+#endif /* __INC_SKGEINIT_H_ */
+

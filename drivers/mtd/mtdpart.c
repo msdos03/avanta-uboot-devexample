@@ -44,8 +44,8 @@ struct mtd_part {
  * to the _real_ device.
  */
 
-static int part_read(struct mtd_info *mtd, loff_t from, size_t len,
-		size_t *retlen, u_char *buf)
+static int part_read(struct mtd_info *mtd, uint64_t from, uint64_t len,
+		uint64_t *retlen, u_char *buf)
 {
 	struct mtd_part *part = PART(mtd);
 	struct mtd_ecc_stats stats;
@@ -68,7 +68,7 @@ static int part_read(struct mtd_info *mtd, loff_t from, size_t len,
 	return res;
 }
 
-static int part_read_oob(struct mtd_info *mtd, loff_t from,
+static int part_read_oob(struct mtd_info *mtd, uint64_t from,
 		struct mtd_oob_ops *ops)
 {
 	struct mtd_part *part = PART(mtd);
@@ -89,8 +89,8 @@ static int part_read_oob(struct mtd_info *mtd, loff_t from,
 	return res;
 }
 
-static int part_read_user_prot_reg(struct mtd_info *mtd, loff_t from,
-		size_t len, size_t *retlen, u_char *buf)
+static int part_read_user_prot_reg(struct mtd_info *mtd, uint64_t from,
+		uint64_t len, uint64_t *retlen, u_char *buf)
 {
 	struct mtd_part *part = PART(mtd);
 	return part->master->read_user_prot_reg(part->master, from,
@@ -98,14 +98,14 @@ static int part_read_user_prot_reg(struct mtd_info *mtd, loff_t from,
 }
 
 static int part_get_user_prot_info(struct mtd_info *mtd,
-		struct otp_info *buf, size_t len)
+		struct otp_info *buf, uint64_t len)
 {
 	struct mtd_part *part = PART(mtd);
 	return part->master->get_user_prot_info(part->master, buf, len);
 }
 
-static int part_read_fact_prot_reg(struct mtd_info *mtd, loff_t from,
-		size_t len, size_t *retlen, u_char *buf)
+static int part_read_fact_prot_reg(struct mtd_info *mtd, uint64_t from,
+		uint64_t len, uint64_t *retlen, u_char *buf)
 {
 	struct mtd_part *part = PART(mtd);
 	return part->master->read_fact_prot_reg(part->master, from,
@@ -113,14 +113,14 @@ static int part_read_fact_prot_reg(struct mtd_info *mtd, loff_t from,
 }
 
 static int part_get_fact_prot_info(struct mtd_info *mtd, struct otp_info *buf,
-		size_t len)
+		uint64_t len)
 {
 	struct mtd_part *part = PART(mtd);
 	return part->master->get_fact_prot_info(part->master, buf, len);
 }
 
-static int part_write(struct mtd_info *mtd, loff_t to, size_t len,
-		size_t *retlen, const u_char *buf)
+static int part_write(struct mtd_info *mtd, uint64_t to, uint64_t len,
+		uint64_t *retlen, const u_char *buf)
 {
 	struct mtd_part *part = PART(mtd);
 	if (!(mtd->flags & MTD_WRITEABLE))
@@ -133,8 +133,8 @@ static int part_write(struct mtd_info *mtd, loff_t to, size_t len,
 				    len, retlen, buf);
 }
 
-static int part_panic_write(struct mtd_info *mtd, loff_t to, size_t len,
-		size_t *retlen, const u_char *buf)
+static int part_panic_write(struct mtd_info *mtd, uint64_t to, uint64_t len,
+		uint64_t *retlen, const u_char *buf)
 {
 	struct mtd_part *part = PART(mtd);
 	if (!(mtd->flags & MTD_WRITEABLE))
@@ -147,7 +147,7 @@ static int part_panic_write(struct mtd_info *mtd, loff_t to, size_t len,
 				    len, retlen, buf);
 }
 
-static int part_write_oob(struct mtd_info *mtd, loff_t to,
+static int part_write_oob(struct mtd_info *mtd, uint64_t to,
 		struct mtd_oob_ops *ops)
 {
 	struct mtd_part *part = PART(mtd);
@@ -162,16 +162,16 @@ static int part_write_oob(struct mtd_info *mtd, loff_t to,
 	return part->master->write_oob(part->master, to + part->offset, ops);
 }
 
-static int part_write_user_prot_reg(struct mtd_info *mtd, loff_t from,
-		size_t len, size_t *retlen, u_char *buf)
+static int part_write_user_prot_reg(struct mtd_info *mtd, uint64_t from,
+		uint64_t len, uint64_t *retlen, u_char *buf)
 {
 	struct mtd_part *part = PART(mtd);
 	return part->master->write_user_prot_reg(part->master, from,
 					len, retlen, buf);
 }
 
-static int part_lock_user_prot_reg(struct mtd_info *mtd, loff_t from,
-		size_t len)
+static int part_lock_user_prot_reg(struct mtd_info *mtd, uint64_t from,
+		uint64_t len)
 {
 	struct mtd_part *part = PART(mtd);
 	return part->master->lock_user_prot_reg(part->master, from, len);
@@ -208,7 +208,7 @@ void mtd_erase_callback(struct erase_info *instr)
 		instr->callback(instr);
 }
 
-static int part_lock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
+static int part_lock(struct mtd_info *mtd, uint64_t ofs, uint64_t len)
 {
 	struct mtd_part *part = PART(mtd);
 	if ((len + ofs) > mtd->size)
@@ -216,7 +216,7 @@ static int part_lock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
 	return part->master->lock(part->master, ofs + part->offset, len);
 }
 
-static int part_unlock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
+static int part_unlock(struct mtd_info *mtd, uint64_t ofs, uint64_t len)
 {
 	struct mtd_part *part = PART(mtd);
 	if ((len + ofs) > mtd->size)
@@ -242,7 +242,7 @@ static void part_resume(struct mtd_info *mtd)
 	part->master->resume(part->master);
 }
 
-static int part_block_isbad(struct mtd_info *mtd, loff_t ofs)
+static int part_block_isbad(struct mtd_info *mtd, uint64_t ofs)
 {
 	struct mtd_part *part = PART(mtd);
 	if (ofs >= mtd->size)
@@ -251,7 +251,7 @@ static int part_block_isbad(struct mtd_info *mtd, loff_t ofs)
 	return part->master->block_isbad(part->master, ofs);
 }
 
-static int part_block_markbad(struct mtd_info *mtd, loff_t ofs)
+static int part_block_markbad(struct mtd_info *mtd, uint64_t ofs)
 {
 	struct mtd_part *part = PART(mtd);
 	int res;

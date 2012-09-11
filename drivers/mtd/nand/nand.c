@@ -85,7 +85,11 @@ void nand_init(void)
 		if (nand_curr_device == -1)
 			nand_curr_device = i;
 	}
+#if defined(MV_NAND_GANG_MODE)
+	printf("%u MiB - Gang\n", size / 1024);
+#else
 	printf("%u MiB\n", size / 1024);
+#endif
 
 #ifdef CONFIG_SYS_NAND_SELECT_DEVICE
 	/*

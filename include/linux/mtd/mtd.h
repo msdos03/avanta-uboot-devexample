@@ -101,11 +101,11 @@ typedef enum {
  */
 struct mtd_oob_ops {
 	mtd_oob_mode_t	mode;
-	size_t		len;
-	size_t		retlen;
-	size_t		ooblen;
-	size_t		oobretlen;
-	uint32_t	ooboffs;
+	uint64_t		len;
+	uint64_t		retlen;
+	uint64_t		ooblen;
+	uint64_t		oobretlen;
+	uint64_t	ooboffs;
 	uint8_t		*datbuf;
 	uint8_t		*oobbuf;
 };
@@ -115,11 +115,11 @@ struct mtd_info {
 	u_int32_t flags;
 	uint64_t size;	 /* Total size of the MTD */
 
-	/* "Major" erase size for the device. Naïve users may take this
+	/* "Major" erase size for the device. Naï¿½ve users may take this
 	 * to be the only erase size available, or may use the more detailed
 	 * information below if they desire
 	 */
-	u_int32_t erasesize;
+	uint64_t erasesize;
 	/* Minimal writable flash unit size. In case of NOR flash it is 1 (even
 	 * though individual bits can be cleared), in case of NAND flash it is
 	 * one NAND page (or half, or one-fourths of it), in case of ECC-ed NOR
@@ -127,10 +127,10 @@ struct mtd_info {
 	 * Any driver registering a struct mtd_info must ensure a writesize of
 	 * 1 or larger.
 	 */
-	u_int32_t writesize;
+	uint64_t writesize;
 
-	u_int32_t oobsize;   /* Amount of OOB data per block (e.g. 16) */
-	u_int32_t oobavail;  /* Available OOB bytes per block */
+	uint64_t oobsize;   /* Amount of OOB data per block (e.g. 16) */
+	uint64_t oobavail;  /* Available OOB bytes per block */
 
 	/* Kernel-only stuff starts here. */
 	const char *name;
@@ -156,15 +156,15 @@ struct mtd_info {
 
 	/* This stuff for eXecute-In-Place */
 	/* phys is optional and may be set to NULL */
-	int (*point) (struct mtd_info *mtd, loff_t from, size_t len,
-			size_t *retlen, void **virt, phys_addr_t *phys);
+	int (*point) (struct mtd_info *mtd, uint64_t from, uint64_t len,
+			uint64_t *retlen, void **virt, phys_addr_t *phys);
 
 	/* We probably shouldn't allow XIP if the unpoint isn't a NULL */
-	void (*unpoint) (struct mtd_info *mtd, loff_t from, size_t len);
+	void (*unpoint) (struct mtd_info *mtd, uint64_t from, uint64_t len);
 
 
-	int (*read) (struct mtd_info *mtd, loff_t from, size_t len, size_t *retlen, u_char *buf);
-	int (*write) (struct mtd_info *mtd, loff_t to, size_t len, size_t *retlen, const u_char *buf);
+	int (*read) (struct mtd_info *mtd, uint64_t from, uint64_t len, uint64_t *retlen, u_char *buf);
+	int (*write) (struct mtd_info *mtd, uint64_t to, uint64_t len, uint64_t *retlen, const u_char *buf);
 
 	/* In blackbox flight recorder like scenarios we want to make successful
 	   writes in interrupt context. panic_write() is only intended to be
@@ -173,11 +173,11 @@ struct mtd_info {
 	   longer, this function can break locks and delay to ensure the write
 	   succeeds (but not sleep). */
 
-	int (*panic_write) (struct mtd_info *mtd, loff_t to, size_t len, size_t *retlen, const u_char *buf);
+	int (*panic_write) (struct mtd_info *mtd, uint64_t to, uint64_t len, uint64_t *retlen, const u_char *buf);
 
-	int (*read_oob) (struct mtd_info *mtd, loff_t from,
+	int (*read_oob) (struct mtd_info *mtd, uint64_t from,
 			 struct mtd_oob_ops *ops);
-	int (*write_oob) (struct mtd_info *mtd, loff_t to,
+	int (*write_oob) (struct mtd_info *mtd, uint64_t to,
 			 struct mtd_oob_ops *ops);
 
 	/*
@@ -185,12 +185,12 @@ struct mtd_info {
 	 * flash devices. The user data is one time programmable but the
 	 * factory data is read only.
 	 */
-	int (*get_fact_prot_info) (struct mtd_info *mtd, struct otp_info *buf, size_t len);
-	int (*read_fact_prot_reg) (struct mtd_info *mtd, loff_t from, size_t len, size_t *retlen, u_char *buf);
-	int (*get_user_prot_info) (struct mtd_info *mtd, struct otp_info *buf, size_t len);
-	int (*read_user_prot_reg) (struct mtd_info *mtd, loff_t from, size_t len, size_t *retlen, u_char *buf);
-	int (*write_user_prot_reg) (struct mtd_info *mtd, loff_t from, size_t len, size_t *retlen, u_char *buf);
-	int (*lock_user_prot_reg) (struct mtd_info *mtd, loff_t from, size_t len);
+	int (*get_fact_prot_info) (struct mtd_info *mtd, struct otp_info *buf, uint64_t len);
+	int (*read_fact_prot_reg) (struct mtd_info *mtd, uint64_t from, uint64_t len, uint64_t *retlen, u_char *buf);
+	int (*get_user_prot_info) (struct mtd_info *mtd, struct otp_info *buf, uint64_t len);
+	int (*read_user_prot_reg) (struct mtd_info *mtd, uint64_t from, uint64_t len, uint64_t *retlen, u_char *buf);
+	int (*write_user_prot_reg) (struct mtd_info *mtd, uint64_t from, uint64_t len, uint64_t *retlen, u_char *buf);
+	int (*lock_user_prot_reg) (struct mtd_info *mtd, uint64_t from, uint64_t len);
 
 /* XXX U-BOOT XXX */
 #if 0
@@ -205,16 +205,16 @@ struct mtd_info {
 	void (*sync) (struct mtd_info *mtd);
 
 	/* Chip-supported device locking */
-	int (*lock) (struct mtd_info *mtd, loff_t ofs, uint64_t len);
-	int (*unlock) (struct mtd_info *mtd, loff_t ofs, uint64_t len);
+	int (*lock) (struct mtd_info *mtd, uint64_t ofs, uint64_t len);
+	int (*unlock) (struct mtd_info *mtd, uint64_t ofs, uint64_t len);
 
 	/* Power Management functions */
 	int (*suspend) (struct mtd_info *mtd);
 	void (*resume) (struct mtd_info *mtd);
 
 	/* Bad block management functions */
-	int (*block_isbad) (struct mtd_info *mtd, loff_t ofs);
-	int (*block_markbad) (struct mtd_info *mtd, loff_t ofs);
+	int (*block_isbad) (struct mtd_info *mtd, uint64_t ofs);
+	int (*block_markbad) (struct mtd_info *mtd, uint64_t ofs);
 
 /* XXX U-BOOT XXX */
 #if 0

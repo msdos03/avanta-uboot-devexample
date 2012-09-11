@@ -1,44 +1,82 @@
+#******************************************************************************
 #
-# (C) Copyright 2003-2006
-# Wolfgang Denk, DENX Software Engineering, wd@denx.de.
+# Name:         skge.c
+# Project:      GEnesis, PCI Gigabit Ethernet Adapter
+# Version:      $Revision: 1.9 $
+# Date:         $Date: 2004/07/13 15:54:50 $
+# Purpose:      The main driver source module
 #
-# See file CREDITS for list of people who contributed to this
-# project.
+#******************************************************************************
+
+#******************************************************************************
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of
-# the License, or (at your option) any later version.
+#	(C)Copyright 1998-2002 SysKonnect GmbH.
+#	(C)Copyright 2002-2004 Marvell.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#	Makefile for Marvell Yukon chipset and SysKonnect Gigabit Ethernet 
+#	Server Adapter driver. (Kernel 2.4)
 #
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307 USA
+#	Author: Mirko Lindner (mlindner@syskonnect.de)
+#		Ralph Roesler (rroesler@syskonnect.de)
 #
-# File: drivers/net/sk98lin/Makefile
+#	Address all question to: linux@syskonnect.de
 #
-# Makefile for the SysKonnect SK-98xx device driver.
+#	This program is free software; you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation; either version 2 of the License, or
+#	(at your option) any later version.
 #
+#	The information in this file is provided "AS IS" without warranty.
+# 
+#******************************************************************************
+
+#******************************************************************************
+#
+# History:
+#
+#	$Log: Makefile2.4,v $
+#	Revision 1.9  2004/07/13 15:54:50  rroesler
+#	Add: file skethtool.c
+#	Fix: corrected header regarding copyright
+#	Fix: minor typos corrected
+#	
+#	Revision 1.8  2004/06/08 08:40:36  mlindner
+#	Fix: Add CONFIG_SK98LIN_ZEROCOPY as default value
+#	
+#	Revision 1.7  2004/06/03 16:06:56  mlindner
+#	Fix: Added compile flag SK_DIAG_SUPPORT
+#	
+#	Revision 1.6  2004/06/02 08:02:59  mlindner
+#	Add: Changed header information and inserted a GPL statement
+#	
+#
+#******************************************************************************
+
 
 include $(TOPDIR)/config.mk
+ 
+LIB := libsk98lin.a
 
-LIB	:= $(obj)libsk98lin.a
-
-COBJS-$(CONFIG_SK98) += skge.o skaddr.o skgehwt.o skgeinit.o skgepnmi.o \
-	skgesirq.o ski2c.o sklm80.o skqueue.o skrlmt.o sktimer.o \
-	skvpd.o skxmac2.o skcsum.o
-#COBJS-y += skproc.o
-
-COBJS-$(CONFIG_SK98) += uboot_skb.o uboot_drv.o
-
-COBJS	:= $(COBJS-y)
-SRCS	:= $(COBJS:.o=.c)
-OBJS	:= $(addprefix $(obj),$(COBJS))
+OBJS :=	\
+		uboot_drv.o	\
+		uboot_skb.o	\
+		sky2.o		\
+		skge.o		\
+		sky2le.o	\
+		skdim.o		\
+		skaddr.o	\
+		skgehwt.o	\
+		skgeinit.o	\
+		skgesirq.o	\
+		sktwsi.o	\
+		sklm80.o	\
+		skqueue.o	\
+		skrlmt.o	\
+		sktimer.o	\
+		skvpd.o		\
+		skxmac2.o	\
+		skcsum.o	\
+#		skgepnmi.o
 
 # DBGDEF =  \
 # -DDEBUG
@@ -87,22 +125,24 @@ endif
 # SK_DBGCAT_DRV_INT_SRC         0x04000000      interrupts sources
 # SK_DBGCAT_DRV_EVENT           0x08000000      driver events
 
-EXTRA_CFLAGS += -I. -DSK_USE_CSUM $(DBGDEF)
+#EXTRA_CFLAGS += -I. -DYUK2 -DYUKON -DGENESIS #-DSK_DIAG_SUPPORT $(DBGDEF) $(SKPARAM)
+EXTRA_CFLAGS += -I. -DYUK2 -DYUKON #-DGENESIS -DSK_DIAG_SUPPORT $(DBGDEF) $(SKPARAM)
 
 CFLAGS += $(EXTRA_CFLAGS)
-HOSTCFLAGS += $(EXTRA_CFLAGS)
-
-
-all:	$(LIB)
-
-$(LIB):	$(obj).depend $(OBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS)
-
+ 
+ 
+all:    $(LIB)
+ 
+$(LIB): $(OBJS)
+	$(AR) crv $@ $(OBJS)
+ 
+#########################################################################
+ 
+.depend:        Makefile $(OBJS:.o=.c)
+		$(CC) -M $(CFLAGS) $(OBJS:.o=.c) > $@
+ 
+sinclude .depend
+                                                                                                                                               
 #########################################################################
 
-# defines $(obj).depend target
-include $(SRCTREE)/rules.mk
 
-sinclude $(obj).depend
-
-#########################################################################

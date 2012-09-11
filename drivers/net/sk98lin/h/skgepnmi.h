@@ -1,16 +1,18 @@
 /*****************************************************************************
  *
  * Name:	skgepnmi.h
- * Project:	GEnesis, PCI Gigabit Ethernet Adapter
- * Version:	$Revision: 1.59 $
- * Date:	$Date: 2002/12/16 14:03:50 $
+ * Project:	Gigabit Ethernet Adapters, PNMI-Module
+ * Version:	$Revision: 2.12 $
+ * Date:	$Date: 2005/12/14 16:11:19 $
  * Purpose:	Defines for Private Network Management Interface
  *
  ****************************************************************************/
 
 /******************************************************************************
  *
- *	(C)Copyright 1998-2001 SysKonnect GmbH.
+ *	LICENSE:
+ *	(C)Copyright 1998-2002 SysKonnect GmbH.
+ *	(C)Copyright 2002-2003 Marvell.
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -18,217 +20,9 @@
  *	(at your option) any later version.
  *
  *	The information in this file is provided "AS IS" without warranty.
+ *	/LICENSE
  *
  ******************************************************************************/
-
-/*****************************************************************************
- *
- * History:
- *
- *	$Log: skgepnmi.h,v $
- *	Revision 1.59  2002/12/16 14:03:50  tschilli
- *	New defines for VCT added.
- *
- *	Revision 1.58  2002/12/16 09:04:59  tschilli
- *	Code for VCT handling added.
- *
- *	Revision 1.57  2002/09/26 12:41:05  tschilli
- *	SK_PNMI_PORT BufPort entry in struct SK_PNMI added.
- *
- *	Revision 1.56  2002/08/16 11:10:41  rwahl
- *	- Replaced c++ comment.
- *
- *	Revision 1.55  2002/08/09 15:40:21  rwahl
- *	Editorial change (renamed ConfSpeedCap).
- *
- *	Revision 1.54  2002/08/09 11:06:07  rwahl
- *	Added OID_SKGE_SPEED_CAP.
- *
- *	Revision 1.53  2002/08/09 09:45:28  rwahl
- *	Added support for NDIS OID_PNP_xxx.
- *	Editorial changes.
- *
- *	Revision 1.52  2002/08/06 17:54:07  rwahl
- *	- Added speed cap to PNMI config struct.
- *
- *	Revision 1.51  2002/07/17 19:19:26  rwahl
- *	- Added OID_SKGE_SPEED_MODE and OID_SKGE_SPEED_STATUS.
- *	- Added SK_PNMI_CNT_RX_PMACC_ERR() & SK_PNMI_CNT_RX_LONGFRAMES().
- *	- Added speed mode & status to PNMI config struct.
- *	- Editorial changes.
- *
- *	Revision 1.50  2002/05/22 08:59:37  rwahl
- *	Added string definitions for error msgs.
- *
- *	Revision 1.49  2001/11/20 09:23:50  rwahl
- *	- pnmi struct: reordered and aligned to 32bit.
- *
- *	Revision 1.48  2001/02/23 14:34:24  mkunz
- *	Changed macro PHYS2INST. Added pAC to Interface
- *
- *	Revision 1.47  2001/02/07 08:28:23  mkunz
- *	- Added Oids:	OID_SKGE_DIAG_ACTION
- *					OID_SKGE_DIAG_RESULT
- *					OID_SKGE_MULTICAST_LIST
- *					OID_SKGE_CURRENT_PACKET_FILTER
- *					OID_SKGE_INTERMEDIATE_SUPPORT
- *	- Changed value of OID_SKGE_MTU
- *
- *	Revision 1.46  2001/02/06 10:01:41  mkunz
- *	- Pnmi V4 dual net support added. Interface functions and macros extended
- *	- Vpd bug fixed
- *	- OID_SKGE_MTU added
- *
- *	Revision 1.45  2001/01/22 13:41:37  rassmann
- *	Supporting two nets on dual-port adapters.
- *
- *	Revision 1.44  2000/09/07 07:35:27  rwahl
- *	- removed NDIS counter specific data type.
- *	- fixed spelling for OID_SKGE_RLMT_PORT_PREFERRED.
- *
- *	Revision 1.43  2000/08/04 11:41:08  rwahl
- *	- Fixed compiler warning (port is always >= 0) for macros
- *	  SK_PNMI_CNT_RX_LONGFRAMES & SK_PNMI_CNT_SYNC_OCTETS
- *
- *	Revision 1.42  2000/08/03 15:14:07  rwahl
- *	- Corrected error in driver macros addressing a physical port.
- *
- *	Revision 1.41  2000/08/01 16:22:29  rwahl
- *	- Changed MDB version to 3.1.
- *	- Added definitions for StatRxLongFrames counter.
- *	- Added macro to be used by driver to count long frames received.
- *	- Added directive to control width (default = 32bit) of NDIS statistic
- *	  counters (SK_NDIS_64BIT_CTR).
- *
- *	Revision 1.40  2000/03/31 13:51:34  rwahl
- *	Added SK_UPTR cast to offset calculation for PNMI struct fields;
- *	missing cast caused compiler warnings by Win64 compiler.
- *
- *	Revision 1.39  1999/12/06 10:09:47  rwahl
- *	Added new error log message.
- *
- *	Revision 1.38  1999/11/22 13:57:55  cgoos
- *	Changed license header to GPL.
- *
- *	Revision 1.37  1999/09/14 14:25:32  rwahl
- *	Set MDB version for 1000Base-T (sensors, Master/Slave) changes.
- *
- *	Revision 1.36  1999/05/20 09:24:56  cgoos
- *	Changes for 1000Base-T (sensors, Master/Slave).
- *
- *	Revision 1.35  1999/04/13 15:10:51  mhaveman
- *	Replaced RLMT macros SK_RLMT_CHECK_xxx again by those of PNMI to
- *	grant unified interface. But PNMI macros will store the same
- *	value as RLMT macros.
- *
- *	Revision 1.34  1999/04/13 15:03:49  mhaveman
- *	-Changed copyright
- *	-Removed SK_PNMI_RLMT_MODE_CHK_xxx macros. Those of RLMT should be
- *	 used.
- *
- *	Revision 1.33  1999/03/23 10:41:02  mhaveman
- *	Changed comments.
- *
- *	Revision 1.32  1999/01/25 15:01:33  mhaveman
- *	Added support for multiple simultaniously active ports.
- *
- *	Revision 1.31  1999/01/19 10:06:26  mhaveman
- *	Added new error log message.
- *
- *	Revision 1.30  1999/01/05 10:34:49  mhaveman
- *	Fixed little error in RlmtChangeEstimate calculation.
- *
- *	Revision 1.29  1999/01/05 09:59:41  mhaveman
- *	Redesigned port switch average calculation to avoid 64bit
- *	arithmetic.
- *
- *	Revision 1.28  1998/12/08 10:05:48  mhaveman
- *	Defined macro SK_PNMI_MIN_STRUCT_SIZE.
- *
- *	Revision 1.27  1998/12/03 14:39:35  mhaveman
- *	Fixed problem that LSTAT was enumerated wrong.
- *
- *	Revision 1.26  1998/12/03 11:19:51  mhaveman
- *	Changed contents of errlog message SK_PNMI_ERR016MSG
- *
- *	Revision 1.25  1998/12/01 10:40:04  mhaveman
- *	Changed size of SensorNumber, ChecksumNumber and RlmtPortNumber in
- *	SK_PNMI_STRUCT_DATA to be conform with OID definition.
- *
- *	Revision 1.24  1998/11/20 08:09:27  mhaveman
- *	Added macros to convert between logical, physical port indexes and
- *	instances.
- *
- *	Revision 1.23  1998/11/10 13:41:13  mhaveman
- *	Needed to change interface, because NT driver needs a return value
- *	of needed buffer space on TOO_SHORT errors. Therefore all
- *	SkPnmiGet/Preset/Set functions now have a pointer to the length
- *	parameter, where the needed space on error is returned.
- *
- *	Revision 1.22  1998/11/03 12:05:51  mhaveman
- *	Added pAC parameter to counter macors.
- *
- *	Revision 1.21  1998/11/02 10:47:36  mhaveman
- *	Added syslog messages for internal errors.
- *
- *	Revision 1.20  1998/10/30 15:49:36  mhaveman
- *	-Removed unused SK_PNMI_UTILIZATION_BASE and EstOldCnt.
- *	-Redefined SK_PNMI_CHG_EST_BASE to hundreds of seconds.
- *
- *	Revision 1.19  1998/10/29 15:38:44  mhaveman
- *	Changed string lengths of PNMI_STRUCT_DATA structure because
- *	string OIDs are now encoded with leading length ocetet.
- *
- *	Revision 1.18  1998/10/29 08:52:27  mhaveman
- *	-Added byte to strings in PNMI_STRUCT_DATA structure.
- *	-Shortened SK_PNMI_RLMT structure to SK_MAX_MACS elements.
- *
- *	Revision 1.17  1998/10/28 08:49:50  mhaveman
- *	-Changed type of Instance back to SK_U32 because of VPD
- *	-Changed type from SK_U8 to char of PciBusSpeed, PciBusWidth, PMD,
- *	 and Connector.
- *
- *	Revision 1.16  1998/10/22 10:42:31  mhaveman
- *	-Removed (SK_U32) casts for OIDs
- *	-excluded NDIS OIDs when they are already defined with ifndef _NDIS_
- *
- *	Revision 1.15  1998/10/20 13:56:28  mhaveman
- *	Headerfile includes now directly other header files to comile correctly.
- *
- *	Revision 1.14  1998/10/20 07:31:09  mhaveman
- *	Made type changes to unsigned int where possible.
- *
- *	Revision 1.13  1998/10/19 10:53:13  mhaveman
- *	-Casted OID definitions to SK_U32
- *	-Renamed RlmtMAC... to RlmtPort...
- *	-Changed wrong type of VpdEntriesList from SK_U32 to char *
- *
- *	Revision 1.12  1998/10/13 07:42:27  mhaveman
- *	-Added OIDs OID_SKGE_TRAP_NUMBER and OID_SKGE_ALL_DATA
- *	-Removed old cvs history entries
- *	-Renamed MacNumber to PortNumber
- *
- *	Revision 1.11  1998/10/07 10:55:24  mhaveman
- *	-Added OID_MDB_VERSION. Therefore was a renumbering of the VPD OIDs
- *	 necessary.
- *	-Added OID_GEN_ Ids to support the windows driver.
- *
- *	Revision 1.10  1998/09/30 13:41:10  mhaveman
- *	Renamed some OIDs to reduce usage of 'MAC' which is replaced by 'PORT'.
- *
- *	Revision 1.9  1998/09/04 17:06:17  mhaveman
- *	-Added SyncCounter as macro.
- *	-Renamed OID_SKGE_.._NO_DESCR_CTS to OID_SKGE_.._NO_BUF_CTS.
- *	-Added macros for driver description and version strings.
- *
- *	Revision 1.8  1998/09/04 14:36:52  mhaveman
- *	Added OIDs and Structure to access value of macro counters which are
- *	counted by the driver.
- *
- *	Revision 1.7  1998/09/04 11:59:36  mhaveman
- *	Everything compiles now. Driver Macros for counting still missing.
- *
- ****************************************************************************/
 
 #ifndef _SKGEPNMI_H_
 #define _SKGEPNMI_H_
@@ -239,7 +33,7 @@
 #include "h/sktypes.h"
 #include "h/skerror.h"
 #include "h/sktimer.h"
-#include "h/ski2c.h"
+#include "h/sktwsi.h"
 #include "h/skaddr.h"
 #include "h/skrlmt.h"
 #include "h/skvpd.h"
@@ -249,42 +43,38 @@
  */
 #define SK_PNMI_MDB_VERSION		0x00030001	/* 3.1 */
 
-
 /*
  * Event definitions
  */
-#define SK_PNMI_EVT_SIRQ_OVERFLOW	1	/* Counter overflow */
-#define SK_PNMI_EVT_SEN_WAR_LOW		2	/* Lower war thres exceeded */
-#define SK_PNMI_EVT_SEN_WAR_UPP		3	/* Upper war thres exceeded */
-#define SK_PNMI_EVT_SEN_ERR_LOW		4	/* Lower err thres exceeded */
-#define SK_PNMI_EVT_SEN_ERR_UPP		5	/* Upper err thres exceeded */
-#define SK_PNMI_EVT_CHG_EST_TIMER	6	/* Timer event for RLMT Chg */
+#define SK_PNMI_EVT_SIRQ_OVERFLOW		1	/* Counter overflow */
+#define SK_PNMI_EVT_SEN_WAR_LOW			2	/* Lower war thres exceeded */
+#define SK_PNMI_EVT_SEN_WAR_UPP			3	/* Upper war thres exceeded */
+#define SK_PNMI_EVT_SEN_ERR_LOW			4	/* Lower err thres exceeded */
+#define SK_PNMI_EVT_SEN_ERR_UPP			5	/* Upper err thres exceeded */
+#define SK_PNMI_EVT_CHG_EST_TIMER		6	/* Timer event for RLMT Chg */
 #define SK_PNMI_EVT_UTILIZATION_TIMER	7	/* Timer event for Utiliza. */
-#define SK_PNMI_EVT_CLEAR_COUNTER	8	/* Clear statistic counters */
-#define SK_PNMI_EVT_XMAC_RESET		9	/* XMAC will be reset */
-
-#define SK_PNMI_EVT_RLMT_PORT_UP	10	/* Port came logically up */
-#define SK_PNMI_EVT_RLMT_PORT_DOWN	11	/* Port went logically down */
+#define SK_PNMI_EVT_CLEAR_COUNTER		8	/* Clear statistic counters */
+#define SK_PNMI_EVT_XMAC_RESET			9	/* XMAC will be reset */
+#define SK_PNMI_EVT_RLMT_PORT_UP		10	/* Port came logically up */
+#define SK_PNMI_EVT_RLMT_PORT_DOWN		11	/* Port went logically down */
 #define SK_PNMI_EVT_RLMT_SEGMENTATION	13	/* Two SP root bridges found */
 #define SK_PNMI_EVT_RLMT_ACTIVE_DOWN	14	/* Port went logically down */
-#define SK_PNMI_EVT_RLMT_ACTIVE_UP	15	/* Port came logically up */
-#define SK_PNMI_EVT_RLMT_SET_NETS	16	/* 1. Parameter is number of nets
-												1 = single net; 2 = dual net */
-#define SK_PNMI_EVT_VCT_RESET		17	/* VCT port reset timer event started with SET. */
-
+#define SK_PNMI_EVT_RLMT_ACTIVE_UP		15	/* Port came logically up */
+#define SK_PNMI_EVT_RLMT_SET_NETS		16	/* Number of nets (1 or 2). */
+#define SK_PNMI_EVT_VCT_RESET			17	/* VCT port reset timer event started with SET. */
 
 /*
  * Return values
  */
-#define SK_PNMI_ERR_OK			0
-#define SK_PNMI_ERR_GENERAL		1
+#define SK_PNMI_ERR_OK				0
+#define SK_PNMI_ERR_GENERAL			1
 #define SK_PNMI_ERR_TOO_SHORT		2
 #define SK_PNMI_ERR_BAD_VALUE		3
 #define SK_PNMI_ERR_READ_ONLY		4
 #define SK_PNMI_ERR_UNKNOWN_OID		5
 #define SK_PNMI_ERR_UNKNOWN_INST	6
-#define SK_PNMI_ERR_UNKNOWN_NET		7
-
+#define SK_PNMI_ERR_UNKNOWN_NET 	7
+#define SK_PNMI_ERR_NOT_SUPPORTED	10
 
 /*
  * Return values of driver reset function SK_DRIVER_RESET() and
@@ -293,18 +83,16 @@
 #define SK_PNMI_ERR_OK			0
 #define SK_PNMI_ERR_FAIL		1
 
-
 /*
  * Return values of driver test function SK_DRIVER_SELFTEST()
  */
 #define SK_PNMI_TST_UNKNOWN		(1 << 0)
-#define SK_PNMI_TST_TRANCEIVER		(1 << 1)
+#define SK_PNMI_TST_TRANCEIVER	(1 << 1)
 #define SK_PNMI_TST_ASIC		(1 << 2)
 #define SK_PNMI_TST_SENSOR		(1 << 3)
-#define SK_PNMI_TST_POWERMGMT		(1 << 4)
+#define SK_PNMI_TST_POWERMGMT	(1 << 4)
 #define SK_PNMI_TST_PCI			(1 << 5)
 #define SK_PNMI_TST_MAC			(1 << 6)
-
 
 /*
  * RLMT specific definitions
@@ -329,11 +117,11 @@
  */
 #ifndef _NDIS_	/* Check, whether NDIS already included OIDs */
 
-#define OID_GEN_XMIT_OK			0x00020101
-#define OID_GEN_RCV_OK			0x00020102
-#define OID_GEN_XMIT_ERROR		0x00020103
-#define OID_GEN_RCV_ERROR		0x00020104
-#define OID_GEN_RCV_NO_BUFFER		0x00020105
+#define OID_GEN_XMIT_OK					0x00020101
+#define OID_GEN_RCV_OK					0x00020102
+#define OID_GEN_XMIT_ERROR				0x00020103
+#define OID_GEN_RCV_ERROR				0x00020104
+#define OID_GEN_RCV_NO_BUFFER			0x00020105
 
 /* #define OID_GEN_DIRECTED_BYTES_XMIT	0x00020201 */
 #define OID_GEN_DIRECTED_FRAMES_XMIT	0x00020202
@@ -342,27 +130,27 @@
 /* #define OID_GEN_BROADCAST_BYTES_XMIT	0x00020205 */
 #define OID_GEN_BROADCAST_FRAMES_XMIT	0x00020206
 /* #define OID_GEN_DIRECTED_BYTES_RCV	0x00020207 */
-#define OID_GEN_DIRECTED_FRAMES_RCV	0x00020208
+#define OID_GEN_DIRECTED_FRAMES_RCV		0x00020208
 /* #define OID_GEN_MULTICAST_BYTES_RCV	0x00020209 */
 #define OID_GEN_MULTICAST_FRAMES_RCV	0x0002020A
 /* #define OID_GEN_BROADCAST_BYTES_RCV	0x0002020B */
 #define OID_GEN_BROADCAST_FRAMES_RCV	0x0002020C
-#define OID_GEN_RCV_CRC_ERROR		0x0002020D
+#define OID_GEN_RCV_CRC_ERROR			0x0002020D
 #define OID_GEN_TRANSMIT_QUEUE_LENGTH	0x0002020E
 
-#define OID_802_3_PERMANENT_ADDRESS	0x01010101
-#define OID_802_3_CURRENT_ADDRESS	0x01010102
-/* #define OID_802_3_MULTICAST_LIST	0x01010103 */
+#define OID_802_3_PERMANENT_ADDRESS		0x01010101
+#define OID_802_3_CURRENT_ADDRESS		0x01010102
+/* #define OID_802_3_MULTICAST_LIST		0x01010103 */
 /* #define OID_802_3_MAXIMUM_LIST_SIZE	0x01010104 */
-/* #define OID_802_3_MAC_OPTIONS	0x01010105 */
-
+/* #define OID_802_3_MAC_OPTIONS		0x01010105 */
+			
 #define OID_802_3_RCV_ERROR_ALIGNMENT	0x01020101
 #define OID_802_3_XMIT_ONE_COLLISION	0x01020102
 #define OID_802_3_XMIT_MORE_COLLISIONS	0x01020103
-#define OID_802_3_XMIT_DEFERRED		0x01020201
+#define OID_802_3_XMIT_DEFERRED			0x01020201
 #define OID_802_3_XMIT_MAX_COLLISIONS	0x01020202
-#define OID_802_3_RCV_OVERRUN		0x01020203
-#define OID_802_3_XMIT_UNDERRUN		0x01020204
+#define OID_802_3_RCV_OVERRUN			0x01020203
+#define OID_802_3_XMIT_UNDERRUN			0x01020204
 #define OID_802_3_XMIT_TIMES_CRS_LOST	0x01020206
 #define OID_802_3_XMIT_LATE_COLLISIONS	0x01020207
 
@@ -370,230 +158,327 @@
  * PnP and PM OIDs
  */
 #ifdef SK_POWER_MGMT
-#define OID_PNP_CAPABILITIES		0xFD010100
-#define OID_PNP_SET_POWER		0xFD010101
-#define OID_PNP_QUERY_POWER		0xFD010102
-#define OID_PNP_ADD_WAKE_UP_PATTERN	0xFD010103
+#define OID_PNP_CAPABILITIES			0xFD010100
+#define OID_PNP_SET_POWER				0xFD010101
+#define OID_PNP_QUERY_POWER				0xFD010102
+#define OID_PNP_ADD_WAKE_UP_PATTERN		0xFD010103
 #define OID_PNP_REMOVE_WAKE_UP_PATTERN	0xFD010104
-#define OID_PNP_ENABLE_WAKE_UP		0xFD010106
+#define OID_PNP_ENABLE_WAKE_UP			0xFD010106
 #endif /* SK_POWER_MGMT */
 
 #endif /* _NDIS_ */
 
-#define OID_SKGE_MDB_VERSION		0xFF010100
-#define OID_SKGE_SUPPORTED_LIST		0xFF010101
-#define OID_SKGE_VPD_FREE_BYTES		0xFF010102
-#define OID_SKGE_VPD_ENTRIES_LIST	0xFF010103
-#define OID_SKGE_VPD_ENTRIES_NUMBER	0xFF010104
-#define OID_SKGE_VPD_KEY		0xFF010105
-#define OID_SKGE_VPD_VALUE		0xFF010106
-#define OID_SKGE_VPD_ACCESS		0xFF010107
-#define OID_SKGE_VPD_ACTION		0xFF010108
-
-#define OID_SKGE_PORT_NUMBER		0xFF010110
-#define OID_SKGE_DEVICE_TYPE		0xFF010111
-#define OID_SKGE_DRIVER_DESCR		0xFF010112
-#define OID_SKGE_DRIVER_VERSION		0xFF010113
-#define OID_SKGE_HW_DESCR		0xFF010114
-#define OID_SKGE_HW_VERSION		0xFF010115
-#define OID_SKGE_CHIPSET		0xFF010116
-#define OID_SKGE_ACTION			0xFF010117
-#define OID_SKGE_RESULT			0xFF010118
-#define OID_SKGE_BUS_TYPE		0xFF010119
-#define OID_SKGE_BUS_SPEED		0xFF01011A
-#define OID_SKGE_BUS_WIDTH		0xFF01011B
+#define OID_SKGE_MDB_VERSION			0xFF010100
+#define OID_SKGE_SUPPORTED_LIST			0xFF010101
+#define OID_SKGE_VPD_FREE_BYTES			0xFF010102
+#define OID_SKGE_VPD_ENTRIES_LIST		0xFF010103
+#define OID_SKGE_VPD_ENTRIES_NUMBER		0xFF010104
+#define OID_SKGE_VPD_KEY				0xFF010105
+#define OID_SKGE_VPD_VALUE				0xFF010106
+#define OID_SKGE_VPD_ACCESS				0xFF010107
+#define OID_SKGE_VPD_ACTION				0xFF010108
+			
+#define OID_SKGE_PORT_NUMBER			0xFF010110
+#define OID_SKGE_DEVICE_TYPE			0xFF010111
+#define OID_SKGE_DRIVER_DESCR			0xFF010112
+#define OID_SKGE_DRIVER_VERSION			0xFF010113
+#define OID_SKGE_HW_DESCR				0xFF010114
+#define OID_SKGE_HW_VERSION				0xFF010115
+#define OID_SKGE_CHIPSET				0xFF010116
+#define OID_SKGE_ACTION					0xFF010117
+#define OID_SKGE_RESULT					0xFF010118
+#define OID_SKGE_BUS_TYPE				0xFF010119
+#define OID_SKGE_BUS_SPEED				0xFF01011A
+#define OID_SKGE_BUS_WIDTH				0xFF01011B
 /* 0xFF01011C unused */
-#define OID_SKGE_DIAG_ACTION		0xFF01011D
-#define OID_SKGE_DIAG_RESULT		0xFF01011E
-#define OID_SKGE_MTU			0xFF01011F
-#define OID_SKGE_PHYS_CUR_ADDR		0xFF010120
-#define OID_SKGE_PHYS_FAC_ADDR		0xFF010121
-#define OID_SKGE_PMD			0xFF010122
-#define OID_SKGE_CONNECTOR		0xFF010123
-#define OID_SKGE_LINK_CAP		0xFF010124
-#define OID_SKGE_LINK_MODE		0xFF010125
-#define OID_SKGE_LINK_MODE_STATUS	0xFF010126
-#define OID_SKGE_LINK_STATUS		0xFF010127
-#define OID_SKGE_FLOWCTRL_CAP		0xFF010128
-#define OID_SKGE_FLOWCTRL_MODE		0xFF010129
-#define OID_SKGE_FLOWCTRL_STATUS	0xFF01012A
-#define OID_SKGE_PHY_OPERATION_CAP	0xFF01012B
-#define OID_SKGE_PHY_OPERATION_MODE	0xFF01012C
+#define OID_SKGE_DIAG_ACTION			0xFF01011D
+#define OID_SKGE_DIAG_RESULT			0xFF01011E
+#define OID_SKGE_MTU					0xFF01011F
+#define OID_SKGE_PHYS_CUR_ADDR			0xFF010120
+#define OID_SKGE_PHYS_FAC_ADDR			0xFF010121
+#define OID_SKGE_PMD					0xFF010122
+#define OID_SKGE_CONNECTOR				0xFF010123
+#define OID_SKGE_LINK_CAP				0xFF010124
+#define OID_SKGE_LINK_MODE				0xFF010125
+#define OID_SKGE_LINK_MODE_STATUS		0xFF010126
+#define OID_SKGE_LINK_STATUS			0xFF010127
+#define OID_SKGE_FLOWCTRL_CAP			0xFF010128
+#define OID_SKGE_FLOWCTRL_MODE			0xFF010129
+#define OID_SKGE_FLOWCTRL_STATUS		0xFF01012A
+#define OID_SKGE_PHY_OPERATION_CAP		0xFF01012B
+#define OID_SKGE_PHY_OPERATION_MODE		0xFF01012C
 #define OID_SKGE_PHY_OPERATION_STATUS	0xFF01012D
-#define OID_SKGE_MULTICAST_LIST		0xFF01012E
+#define OID_SKGE_MULTICAST_LIST			0xFF01012E
 #define OID_SKGE_CURRENT_PACKET_FILTER	0xFF01012F
 
-#define OID_SKGE_TRAP			0xFF010130
-#define OID_SKGE_TRAP_NUMBER		0xFF010131
+#define OID_SKGE_TRAP					0xFF010130
+#define OID_SKGE_TRAP_NUMBER			0xFF010131
 
-#define OID_SKGE_RLMT_MODE		0xFF010140
-#define OID_SKGE_RLMT_PORT_NUMBER	0xFF010141
-#define OID_SKGE_RLMT_PORT_ACTIVE	0xFF010142
+#define OID_SKGE_RLMT_MODE				0xFF010140
+#define OID_SKGE_RLMT_PORT_NUMBER		0xFF010141
+#define OID_SKGE_RLMT_PORT_ACTIVE		0xFF010142
 #define OID_SKGE_RLMT_PORT_PREFERRED	0xFF010143
-#define OID_SKGE_INTERMEDIATE_SUPPORT	0xFF010160
 
-#define OID_SKGE_SPEED_CAP		0xFF010170
-#define OID_SKGE_SPEED_MODE		0xFF010171
-#define OID_SKGE_SPEED_STATUS		0xFF010172
+#define OID_SKGE_RLMT_MONITOR_NUMBER	0xFF010150
+#define OID_SKGE_RLMT_MONITOR_INDEX		0xFF010151
+#define OID_SKGE_RLMT_MONITOR_ADDR		0xFF010152
+#define OID_SKGE_RLMT_MONITOR_ERRS		0xFF010153
+#define OID_SKGE_RLMT_MONITOR_TIMESTAMP	0xFF010154
+#define OID_SKGE_RLMT_MONITOR_ADMIN		0xFF010155
 
-#define OID_SKGE_SENSOR_NUMBER		0xFF020100
-#define OID_SKGE_SENSOR_INDEX		0xFF020101
-#define OID_SKGE_SENSOR_DESCR		0xFF020102
-#define OID_SKGE_SENSOR_TYPE		0xFF020103
-#define OID_SKGE_SENSOR_VALUE		0xFF020104
+#define OID_SKGE_INTERMEDIATE_SUPPORT		0xFF010160
+#define OID_SKGE_SET_TEAM_MAC_ADDRESS		0xFF010161
+#define OID_SKGE_DEVICE_INFORMATION 		0xFF010162
+
+#define OID_SKGE_SPEED_CAP				0xFF010170
+#define OID_SKGE_SPEED_MODE				0xFF010171
+#define OID_SKGE_SPEED_STATUS			0xFF010172
+
+#define OID_SKGE_BOARDLEVEL				0xFF010180
+
+#define OID_SKGE_SENSOR_NUMBER			0xFF020100			
+#define OID_SKGE_SENSOR_INDEX			0xFF020101
+#define OID_SKGE_SENSOR_DESCR			0xFF020102
+#define OID_SKGE_SENSOR_TYPE			0xFF020103
+#define OID_SKGE_SENSOR_VALUE			0xFF020104
 #define OID_SKGE_SENSOR_WAR_THRES_LOW	0xFF020105
 #define OID_SKGE_SENSOR_WAR_THRES_UPP	0xFF020106
 #define OID_SKGE_SENSOR_ERR_THRES_LOW	0xFF020107
 #define OID_SKGE_SENSOR_ERR_THRES_UPP	0xFF020108
-#define OID_SKGE_SENSOR_STATUS		0xFF020109
-#define OID_SKGE_SENSOR_WAR_CTS		0xFF02010A
-#define OID_SKGE_SENSOR_ERR_CTS		0xFF02010B
-#define OID_SKGE_SENSOR_WAR_TIME	0xFF02010C
-#define OID_SKGE_SENSOR_ERR_TIME	0xFF02010D
+#define OID_SKGE_SENSOR_STATUS			0xFF020109
+#define OID_SKGE_SENSOR_WAR_CTS			0xFF02010A
+#define OID_SKGE_SENSOR_ERR_CTS			0xFF02010B
+#define OID_SKGE_SENSOR_WAR_TIME		0xFF02010C
+#define OID_SKGE_SENSOR_ERR_TIME		0xFF02010D
 
-#define OID_SKGE_CHKSM_NUMBER		0xFF020110
-#define OID_SKGE_CHKSM_RX_OK_CTS	0xFF020111
+#define OID_SKGE_CHKSM_NUMBER			0xFF020110
+#define OID_SKGE_CHKSM_RX_OK_CTS		0xFF020111
 #define OID_SKGE_CHKSM_RX_UNABLE_CTS	0xFF020112
-#define OID_SKGE_CHKSM_RX_ERR_CTS	0xFF020113
-#define OID_SKGE_CHKSM_TX_OK_CTS	0xFF020114
+#define OID_SKGE_CHKSM_RX_ERR_CTS		0xFF020113
+#define OID_SKGE_CHKSM_TX_OK_CTS		0xFF020114
 #define OID_SKGE_CHKSM_TX_UNABLE_CTS	0xFF020115
 
-#define OID_SKGE_STAT_TX		0xFF020120
-#define OID_SKGE_STAT_TX_OCTETS		0xFF020121
-#define OID_SKGE_STAT_TX_BROADCAST	0xFF020122
-#define OID_SKGE_STAT_TX_MULTICAST	0xFF020123
-#define OID_SKGE_STAT_TX_UNICAST	0xFF020124
-#define OID_SKGE_STAT_TX_LONGFRAMES	0xFF020125
-#define OID_SKGE_STAT_TX_BURST		0xFF020126
-#define OID_SKGE_STAT_TX_PFLOWC		0xFF020127
-#define OID_SKGE_STAT_TX_FLOWC		0xFF020128
-#define OID_SKGE_STAT_TX_SINGLE_COL	0xFF020129
-#define OID_SKGE_STAT_TX_MULTI_COL	0xFF02012A
-#define OID_SKGE_STAT_TX_EXCESS_COL	0xFF02012B
-#define OID_SKGE_STAT_TX_LATE_COL	0xFF02012C
-#define OID_SKGE_STAT_TX_DEFFERAL	0xFF02012D
-#define OID_SKGE_STAT_TX_EXCESS_DEF	0xFF02012E
-#define OID_SKGE_STAT_TX_UNDERRUN	0xFF02012F
-#define OID_SKGE_STAT_TX_CARRIER	0xFF020130
-/* #define OID_SKGE_STAT_TX_UTIL	0xFF020131 */
-#define OID_SKGE_STAT_TX_64		0xFF020132
-#define OID_SKGE_STAT_TX_127		0xFF020133
-#define OID_SKGE_STAT_TX_255		0xFF020134
-#define OID_SKGE_STAT_TX_511		0xFF020135
-#define OID_SKGE_STAT_TX_1023		0xFF020136
-#define OID_SKGE_STAT_TX_MAX		0xFF020137
-#define OID_SKGE_STAT_TX_SYNC		0xFF020138
+#define OID_SKGE_STAT_TX				0xFF020120
+#define OID_SKGE_STAT_TX_OCTETS			0xFF020121
+#define OID_SKGE_STAT_TX_BROADCAST		0xFF020122
+#define OID_SKGE_STAT_TX_MULTICAST		0xFF020123
+#define OID_SKGE_STAT_TX_UNICAST		0xFF020124
+#define OID_SKGE_STAT_TX_LONGFRAMES		0xFF020125
+#define OID_SKGE_STAT_TX_BURST			0xFF020126
+#define OID_SKGE_STAT_TX_PFLOWC			0xFF020127
+#define OID_SKGE_STAT_TX_FLOWC			0xFF020128
+#define OID_SKGE_STAT_TX_SINGLE_COL		0xFF020129
+#define OID_SKGE_STAT_TX_MULTI_COL		0xFF02012A
+#define OID_SKGE_STAT_TX_EXCESS_COL		0xFF02012B
+#define OID_SKGE_STAT_TX_LATE_COL		0xFF02012C
+#define OID_SKGE_STAT_TX_DEFFERAL		0xFF02012D
+#define OID_SKGE_STAT_TX_EXCESS_DEF		0xFF02012E
+#define OID_SKGE_STAT_TX_UNDERRUN		0xFF02012F
+#define OID_SKGE_STAT_TX_CARRIER		0xFF020130
+/* #define OID_SKGE_STAT_TX_UTIL		0xFF020131 */
+#define OID_SKGE_STAT_TX_64				0xFF020132
+#define OID_SKGE_STAT_TX_127			0xFF020133
+#define OID_SKGE_STAT_TX_255			0xFF020134
+#define OID_SKGE_STAT_TX_511			0xFF020135
+#define OID_SKGE_STAT_TX_1023			0xFF020136
+#define OID_SKGE_STAT_TX_MAX			0xFF020137
+#define OID_SKGE_STAT_TX_SYNC			0xFF020138
 #define OID_SKGE_STAT_TX_SYNC_OCTETS	0xFF020139
-#define OID_SKGE_STAT_RX		0xFF02013A
-#define OID_SKGE_STAT_RX_OCTETS		0xFF02013B
-#define OID_SKGE_STAT_RX_BROADCAST	0xFF02013C
-#define OID_SKGE_STAT_RX_MULTICAST	0xFF02013D
-#define OID_SKGE_STAT_RX_UNICAST	0xFF02013E
-#define OID_SKGE_STAT_RX_PFLOWC		0xFF02013F
-#define OID_SKGE_STAT_RX_FLOWC		0xFF020140
-#define OID_SKGE_STAT_RX_PFLOWC_ERR	0xFF020141
+#define OID_SKGE_STAT_RX				0xFF02013A
+#define OID_SKGE_STAT_RX_OCTETS			0xFF02013B
+#define OID_SKGE_STAT_RX_BROADCAST		0xFF02013C
+#define OID_SKGE_STAT_RX_MULTICAST		0xFF02013D
+#define OID_SKGE_STAT_RX_UNICAST		0xFF02013E
+#define OID_SKGE_STAT_RX_PFLOWC			0xFF02013F
+#define OID_SKGE_STAT_RX_FLOWC			0xFF020140
+#define OID_SKGE_STAT_RX_PFLOWC_ERR		0xFF020141
 #define OID_SKGE_STAT_RX_FLOWC_UNKWN	0xFF020142
-#define OID_SKGE_STAT_RX_BURST		0xFF020143
-#define OID_SKGE_STAT_RX_MISSED		0xFF020144
-#define OID_SKGE_STAT_RX_FRAMING	0xFF020145
-#define OID_SKGE_STAT_RX_OVERFLOW	0xFF020146
-#define OID_SKGE_STAT_RX_JABBER		0xFF020147
-#define OID_SKGE_STAT_RX_CARRIER	0xFF020148
-#define OID_SKGE_STAT_RX_IR_LENGTH	0xFF020149
-#define OID_SKGE_STAT_RX_SYMBOL		0xFF02014A
-#define OID_SKGE_STAT_RX_SHORTS		0xFF02014B
-#define OID_SKGE_STAT_RX_RUNT		0xFF02014C
-#define OID_SKGE_STAT_RX_CEXT		0xFF02014D
-#define OID_SKGE_STAT_RX_TOO_LONG	0xFF02014E
-#define OID_SKGE_STAT_RX_FCS		0xFF02014F
-/* #define OID_SKGE_STAT_RX_UTIL	0xFF020150 */
-#define OID_SKGE_STAT_RX_64		0xFF020151
-#define OID_SKGE_STAT_RX_127		0xFF020152
-#define OID_SKGE_STAT_RX_255		0xFF020153
-#define OID_SKGE_STAT_RX_511		0xFF020154
-#define OID_SKGE_STAT_RX_1023		0xFF020155
-#define OID_SKGE_STAT_RX_MAX		0xFF020156
-#define OID_SKGE_STAT_RX_LONGFRAMES	0xFF020157
+#define OID_SKGE_STAT_RX_BURST			0xFF020143
+#define OID_SKGE_STAT_RX_MISSED			0xFF020144
+#define OID_SKGE_STAT_RX_FRAMING		0xFF020145
+#define OID_SKGE_STAT_RX_OVERFLOW		0xFF020146
+#define OID_SKGE_STAT_RX_JABBER			0xFF020147
+#define OID_SKGE_STAT_RX_CARRIER		0xFF020148
+#define OID_SKGE_STAT_RX_IR_LENGTH		0xFF020149
+#define OID_SKGE_STAT_RX_SYMBOL			0xFF02014A
+#define OID_SKGE_STAT_RX_SHORTS			0xFF02014B
+#define OID_SKGE_STAT_RX_RUNT			0xFF02014C
+#define OID_SKGE_STAT_RX_CEXT			0xFF02014D
+#define OID_SKGE_STAT_RX_TOO_LONG		0xFF02014E
+#define OID_SKGE_STAT_RX_FCS			0xFF02014F
+/* #define OID_SKGE_STAT_RX_UTIL		0xFF020150 */
+#define OID_SKGE_STAT_RX_64				0xFF020151
+#define OID_SKGE_STAT_RX_127			0xFF020152
+#define OID_SKGE_STAT_RX_255			0xFF020153
+#define OID_SKGE_STAT_RX_511			0xFF020154
+#define OID_SKGE_STAT_RX_1023			0xFF020155
+#define OID_SKGE_STAT_RX_MAX			0xFF020156
+#define OID_SKGE_STAT_RX_LONGFRAMES		0xFF020157
 
-#define OID_SKGE_RLMT_CHANGE_CTS	0xFF020160
-#define OID_SKGE_RLMT_CHANGE_TIME	0xFF020161
-#define OID_SKGE_RLMT_CHANGE_ESTIM	0xFF020162
-#define OID_SKGE_RLMT_CHANGE_THRES	0xFF020163
+#define OID_SKGE_RLMT_CHANGE_CTS		0xFF020160
+#define OID_SKGE_RLMT_CHANGE_TIME		0xFF020161
+#define OID_SKGE_RLMT_CHANGE_ESTIM		0xFF020162
+#define OID_SKGE_RLMT_CHANGE_THRES		0xFF020163
 
-#define OID_SKGE_RLMT_PORT_INDEX	0xFF020164
-#define OID_SKGE_RLMT_STATUS		0xFF020165
-#define OID_SKGE_RLMT_TX_HELLO_CTS	0xFF020166
-#define OID_SKGE_RLMT_RX_HELLO_CTS	0xFF020167
-#define OID_SKGE_RLMT_TX_SP_REQ_CTS	0xFF020168
-#define OID_SKGE_RLMT_RX_SP_CTS		0xFF020169
+#define OID_SKGE_RLMT_PORT_INDEX		0xFF020164
+#define OID_SKGE_RLMT_STATUS			0xFF020165
+#define OID_SKGE_RLMT_TX_HELLO_CTS		0xFF020166
+#define OID_SKGE_RLMT_RX_HELLO_CTS		0xFF020167
+#define OID_SKGE_RLMT_TX_SP_REQ_CTS		0xFF020168
+#define OID_SKGE_RLMT_RX_SP_CTS			0xFF020169
 
-#define OID_SKGE_RLMT_MONITOR_NUMBER	0xFF010150
-#define OID_SKGE_RLMT_MONITOR_INDEX	0xFF010151
-#define OID_SKGE_RLMT_MONITOR_ADDR	0xFF010152
-#define OID_SKGE_RLMT_MONITOR_ERRS	0xFF010153
-#define OID_SKGE_RLMT_MONITOR_TIMESTAMP	0xFF010154
-#define OID_SKGE_RLMT_MONITOR_ADMIN	0xFF010155
-
-#define OID_SKGE_TX_SW_QUEUE_LEN	0xFF020170
-#define OID_SKGE_TX_SW_QUEUE_MAX	0xFF020171
-#define OID_SKGE_TX_RETRY		0xFF020172
-#define OID_SKGE_RX_INTR_CTS		0xFF020173
-#define OID_SKGE_TX_INTR_CTS		0xFF020174
-#define OID_SKGE_RX_NO_BUF_CTS		0xFF020175
-#define OID_SKGE_TX_NO_BUF_CTS		0xFF020176
-#define OID_SKGE_TX_USED_DESCR_NO	0xFF020177
-#define OID_SKGE_RX_DELIVERED_CTS	0xFF020178
+#define OID_SKGE_TX_SW_QUEUE_LEN		0xFF020170
+#define OID_SKGE_TX_SW_QUEUE_MAX		0xFF020171
+#define OID_SKGE_TX_RETRY				0xFF020172
+#define OID_SKGE_RX_INTR_CTS			0xFF020173
+#define OID_SKGE_TX_INTR_CTS			0xFF020174
+#define OID_SKGE_RX_NO_BUF_CTS			0xFF020175
+#define OID_SKGE_TX_NO_BUF_CTS			0xFF020176
+#define OID_SKGE_TX_USED_DESCR_NO		0xFF020177
+#define OID_SKGE_RX_DELIVERED_CTS		0xFF020178
 #define OID_SKGE_RX_OCTETS_DELIV_CTS	0xFF020179
-#define OID_SKGE_RX_HW_ERROR_CTS	0xFF02017A
-#define OID_SKGE_TX_HW_ERROR_CTS	0xFF02017B
-#define OID_SKGE_IN_ERRORS_CTS		0xFF02017C
-#define OID_SKGE_OUT_ERROR_CTS		0xFF02017D
-#define OID_SKGE_ERR_RECOVERY_CTS	0xFF02017E
-#define OID_SKGE_SYSUPTIME		0xFF02017F
+#define OID_SKGE_RX_HW_ERROR_CTS		0xFF02017A
+#define OID_SKGE_TX_HW_ERROR_CTS		0xFF02017B
+#define OID_SKGE_IN_ERRORS_CTS			0xFF02017C
+#define OID_SKGE_OUT_ERROR_CTS			0xFF02017D
+#define OID_SKGE_ERR_RECOVERY_CTS		0xFF02017E
+#define OID_SKGE_SYSUPTIME				0xFF02017F
 
-#define OID_SKGE_ALL_DATA		0xFF020190
+#define OID_SKGE_ALL_DATA				0xFF020190
 
 /* Defines for VCT. */
-#define OID_SKGE_VCT_GET		0xFF020200
-#define OID_SKGE_VCT_SET		0xFF020201
-#define OID_SKGE_VCT_STATUS		0xFF020202
+#define OID_SKGE_VCT_GET				0xFF020200
+#define OID_SKGE_VCT_SET				0xFF020201
+#define OID_SKGE_VCT_STATUS				0xFF020202
+#define OID_SKGE_VCT_CAPABILITIES		0xFF020203
+
+#ifdef SK_DIAG_SUPPORT
+/* Defines for driver DIAG mode. */
+#define OID_SKGE_DIAG_MODE				0xFF020204
+#endif /* SK_DIAG_SUPPORT */
+
+/* New OIDs */
+#define OID_SKGE_DRIVER_RELDATE			0xFF020210
+#define OID_SKGE_DRIVER_FILENAME		0xFF020211
+#define OID_SKGE_CHIPID					0xFF020212
+#define OID_SKGE_RAMSIZE				0xFF020213
+#define OID_SKGE_VAUXAVAIL				0xFF020214
+#define OID_SKGE_PHY_TYPE				0xFF020215
+#define OID_SKGE_PHY_LP_MODE			0xFF020216
+
+/*
+ * Added for new DualNet IM driver V2
+ * these OIDs should later  be in pnmi.h
+ */
+#define OID_SKGE_MAC_COUNT		0xFF020217
+#define OID_SKGE_DUALNET_MODE		0xFF020218
+#define OID_SKGE_SET_TAGHEADER	0xFF020219
+
+#ifdef SK_ASF
+/* Defines for ASF */
+#define OID_SKGE_ASF                    0xFF02021a
+#define OID_SKGE_ASF_STORE_CONFIG       0xFF02021b
+#define OID_SKGE_ASF_ENA                0xFF02021c
+#define OID_SKGE_ASF_RETRANS            0xFF02021d
+#define OID_SKGE_ASF_RETRANS_INT        0xFF02021e
+#define OID_SKGE_ASF_HB_ENA             0xFF02021f
+#define OID_SKGE_ASF_HB_INT             0xFF020220
+#define OID_SKGE_ASF_WD_ENA             0xFF020221
+#define OID_SKGE_ASF_WD_TIME            0xFF020222
+#define OID_SKGE_ASF_IP_SOURCE          0xFF020223
+#define OID_SKGE_ASF_MAC_SOURCE			0xFF020224
+#define OID_SKGE_ASF_IP_DEST            0xFF020225
+#define OID_SKGE_ASF_MAC_DEST           0xFF020226
+#define OID_SKGE_ASF_COMMUNITY_NAME     0xFF020227
+#define OID_SKGE_ASF_RSP_ENA            0xFF020228  
+#define OID_SKGE_ASF_RETRANS_COUNT_MIN	0xFF020229
+#define OID_SKGE_ASF_RETRANS_COUNT_MAX	0xFF02022a
+#define OID_SKGE_ASF_RETRANS_INT_MIN	0xFF02022b
+#define OID_SKGE_ASF_RETRANS_INT_MAX	0xFF02022c
+#define OID_SKGE_ASF_HB_INT_MIN			0xFF02022d
+#define OID_SKGE_ASF_HB_INT_MAX			0xFF02022e
+#define OID_SKGE_ASF_WD_TIME_MIN		0xFF02022f
+#define OID_SKGE_ASF_WD_TIME_MAX		0xFF020230
+#define OID_SKGE_ASF_HB_CAP				0xFF020231
+#define OID_SKGE_ASF_WD_TIMER_RES		0xFF020232
+#define OID_SKGE_ASF_GUID				0xFF020233
+#define OID_SKGE_ASF_KEY_OP				0xFF020234
+#define OID_SKGE_ASF_KEY_ADM			0xFF020235
+#define OID_SKGE_ASF_KEY_GEN			0xFF020236
+#define OID_SKGE_ASF_CAP				0xFF020237
+#define OID_SKGE_ASF_PAR_1				0xFF020238
+#define OID_SKGE_ASF_OVERALL_OID        0xFF020239
+#endif /* SK_ASF */
+
+
+// Defined for yukon2 path only 
+#define OID_SKGE_UPPER_MINIPORT 		0xFF02023D
+
+
+#ifdef SK_ASF
+/* Defines for ASF */
+#define OID_SKGE_ASF_FWVER_OID          0xFF020240
+#define OID_SKGE_ASF_ACPI_OID           0xFF020241
+#define OID_SKGE_ASF_SMBUS_OID          0xFF020242
+#endif /* SK_ASF */
 
 
 /* VCT struct to store a backup copy of VCT data after a port reset. */
 typedef struct s_PnmiVct {
 	SK_U8			VctStatus;
-	SK_U8			PCableLen;
-	SK_U32			PMdiPairLen[4];
-	SK_U8			PMdiPairSts[4];
+	SK_U8			CableLen;
+	SK_U32			MdiPairLen[4];
+	SK_U8			MdiPairSts[4];
 } SK_PNMI_VCT;
 
 
 /* VCT status values (to be given to CPA via OID_SKGE_VCT_STATUS). */
-#define SK_PNMI_VCT_NONE		0
-#define SK_PNMI_VCT_OLD_VCT_DATA	1
-#define SK_PNMI_VCT_NEW_VCT_DATA	2
-#define SK_PNMI_VCT_OLD_DSP_DATA	4
-#define SK_PNMI_VCT_NEW_DSP_DATA	8
-#define SK_PNMI_VCT_RUNNING		16
+#define SK_PNMI_VCT_NONE			0x00
+#define SK_PNMI_VCT_OLD_VCT_DATA	0x01
+#define SK_PNMI_VCT_NEW_VCT_DATA	0x02
+#define SK_PNMI_VCT_OLD_DSP_DATA	0x04
+#define SK_PNMI_VCT_NEW_DSP_DATA	0x08
+#define SK_PNMI_VCT_RUNNING			0x10
 
 
 /* VCT cable test status. */
-#define SK_PNMI_VCT_NORMAL_CABLE	0
-#define SK_PNMI_VCT_SHORT_CABLE		1
-#define SK_PNMI_VCT_OPEN_CABLE		2
-#define SK_PNMI_VCT_TEST_FAIL		3
+#define SK_PNMI_VCT_NORMAL_CABLE		0
+#define SK_PNMI_VCT_SHORT_CABLE			1
+#define SK_PNMI_VCT_OPEN_CABLE			2
+#define SK_PNMI_VCT_TEST_FAIL			3
 #define SK_PNMI_VCT_IMPEDANCE_MISMATCH	4
+#define SK_PNMI_VCT_NOT_PRESENT			5
 
-#define	OID_SKGE_TRAP_SEN_WAR_LOW	500
-#define OID_SKGE_TRAP_SEN_WAR_UPP	501
-#define	OID_SKGE_TRAP_SEN_ERR_LOW	502
-#define OID_SKGE_TRAP_SEN_ERR_UPP	503
+/* VCT capabilities (needed for OID_SKGE_VCT_CAPABILITIES. */
+#define SK_PNMI_VCT_SUPPORTED			1
+#define SK_PNMI_VCT_NOT_SUPPORTED		0
+
+#define	OID_SKGE_TRAP_SEN_WAR_LOW		500
+#define OID_SKGE_TRAP_SEN_WAR_UPP		501
+#define	OID_SKGE_TRAP_SEN_ERR_LOW		502
+#define OID_SKGE_TRAP_SEN_ERR_UPP		503
 #define OID_SKGE_TRAP_RLMT_CHANGE_THRES	520
 #define OID_SKGE_TRAP_RLMT_CHANGE_PORT	521
 #define OID_SKGE_TRAP_RLMT_PORT_DOWN	522
-#define OID_SKGE_TRAP_RLMT_PORT_UP	523
+#define OID_SKGE_TRAP_RLMT_PORT_UP		523
 #define OID_SKGE_TRAP_RLMT_SEGMENTATION	524
 
+#ifdef SK_DIAG_SUPPORT
+/* Defines for driver DIAG mode. */
+#define SK_DIAG_ATTACHED	2
+#define SK_DIAG_RUNNING		1
+#define SK_DIAG_IDLE		0
+#endif /* SK_DIAG_SUPPORT */
+
+/*
+ * Generic PNMI IOCTL subcommand definitions.
+ */
+#define	SK_GET_SINGLE_VAR		1
+#define	SK_SET_SINGLE_VAR		2
+#define	SK_PRESET_SINGLE_VAR	3
+#define	SK_GET_FULL_MIB			4
+#define	SK_SET_FULL_MIB			5
+#define	SK_PRESET_FULL_MIB		6
 
 /*
  * Define error numbers and messages for syslog
@@ -627,7 +512,7 @@ typedef struct s_PnmiVct {
 #define SK_PNMI_ERR014		(SK_ERRBASE_PNMI + 14)
 #define SK_PNMI_ERR014MSG	"Vpd: Cannot read VPD keys"
 #define SK_PNMI_ERR015		(SK_ERRBASE_PNMI + 15)
-#define SK_PNMI_ERR015MSG	"Vpd: Internal array for VPD keys to small"
+#define SK_PNMI_ERR015MSG	"Vpd: Internal array for VPD keys too small"
 #define SK_PNMI_ERR016		(SK_ERRBASE_PNMI + 16)
 #define SK_PNMI_ERR016MSG	"Vpd: Key string too long"
 #define SK_PNMI_ERR017		(SK_ERRBASE_PNMI + 17)
@@ -669,9 +554,9 @@ typedef struct s_PnmiVct {
 #define SK_PNMI_ERR036		(SK_ERRBASE_PNMI + 36)
 #define SK_PNMI_ERR036MSG	""
 #define SK_PNMI_ERR037		(SK_ERRBASE_PNMI + 37)
-#define SK_PNMI_ERR037MSG	"Rlmt: SK_RLMT_MODE_CHANGE event return not 0"
+#define SK_PNMI_ERR037MSG	"Rlmt: SK_RLMT_MODE_CHANGE event returned not 0"
 #define SK_PNMI_ERR038		(SK_ERRBASE_PNMI + 38)
-#define SK_PNMI_ERR038MSG	"Rlmt: SK_RLMT_PREFPORT_CHANGE event return not 0"
+#define SK_PNMI_ERR038MSG	"Rlmt: SK_RLMT_PREFPORT_CHANGE event returned not 0"
 #define SK_PNMI_ERR039		(SK_ERRBASE_PNMI + 39)
 #define SK_PNMI_ERR039MSG	"RlmtStat: Unknown OID"
 #define SK_PNMI_ERR040		(SK_ERRBASE_PNMI + 40)
@@ -689,9 +574,9 @@ typedef struct s_PnmiVct {
 #define SK_PNMI_ERR046		(SK_ERRBASE_PNMI + 46)
 #define SK_PNMI_ERR046MSG	"Monitor: Unknown OID"
 #define SK_PNMI_ERR047		(SK_ERRBASE_PNMI + 47)
-#define SK_PNMI_ERR047MSG	"SirqUpdate: Event function returns not 0"
+#define SK_PNMI_ERR047MSG	"SirqUpdate: Event function returned not 0"
 #define SK_PNMI_ERR048		(SK_ERRBASE_PNMI + 48)
-#define SK_PNMI_ERR048MSG	"RlmtUpdate: Event function returns not 0"
+#define SK_PNMI_ERR048MSG	"RlmtUpdate: Event function returned not 0"
 #define SK_PNMI_ERR049		(SK_ERRBASE_PNMI + 49)
 #define SK_PNMI_ERR049MSG	"SkPnmiInit: Invalid size of 'CounterOffset' struct!!"
 #define SK_PNMI_ERR050		(SK_ERRBASE_PNMI + 50)
@@ -700,6 +585,14 @@ typedef struct s_PnmiVct {
 #define SK_PNMI_ERR051MSG	"SkPnmiEvent: Port switch suspicious"
 #define SK_PNMI_ERR052		(SK_ERRBASE_PNMI + 52)
 #define SK_PNMI_ERR052MSG	""
+#define SK_PNMI_ERR053		(SK_ERRBASE_PNMI + 53)
+#define SK_PNMI_ERR053MSG	"General: Driver release date not initialized"
+#define SK_PNMI_ERR054		(SK_ERRBASE_PNMI + 54)
+#define SK_PNMI_ERR054MSG	"General: Driver release date string too long"
+#define SK_PNMI_ERR055		(SK_ERRBASE_PNMI + 55)
+#define SK_PNMI_ERR055MSG	"General: Driver file name not initialized"
+#define SK_PNMI_ERR056		(SK_ERRBASE_PNMI + 56)
+#define SK_PNMI_ERR056MSG	"General: Driver file name string too long"
 
 /*
  * Management counter macros called by the driver
@@ -710,6 +603,11 @@ typedef struct s_PnmiVct {
 #define SK_PNMI_SET_DRIVER_VER(pAC,v)	((pAC)->Pnmi.pDriverVersion = \
 	(char *)(v))
 
+#define SK_PNMI_SET_DRIVER_RELDATE(pAC,v)	((pAC)->Pnmi.pDriverReleaseDate = \
+	(char *)(v))
+
+#define SK_PNMI_SET_DRIVER_FILENAME(pAC,v)	((pAC)->Pnmi.pDriverFileName = \
+	(char *)(v))
 
 #define SK_PNMI_CNT_TX_QUEUE_LEN(pAC,v,p) \
 	{ \
@@ -775,7 +673,7 @@ typedef struct s_PnmiVct {
 /*
  * Structure definition for SkPnmiGetStruct and SkPnmiSetStruct
  */
-#define SK_PNMI_VPD_KEY_SIZE		5
+#define SK_PNMI_VPD_KEY_SIZE	5
 #define SK_PNMI_VPD_BUFSIZE		(VPD_SIZE)
 #define SK_PNMI_VPD_ENTRIES		(VPD_SIZE / 4)
 #define SK_PNMI_VPD_DATALEN		128 /*  Number of data bytes */
@@ -783,12 +681,12 @@ typedef struct s_PnmiVct {
 #define SK_PNMI_MULTICAST_LISTLEN	64
 #define SK_PNMI_SENSOR_ENTRIES		(SK_MAX_SENSORS)
 #define SK_PNMI_CHECKSUM_ENTRIES	3
-#define SK_PNMI_MAC_ENTRIES		(SK_MAX_MACS + 1)
+#define SK_PNMI_MAC_ENTRIES			(SK_MAX_MACS + 1)
 #define SK_PNMI_MONITOR_ENTRIES		20
 #define SK_PNMI_TRAP_ENTRIES		10
-#define SK_PNMI_TRAPLEN			128
-#define SK_PNMI_STRINGLEN1		80
-#define SK_PNMI_STRINGLEN2		25
+#define SK_PNMI_TRAPLEN				128
+#define SK_PNMI_STRINGLEN1			80
+#define SK_PNMI_STRINGLEN2			25
 #define SK_PNMI_TRAP_QUEUE_LEN		512
 
 typedef struct s_PnmiVpd {
@@ -886,6 +784,8 @@ typedef struct s_PnmiConf {
 	char			ConfMacFactoryAddr[6];
 	SK_U8			ConfPMD;
 	SK_U8			ConfConnector;
+	SK_U32			ConfPhyType;
+	SK_U32			ConfPhyMode;
 	SK_U8			ConfLinkCapability;
 	SK_U8			ConfLinkMode;
 	SK_U8			ConfLinkModeStatus;
@@ -934,9 +834,14 @@ typedef struct s_PnmiStrucData {
 	SK_U32			DeviceType;
 	char			DriverDescr[SK_PNMI_STRINGLEN1];
 	char			DriverVersion[SK_PNMI_STRINGLEN2];
+	char			DriverReleaseDate[SK_PNMI_STRINGLEN1];
+	char			DriverFileName[SK_PNMI_STRINGLEN1];
 	char			HwDescr[SK_PNMI_STRINGLEN1];
 	char			HwVersion[SK_PNMI_STRINGLEN2];
 	SK_U16			Chipset;
+	SK_U32			ChipId;
+	SK_U8			VauxAvail;
+	SK_U32			RamSize;
 	SK_U32			MtuSize;
 	SK_U32			Action;
 	SK_U32			TestResult;
@@ -981,23 +886,25 @@ typedef struct s_PnmiStrucData {
 } SK_PNMI_STRUCT_DATA;
 
 #define SK_PNMI_STRUCT_SIZE	(sizeof(SK_PNMI_STRUCT_DATA))
+
+/* The ReturnStatus field must be located before VpdFreeBytes! */
 #define SK_PNMI_MIN_STRUCT_SIZE	((unsigned int)(SK_UPTR)\
 				 &(((SK_PNMI_STRUCT_DATA *)0)->VpdFreeBytes))
-														/*
-														 * ReturnStatus field
-														 * must be located
-														 * before VpdFreeBytes
-														 */
 
 /*
  * Various definitions
  */
-#define SK_PNMI_MAX_PROTOS	3
+#define SK_PNMI_EVT_TIMER_CHECK		28125000L	/* 28125 ms */
 
-#define SK_PNMI_CNT_NO		66	/* Must have the value of the enum
-					 * SK_PNMI_MAX_IDX. Define SK_PNMI_CHECK
-					 * for check while init phase 1
-					 */
+#define SK_PNMI_VCT_TIMER_CHECK		 4000000L	/* 4 sec. */
+
+#define SK_PNMI_MAX_PROTOS		3
+
+/*
+ * SK_PNMI_CNT_NO must have the value of the enum SK_PNMI_MAX_IDX.
+ * Define SK_PNMI_CHECK to check this during init level SK_INIT_IO.
+ */
+#define SK_PNMI_CNT_NO			66
 
 /*
  * Estimate data structure
@@ -1008,14 +915,6 @@ typedef struct s_PnmiEstimate {
 	SK_U64			Estimate;
 	SK_TIMER		EstTimer;
 } SK_PNMI_ESTIMATE;
-
-
-/*
- * VCT timer data structure
- */
-typedef struct s_VctTimer {
-	SK_TIMER		VctTimer;
-} SK_PNMI_VCT_TIMER;
 
 
 /*
@@ -1060,6 +959,8 @@ typedef struct s_PnmiData {
 
 	char			*pDriverDescription;
 	char			*pDriverVersion;
+	char			*pDriverReleaseDate;
+	char			*pDriverFileName;
 
 	int				MacUpdatedFlag;
 	int				RlmtUpdatedFlag;
@@ -1086,28 +987,35 @@ typedef struct s_PnmiData {
 	unsigned int	TrapQueueEnd;
 	unsigned int	TrapBufPad;
 	unsigned int	TrapUnique;
-	SK_U8		VctStatus[SK_MAX_MACS];
-	SK_PNMI_VCT	VctBackup[SK_MAX_MACS];
-	SK_PNMI_VCT_TIMER VctTimeout[SK_MAX_MACS];
+	SK_U8			VctStatus[SK_MAX_MACS];
+	SK_PNMI_VCT		VctBackup[SK_MAX_MACS];
+	SK_TIMER		VctTimeout[SK_MAX_MACS];
+#ifdef SK_DIAG_SUPPORT
+	SK_U32			DiagAttached;
+#endif /* SK_DIAG_SUPPORT */
+	SK_BOOL         VpdKeyReadError;
 } SK_PNMI;
+
 
 /*
  * Function prototypes
  */
-extern int SkPnmiInit(SK_AC *pAc, SK_IOC IoC, int level);
-extern int SkPnmiGetVar(SK_AC *pAc, SK_IOC IoC, SK_U32 Id, void* pBuf,
+extern int SkPnmiInit(SK_AC *pAC, SK_IOC IoC, int Level);
+extern int SkPnmiGetVar(SK_AC *pAC, SK_IOC IoC, SK_U32 Id, void* pBuf,
 	unsigned int* pLen, SK_U32 Instance, SK_U32 NetIndex);
-extern int SkPnmiPreSetVar(SK_AC *pAc, SK_IOC IoC, SK_U32 Id,
+extern int SkPnmiPreSetVar(SK_AC *pAC, SK_IOC IoC, SK_U32 Id,
 	void* pBuf, unsigned int *pLen, SK_U32 Instance, SK_U32 NetIndex);
-extern int SkPnmiSetVar(SK_AC *pAc, SK_IOC IoC, SK_U32 Id, void* pBuf,
+extern int SkPnmiSetVar(SK_AC *pAC, SK_IOC IoC, SK_U32 Id, void* pBuf,
 	unsigned int *pLen, SK_U32 Instance, SK_U32 NetIndex);
-extern int SkPnmiGetStruct(SK_AC *pAc, SK_IOC IoC, void* pBuf,
+extern int SkPnmiGetStruct(SK_AC *pAC, SK_IOC IoC, void* pBuf,
 	unsigned int *pLen, SK_U32 NetIndex);
-extern int SkPnmiPreSetStruct(SK_AC *pAc, SK_IOC IoC, void* pBuf,
+extern int SkPnmiPreSetStruct(SK_AC *pAC, SK_IOC IoC, void* pBuf,
 	unsigned int *pLen, SK_U32 NetIndex);
-extern int SkPnmiSetStruct(SK_AC *pAc, SK_IOC IoC, void* pBuf,
+extern int SkPnmiSetStruct(SK_AC *pAC, SK_IOC IoC, void* pBuf,
 	unsigned int *pLen, SK_U32 NetIndex);
-extern int SkPnmiEvent(SK_AC *pAc, SK_IOC IoC, SK_U32 Event,
+extern int SkPnmiEvent(SK_AC *pAC, SK_IOC IoC, SK_U32 Event,
 	SK_EVPARA Param);
+extern int SkPnmiGenIoctl(SK_AC *pAC, SK_IOC IoC, void * pBuf,
+	unsigned int * pLen, SK_U32 NetIndex);
 
 #endif

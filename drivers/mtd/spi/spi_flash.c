@@ -10,6 +10,11 @@
 #include <spi_flash.h>
 
 #include "spi_flash_internal.h"
+#define PRINT_DOT
+#ifdef PRINT_DOT
+size_t print1block=4096;
+int countDot=0;
+#endif
 
 int spi_flash_cmd(struct spi_slave *spi, u8 cmd, void *response, size_t len)
 {
@@ -66,6 +71,20 @@ int spi_flash_cmd_write(struct spi_slave *spi, const u8 *cmd, size_t cmd_len,
 
 	if (data_len == 0)
 		flags |= SPI_XFER_END;
+#ifdef PRINT_DOT
+	{
+		print1block += data_len;
+		if (print1block > 4096) {
+			printf(".");
+			print1block -= 4096;
+			countDot++;
+			if (countDot == 60) {
+				printf("\n");
+				countDot=0;
+			}
+		}
+	}
+#endif
 
 	ret = spi_xfer(spi, cmd_len * 8, cmd, NULL, flags);
 	if (ret) {

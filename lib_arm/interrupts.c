@@ -91,6 +91,7 @@ int disable_interrupts (void)
 }
 #endif
 
+void	reset_cpu     (ulong addr);
 
 void bad_mode (void)
 {

@@ -96,6 +96,10 @@
 #include "dns.h"
 #endif
 
+#if defined(CONFIG_CMD_RCVR)
+#include "rcvr.h"
+#endif
+
 #if defined(CONFIG_CMD_NET)
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -433,6 +437,11 @@ restart:
 #if defined(CONFIG_CMD_DNS)
 		case DNS:
 			DnsStart();
+			break;
+#endif
+#if defined(CONFIG_CMD_RCVR)
+		case RCVR:
+			RecoverRequest();
 			break;
 #endif
 		default:
@@ -1540,6 +1549,9 @@ static int net_check_prereq (proto_t protocol)
 	case RARP:
 	case BOOTP:
 	case CDP:
+#if defined(CONFIG_CMD_RCVR)
+	case RCVR:
+#endif
 		if (memcmp (NetOurEther, "\0\0\0\0\0\0", 6) == 0) {
 #ifdef CONFIG_NET_MULTI
 			extern int eth_get_dev_index (void);

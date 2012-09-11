@@ -50,6 +50,10 @@
 #include <onenand_uboot.h>
 #include <mmc.h>
 
+#if defined(CONFIG_MARVELL)
+ extern unsigned int whoAmI(void);
+ extern int cpuMapInit (void);
+#endif
 #ifdef CONFIG_DRIVER_SMC91111
 #include "../drivers/net/smc91111.h"
 #endif
@@ -86,6 +90,12 @@ extern void rtl8019_get_enetaddr (uchar * addr);
 #include <i2c.h>
 #endif
 
+#ifdef CONFIG_CMD_RCVR
+extern void recoveryCheck(void);
+#endif
+#if defined(CONFIG_CMD_SF)
+extern unsigned long spi_flash_init(void);
+#endif
 /*
  * Begin and End of memory area for malloc(), and current "brk"
  */
@@ -96,12 +106,31 @@ static ulong mem_malloc_brk = 0;
 static
 void mem_malloc_init (ulong dest_addr)
 {
+#ifndef CONFIG_MARVELL
 	mem_malloc_start = dest_addr;
 	mem_malloc_end = dest_addr + CONFIG_SYS_MALLOC_LEN;
 	mem_malloc_brk = mem_malloc_start;
 
 	memset ((void *) mem_malloc_start, 0,
 			mem_malloc_end - mem_malloc_start);
+#else
+	unsigned int malloc_len;
+	char *env;
+
+	env = getenv("MALLOC_len");
+	malloc_len =  simple_strtoul(env, NULL, 10) << 20;
+	if(malloc_len == 0)
+		malloc_len = CONFIG_SYS_MALLOC_LEN;
+
+	mem_malloc_end = CONFIG_SYS_MALLOC_BASE + malloc_len;
+	printf("       Addresses %ldM - 0M are saved for the U-Boot usage.\n",mem_malloc_end >> 20);
+
+	mem_malloc_start = CONFIG_SYS_MALLOC_BASE;
+	mem_malloc_brk = mem_malloc_start;
+
+	memset ((void *) mem_malloc_start, 0,
+			mem_malloc_end - mem_malloc_start);
+#endif
 }
 
 void *sbrk (ptrdiff_t increment)
@@ -187,18 +216,16 @@ static int display_banner (void)
  * gives a simple yet clear indication which part of the
  * initialization if failing.
  */
+
 static int display_dram_config (void)
 {
 	int i;
 
-#ifdef DEBUG
-	puts ("RAM Configuration:\n");
+//#ifdef DEBUG
+	//puts ("RAM Configuration:\n");
 
-	for(i=0; i<CONFIG_NR_DRAM_BANKS; i++) {
-		printf ("Bank #%d: %08lx ", i, gd->bd->bi_dram[i].start);
-		print_size (gd->bd->bi_dram[i].size, "\n");
-	}
-#else
+	
+//#else
 	ulong size = 0;
 
 	for (i=0; i<CONFIG_NR_DRAM_BANKS; i++) {
@@ -206,7 +233,13 @@ static int display_dram_config (void)
 	}
 	puts("DRAM:  ");
 	print_size(size, "\n");
-#endif
+	for(i=0; i<CONFIG_NR_DRAM_BANKS; i++) {
+		if(gd->bd->bi_dram[i].size == 0)
+			continue;
+		printf ("       CS %d: base 0x%08lx size ", i, gd->bd->bi_dram[i].start);
+		print_size (gd->bd->bi_dram[i].size, "\n");
+	}
+//#endif
 
 	return (0);
 }
@@ -273,12 +306,17 @@ init_fnc_t *init_sequence[] = {
 #if defined(CONFIG_USE_IRQ)
 	interrupt_init,		/* set up exceptions */
 #endif
+#ifndef CONFIG_MARVELL
 	timer_init,		/* initialize timer */
+#endif
 	env_init,		/* initialize environment */
 	init_baudrate,		/* initialze baudrate settings */
 	serial_init,		/* serial communications setup */
 	console_init_f,		/* stage 1 init of console */
 	display_banner,		/* say that we are here */
+#if defined(CONFIG_MARVELL) && defined(MV78XX0)
+	cpuMapInit,
+#endif
 #if defined(CONFIG_DISPLAY_CPUINFO)
 	print_cpuinfo,		/* display cpu info (and speed) */
 #endif
@@ -296,19 +334,47 @@ init_fnc_t *init_sequence[] = {
 	NULL,
 };
 
+#if defined(CONFIG_MARVELL) && defined(MV78200)
+init_fnc_t *init_sequence_slave[] = {
+	cpu_init,		/* basic cpu dependent setup */
+	board_init,		/* basic board dependent setup */
+	env_init,
+	serial_init,		/* serial communications setup */
+	console_init_f,		/* stage 1 init of console */
+	display_banner,		/* say that we are here */
+	NULL,			/* Terminate this list */
+};
+#endif
+
 void start_armboot (void)
 {
 	init_fnc_t **init_fnc_ptr;
 	char *s;
+#if defined(CONFIG_MARVELL) && defined(MV78200)
+	volatile unsigned int cpu;
+#endif
 #if defined(CONFIG_VFD) || defined(CONFIG_LCD)
 	unsigned long addr;
 #endif
 
 	/* Pointer is writable since we allocated a register for it */
+#ifndef	CONFIG_MARVELL
 	gd = (gd_t*)(_armboot_start - CONFIG_SYS_MALLOC_LEN - sizeof(gd_t));
+#else
+#if defined(CONFIG_MARVELL) && defined(MV78200)
+   /* Marvell Master CPU Boot */
+    cpu = whoAmI();
+   if(cpu == 0)
+#endif
+	gd = (gd_t*)(_armboot_start - sizeof(gd_t));
+#endif
 	/* compiler optimization barrier needed for GCC >= 3.4 */
 	__asm__ __volatile__("": : :"memory");
 
+#if defined(CONFIG_MARVELL) && defined(MV78200)
+   /* Marvell Master CPU Boot */
+   if(cpu == 0){
+#endif
 	memset ((void*)gd, 0, sizeof (gd_t));
 	gd->bd = (bd_t*)((char*)gd - sizeof(bd_t));
 	memset (gd->bd, 0, sizeof (bd_t));
@@ -359,7 +425,9 @@ void start_armboot (void)
 		gd->fb_base = addr;
 	}
 #endif /* CONFIG_LCD */
-
+#if defined(CONFIG_CMD_SF)
+	spi_flash_init();
+#endif
 #if defined(CONFIG_CMD_NAND)
 	puts ("NAND:  ");
 	nand_init();		/* go init the NAND */
@@ -456,6 +524,11 @@ extern void davinci_eth_set_mac_addr (const u_int8_t *addr);
 	mmc_initialize (gd->bd);
 #endif
 
+#if (CONFIG_CMD_SCSI)
+	puts ("SCSI:   ");
+	scsi_init ();
+#endif
+
 #if defined(CONFIG_CMD_NET)
 #if defined(CONFIG_NET_MULTI)
 	puts ("Net:   ");
@@ -465,6 +538,42 @@ extern void davinci_eth_set_mac_addr (const u_int8_t *addr);
 	debug ("Reset Ethernet PHY\n");
 	reset_phy();
 #endif
+#endif
+
+#ifdef CONFIG_CMD_RCVR
+	recoveryCheck(); 
+#endif
+/* Cancle SILENT mode for prompt only */
+#if defined(CONFIG_MARVELL) && defined(CONFIG_SILENT_CONSOLE)
+	DECLARE_GLOBAL_DATA_PTR;
+	gd->flags &= ~GD_FLG_SILENT;
+#endif
+#if defined(CONFIG_MARVELL) && defined(MV78200)
+   /* Marvell Second CPU Boot */
+    }
+    else
+    {
+	/* Master CPU global data */
+	gd_t *gd_master;
+	gd_master = (gd_t*)(_armboot_start - sizeof(gd_t));
+	/* Slave CPU global data */
+	gd = (gd_t*)(_armboot_start - _1M - sizeof(gd_t));
+	memset ((void *) gd, 0, sizeof (gd_t));
+	gd->bd = (bd_t*)((char*)gd - sizeof(bd_t));
+	memset ((void *) gd->bd, 0, sizeof (bd_t));
+
+	/*copy the Gloabal Data from the Master. */
+	memcpy ((void *)gd, (const void *)gd_master, sizeof (gd_t));
+	memcpy ((void *)gd->bd, (const void *)gd_master->bd, sizeof (bd_t));
+
+	for (init_fnc_ptr = init_sequence_slave; *init_fnc_ptr; ++init_fnc_ptr) {
+		if ((*init_fnc_ptr)() != 0) {
+			hang ();
+		}
+	}
+
+	misc_init_r ();
+    }
 #endif
 	/* main_loop() can return to retry autoboot, if so just run it again. */
 	for (;;) {

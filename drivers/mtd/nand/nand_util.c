@@ -53,7 +53,7 @@ typedef struct mtd_info	  mtd_info_t;
 #define cpu_to_je32(x) (x)
 
 /*****************************************************************************/
-static int nand_block_bad_scrub(struct mtd_info *mtd, loff_t ofs, int getchip)
+static int nand_block_bad_scrub(struct mtd_info *mtd, uint64_t ofs, int getchip)
 {
 	return 0;
 }
@@ -73,11 +73,11 @@ int nand_erase_opts(nand_info_t *meminfo, const nand_erase_options_t *opts)
 {
 	struct jffs2_unknown_node cleanmarker;
 	erase_info_t erase;
-	ulong erase_length;
+	uint64_t erase_length;
 	int bbtest = 1;
 	int result;
 	int percent_complete = -1;
-	int (*nand_block_bad_old)(struct mtd_info *, loff_t, int) = NULL;
+	int (*nand_block_bad_old)(struct mtd_info *, uint64_t, int) = NULL;
 	const char *mtd_device = meminfo->name;
 	struct mtd_oob_ops oob_opts;
 	struct nand_chip *chip = meminfo->priv;
@@ -113,9 +113,11 @@ int nand_erase_opts(nand_info_t *meminfo, const nand_erase_options_t *opts)
 	}
 
 	if (erase_length < meminfo->erasesize) {
-		printf("Warning: Erase size 0x%08lx smaller than one "	\
-		       "erase block 0x%08x\n",erase_length, meminfo->erasesize);
-		printf("         Erasing 0x%08x instead\n", meminfo->erasesize);
+#ifndef CONFIG_MARVELL
+		printf("Warning: Erase size 0x%08llx smaller than one "	\
+		       "erase block 0x%08llx\n",erase_length, meminfo->erasesize);
+		printf("         Erasing 0x%08llx instead\n", meminfo->erasesize);
+#endif
 		erase_length = meminfo->erasesize;
 	}
 
@@ -436,12 +438,12 @@ int nand_unlock(struct mtd_info *mtd, ulong start, ulong length)
  * @param length image length
  * @return image length including bad blocks
  */
-static size_t get_len_incl_bad (nand_info_t *nand, loff_t offset,
-				const size_t length)
+uint64_t get_len_incl_bad (nand_info_t *nand, uint64_t offset,
+				const uint64_t length)
 {
-	size_t len_incl_bad = 0;
-	size_t len_excl_bad = 0;
-	size_t block_len;
+	uint64_t len_incl_bad = 0;
+	uint64_t len_excl_bad = 0;
+	uint64_t block_len;
 
 	while (len_excl_bad < length) {
 		block_len = nand->erasesize - (offset & (nand->erasesize - 1));
@@ -473,12 +475,12 @@ static size_t get_len_incl_bad (nand_info_t *nand, loff_t offset,
  * @param buf           buffer to read from
  * @return		0 in case of success
  */
-int nand_write_skip_bad(nand_info_t *nand, loff_t offset, size_t *length,
+int nand_write_skip_bad(nand_info_t *nand, uint64_t offset, uint64_t *length,
 			u_char *buffer)
 {
 	int rval;
-	size_t left_to_write = *length;
-	size_t len_incl_bad;
+	uint64_t left_to_write = *length;
+	uint64_t len_incl_bad;
 	u_char *p_buffer = buffer;
 
 	/* Reject writes, which are not page aligned */
@@ -505,8 +507,8 @@ int nand_write_skip_bad(nand_info_t *nand, loff_t offset, size_t *length,
 	}
 
 	while (left_to_write > 0) {
-		size_t block_offset = offset & (nand->erasesize - 1);
-		size_t write_size;
+		uint64_t block_offset = offset & (nand->erasesize - 1);
+		uint64_t write_size;
 
 		WATCHDOG_RESET ();
 
@@ -552,12 +554,12 @@ int nand_write_skip_bad(nand_info_t *nand, loff_t offset, size_t *length,
  * @param buffer buffer to write to
  * @return 0 in case of success
  */
-int nand_read_skip_bad(nand_info_t *nand, loff_t offset, size_t *length,
+int nand_read_skip_bad(nand_info_t *nand, uint64_t offset, uint64_t *length,
 		       u_char *buffer)
 {
 	int rval;
-	size_t left_to_read = *length;
-	size_t len_incl_bad;
+	uint64_t left_to_read = *length;
+	uint64_t len_incl_bad;
 	u_char *p_buffer = buffer;
 
 	len_incl_bad = get_len_incl_bad (nand, offset, *length);
@@ -577,8 +579,8 @@ int nand_read_skip_bad(nand_info_t *nand, loff_t offset, size_t *length,
 	}
 
 	while (left_to_read > 0) {
-		size_t block_offset = offset & (nand->erasesize - 1);
-		size_t read_length;
+		uint64_t block_offset = offset & (nand->erasesize - 1);
+		uint64_t read_length;
 
 		WATCHDOG_RESET ();
 

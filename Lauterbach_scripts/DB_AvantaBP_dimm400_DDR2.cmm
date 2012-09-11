@@ -1,0 +1,100 @@
+; Date: 5-15-2012
+; Revision: 4.0.0
+; initialize system
+SYStem.RESet
+system.cpu 88FR331 
+; disable the id check because the cpu does not send the debugger the pattern the debugger expects
+sys.option noircheck on
+    
+; other 946 cpu bug fix seen also on 926
+sys.option MULTIPLESFIX on
+
+system.JTAGCLOCK 1MHz
+system.up
+system.JTAGCLOCK 10MHz
+
+; select example program
+ area.res
+ area.c select
+ area.s select
+ w.area select
+ screen.always
+
+
+ print "Retrieving System Info:"
+global &x
+global &dev
+global &y
+global &cpuSample
+global &cpuSpeed
+global &ddrSpeed
+global &lSpeed
+global &bootDeviceSample
+
+&ddrSpeed=400
+
+
+   ; dram init
+    d.s 0xD0001400 %LONG 0x0x43010C30;
+    d.s 0xD0001404 %LONG 0x0x37503000;
+    d.s 0xD0001408 %LONG 0x0x2302544F;
+    d.s 0xD000140C %LONG 0x0x08000A32;
+    d.s 0xD0001410 %LONG 0x0x0200000D;
+    d.s 0xD000141c %LONG 0x0x00000652;
+    d.s 0xD0001420 %LONG 0x0x00000004;
+    d.s 0xD0001424 %LONG 0x0x0000014F;
+    d.s 0xD0001428 %LONG 0x0x00085520;
+    d.s 0xD0001430 %LONG 0x0x76543210;
+    d.s 0xD0001434 %LONG 0x0xFEDCBA98;
+    d.s 0xD000147c %LONG 0x0x00008552;
+    d.s 0xD0001494 %LONG 0x0x00010001;
+    d.s 0xD000149c %LONG 0x0x0000E801;
+    d.s 0xD00014B0 %LONG 0x0x0000000F;
+    d.s 0xD0001504 %LONG 0x0x07FFFFF1;
+    d.s 0xD000150c %LONG 0x0x0FFFFFF4;
+    d.s 0xD0001514 %LONG 0x0x0FFFFFF8;
+    d.s 0xD000151c %LONG 0x0x0FFFFFFc;
+    d.s 0xD0020004 %LONG 0x0x00000000;
+    d.s 0xD0020000 %LONG 0x0x1FFF0E01;
+    d.s 0xD00015D0 %LONG 0x0x00000610;
+    d.s 0xD00015D4 %LONG 0x0x00000044;
+    d.s 0xD00015D8 %LONG 0x0x00000000;
+    d.s 0xD00015DC %LONG 0x0x00000000;
+    d.s 0xD00015E0 %LONG 0x0x00000001;
+    d.s 0xD00015E4 %LONG 0x0x00203C18; 
+    d.s 0xD0001620 %LONG 0x0x00680000; 
+    d.s 0xD0001480 %LONG 0x0x00000001; 
+
+
+
+
+
+
+
+
+
+						 
+; set program counter at program start
+Register.Set pc 0xFFFF0000
+ 
+; open some windows
+; winpos 0% 0% 100% 50%
+; Data.List
+; winpos 0% 50% 50% 50%
+ BREAK.SELECT PROGRAM ONCHIP
+
+ SYStem
+ 
+ ;enddo
+
+
+
+
+
+
+
+
+
+
+
+

@@ -139,8 +139,8 @@ int ubi_io_read(const struct ubi_device *ubi, void *buf, int pnum, int offset,
 		int len)
 {
 	int err, retries = 0;
-	size_t read;
-	loff_t addr;
+	uint64_t read;
+	uint64_t addr;
 
 	dbg_io("read %d bytes from PEB %d:%d", len, pnum, offset);
 
@@ -152,7 +152,7 @@ int ubi_io_read(const struct ubi_device *ubi, void *buf, int pnum, int offset,
 	if (err)
 		return err > 0 ? -EINVAL : err;
 
-	addr = (loff_t)pnum * ubi->peb_size + offset;
+	addr = (uint64_t)pnum * ubi->peb_size + offset;
 retry:
 	err = ubi->mtd->read(ubi->mtd, addr, len, &read, buf);
 	if (err) {
@@ -168,7 +168,7 @@ retry:
 
 		if (read != len && retries++ < UBI_IO_RETRIES) {
 			dbg_io("error %d while reading %d bytes from PEB %d:%d, "
-			       "read only %zd bytes, retry",
+			       "read only %lld bytes, retry",
 			       err, len, pnum, offset, read);
 			yield();
 			goto retry;
@@ -221,8 +221,8 @@ int ubi_io_write(struct ubi_device *ubi, const void *buf, int pnum, int offset,
 		 int len)
 {
 	int err;
-	size_t written;
-	loff_t addr;
+	uint64_t written;
+	uint64_t addr;
 
 	dbg_io("write %d bytes to PEB %d:%d", len, pnum, offset);
 
@@ -267,11 +267,11 @@ int ubi_io_write(struct ubi_device *ubi, const void *buf, int pnum, int offset,
 		return -EIO;
 	}
 
-	addr = (loff_t)pnum * ubi->peb_size + offset;
+	addr = (uint64_t)pnum * ubi->peb_size + offset;
 	err = ubi->mtd->write(ubi->mtd, addr, len, &written, buf);
 	if (err) {
 		ubi_err("error %d while writing %d bytes to PEB %d:%d, written"
-			" %zd bytes", err, len, pnum, offset, written);
+			" %lld bytes", err, len, pnum, offset, written);
 		ubi_dbg_dump_stack();
 	} else
 		ubi_assert(written == len);
@@ -313,8 +313,8 @@ retry:
 	memset(&ei, 0, sizeof(struct erase_info));
 
 	ei.mtd      = ubi->mtd;
-	ei.addr     = (loff_t)pnum * ubi->peb_size;
-	ei.len      = ubi->peb_size;
+	ei.addr     = (uint64_t)pnum * ubi->peb_size;
+	ei.len      = (uint64_t)ubi->peb_size;
 	ei.callback = erase_callback;
 	ei.priv     = (unsigned long)&wq;
 
@@ -516,7 +516,7 @@ int ubi_io_is_bad(const struct ubi_device *ubi, int pnum)
 	if (ubi->bad_allowed) {
 		int ret;
 
-		ret = mtd->block_isbad(mtd, (loff_t)pnum * ubi->peb_size);
+		ret = mtd->block_isbad(mtd, (uint64_t)pnum * ubi->peb_size);
 		if (ret < 0)
 			ubi_err("error %d while checking if PEB %d is bad",
 				ret, pnum);
@@ -551,7 +551,7 @@ int ubi_io_mark_bad(const struct ubi_device *ubi, int pnum)
 	if (!ubi->bad_allowed)
 		return 0;
 
-	err = mtd->block_markbad(mtd, (loff_t)pnum * ubi->peb_size);
+	err = mtd->block_markbad(mtd, (uint64_t)pnum * ubi->peb_size);
 	if (err)
 		ubi_err("cannot mark PEB %d bad, error %d", pnum, err);
 	return err;
@@ -1237,9 +1237,9 @@ exit:
 static int paranoid_check_all_ff(struct ubi_device *ubi, int pnum, int offset,
 				 int len)
 {
-	size_t read;
+	uint64_t read;
 	int err;
-	loff_t addr = (loff_t)pnum * ubi->peb_size + offset;
+	uint64_t addr = (uint64_t)pnum * ubi->peb_size + offset;
 
 	mutex_lock(&ubi->dbg_buf_mutex);
 	err = ubi->mtd->read(ubi->mtd, addr, len, &read, ubi->dbg_peb_buf);

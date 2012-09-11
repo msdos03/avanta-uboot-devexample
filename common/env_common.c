@@ -256,6 +256,16 @@ void env_relocate (void)
 		set_default_env();
 	}
 	else {
+#if 0
+#ifdef CONFIG_MARVELL
+		mvMPPConfigToSPI();
+		env_relocate_spec ();
+		mvMPPConfigToDefault();
+#else
+
+        env_relocate_spec ();
+#endif
+#endif
 		env_relocate_spec ();
 	}
 	gd->env_addr = (ulong)&(env_ptr->data);

@@ -1684,8 +1684,10 @@ static void flash_read_cfi (flash_info_t *info, void *buf,
 	u8 *p = buf;
 	unsigned int i;
 
-	for (i = 0; i < len; i++)
+	for (i = 0; i < len; i++) {
 		p[i] = flash_read_uchar(info, start + i);
+		udelay(100);
+	}
 }
 
 static int __flash_detect_cfi (flash_info_t * info, struct cfi_qry *qry)
@@ -1698,6 +1700,8 @@ static int __flash_detect_cfi (flash_info_t * info, struct cfi_qry *qry)
 	flash_write_cmd (info, 0, 0, AMD_CMD_RESET);
 	flash_write_cmd (info, 0, 0, FLASH_CMD_RESET);
 
+	udelay(100);
+	
 	for (cfi_offset=0;
 	     cfi_offset < sizeof(flash_offset_cfi) / sizeof(uint);
 	     cfi_offset++) {

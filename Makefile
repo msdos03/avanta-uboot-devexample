@@ -294,6 +294,26 @@ __LIBS := $(subst $(obj),,$(LIBS)) $(subst $(obj),,$(LIBBOARD))
 # Always append ALL so that arch config.mk's can add custom ones
 ALL += $(obj)u-boot.srec $(obj)u-boot.bin $(obj)System.map $(U_BOOT_NAND) $(U_BOOT_ONENAND)
 
+BINCPY = cp -f u-boot.bin u-boot-${MV_OUTPUT}.bin
+ELFCPY = cp -f u-boot u-boot-${MV_OUTPUT}
+SRECCPY = cp -f u-boot.srec u-boot-${MV_OUTPUT}.srec
+
+DRAM_REGS_FILE=dramregs_$(MV_DDR_FREQ)_$(DDR_TYPE)$(DDR_ACCESS).txt
+ifeq ($(CONFIG_NAND_SP),y)
+DO_IMAGE_NAND = ./tools/doimage -T nand -D 0x600000 -E 0x680000 -P 512 -L ${BLK_SIZE} -N ${NAND_TECH} -R \
+$(DRAM_REGS_FILE) u-boot-${MV_OUTPUT}.bin u-boot-${MV_OUTPUT}_$(MV_DDR_FREQ)_$(DDR_TYPE)_nand.bin
+endif
+ifeq ($(CONFIG_NAND_LP),y)
+DO_IMAGE_NAND = ./tools/doimage -T nand -D 0x600000 -E 0x680000 -P 2048 -L ${BLK_SIZE} -N ${NAND_TECH} -R \
+$(DRAM_REGS_FILE) u-boot-${MV_OUTPUT}.bin u-boot-${MV_OUTPUT}_$(MV_DDR_FREQ)_$(DDR_TYPE)_nand.bin
+endif
+DO_IMAGE_UART = ./tools/doimage -T uart -D 0x600000 -E 0x680000 -R \
+$(DRAM_REGS_FILE) u-boot-${MV_OUTPUT}.bin u-boot-${MV_OUTPUT}_$(MV_DDR_FREQ)_$(DDR_TYPE)_uart.bin
+DO_IMAGE_SPI = ./tools/doimage -T flash -D 0x600000 -E 0x680000 -R \
+$(DRAM_REGS_FILE) u-boot-${MV_OUTPUT}.bin u-boot-${MV_OUTPUT}_$(MV_DDR_FREQ)_$(DDR_TYPE)_spi.bin
+DO_IMAGE_NOR = ./tools/doimage -T flash -D 0x600000 -E 0x680000 -R \
+$(DRAM_REGS_FILE) u-boot-${MV_OUTPUT}.bin u-boot-${MV_OUTPUT}_$(MV_DDR_FREQ)_$(DDR_TYPE)_nor.bin
+
 all:		$(ALL)
 
 $(obj)u-boot.hex:	$(obj)u-boot
@@ -301,9 +321,23 @@ $(obj)u-boot.hex:	$(obj)u-boot
 
 $(obj)u-boot.srec:	$(obj)u-boot
 		$(OBJCOPY) -O srec $< $@
+		$(SRECCPY)
 
 $(obj)u-boot.bin:	$(obj)u-boot
 		$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@
+		$(BINCPY)
+
+ifeq ($(NAND_BOOT), y)
+		$(DO_IMAGE_NAND)
+endif
+ifeq ($(SPI_BOOT), y)
+		$(DO_IMAGE_SPI)
+endif
+ifeq ($(NOR_BOOT), y)
+		$(DO_IMAGE_NOR)
+endif
+
+		$(DO_IMAGE_UART)
 
 $(obj)u-boot.ldr:	$(obj)u-boot
 		$(obj)tools/envcrc --binary > $(obj)env-ldr.o
@@ -375,9 +409,14 @@ $(U_BOOT_ONENAND):	$(ONENAND_IPL) $(obj)u-boot.bin
 		cat $(obj)onenand_ipl/onenand-ipl-2k.bin $(obj)u-boot.bin > $(obj)u-boot-onenand.bin
 		cat $(obj)onenand_ipl/onenand-ipl-4k.bin $(obj)u-boot.bin > $(obj)u-boot-flexonenand.bin
 
+## Remove git related versioning.
+##$(VERSION_FILE):
+##		@( printf '#define U_BOOT_VERSION "U-Boot %s%s"\n' "$(U_BOOT_VERSION)" \
+##		 '$(shell $(TOPDIR)/tools/setlocalversion $(TOPDIR))' ) > $@.tmp
+##		@cmp -s $@ $@.tmp && rm -f $@.tmp || mv -f $@.tmp $@
+
 $(VERSION_FILE):
-		@( printf '#define U_BOOT_VERSION "U-Boot %s%s"\n' "$(U_BOOT_VERSION)" \
-		 '$(shell $(TOPDIR)/tools/setlocalversion $(TOPDIR))' ) > $@.tmp
+		@( printf '#define U_BOOT_VERSION "U-Boot %s%s"\n' "$(U_BOOT_VERSION)" ) > $@.tmp
 		@cmp -s $@ $@.tmp && rm -f $@.tmp || mv -f $@.tmp $@
 
 $(TIMESTAMP_FILE):
@@ -449,6 +488,7 @@ SYSTEM_MAP = \
 		LC_ALL=C sort
 $(obj)System.map:	$(obj)u-boot
 		@$(call SYSTEM_MAP,$<) > $(obj)System.map
+		$(ELFCPY)
 
 #
 # Auto-generate the autoconf.mk file (which is included by all makefiles)
@@ -2612,6 +2652,271 @@ XPEDITE5170_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc mpc86xx xpedite5170 xes
 
 #########################################################################
+## Marvell KW2 based Socs
+#########################################################################
+
+db88f6500bp_config \
+rd88f6510sfu_config \
+rd88f6560gw_config \
+db88f6560pcac_config \
+rd88f6530mdu_config \
+db88f6601bp_config \
+rd88f6601mc_config \
+kw2_test:
+	@$(MAKE) -s mv_kw2 RULE=$@
+mv_kw2:	unconfig
+	@mkdir -p $(obj)include
+	@cp board/mv_feroceon/config_kw2/config_def.mk board/mv_feroceon/config_kw2/config.mk;
+
+	@$(MKCONFIG) -a $(@:_config=) arm arm926ejs config_kw2 mv_feroceon feroceon;
+	@echo "MV_OUTPUT = $(RULE:_config=)" >> $(obj)include/config.mk;
+#=======================
+# Soc Compilation flag
+#=======================
+	@if [ "$(findstring 6500,$(RULE))" ] ; then\
+		echo "#define MV88F6500" > $(obj)include/config.h ;	\
+		echo "  * Configured for MV88F6500"; \
+	elif [ "$(findstring 6510,$(RULE))" ] ; then \
+		echo "#define MV88F6510" > $(obj)include/config.h ;	\
+		echo "  * Configured for MV88F6510"; \
+	elif [ "$(findstring 6560,$(RULE))" ] ; then \
+		echo "#define MV88F6560" > $(obj)include/config.h ;	\
+		echo "  * Configured for MV88F6560"; \
+	elif [ "$(findstring 6530,$(RULE))" ] ; then \
+		echo "#define MV88F6530" > $(obj)include/config.h ;	\
+		echo "  * Configured for MV88F6530"; \
+	elif [ "$(findstring 6601,$(RULE))" ] ; then \
+		echo "#define MV88F6601" > $(obj)include/config.h ;	\
+		echo "  * Configured for MV88F6601"; \
+	elif [ "$(findstring test,$(RULE))" ] ; then \
+		echo "#define MV88F6192" > $(obj)include/config.h ;	\
+		echo "  * Configured for MV88F6192"; \
+	else \
+		echo "  * Error Marvell SoC not configured!"; \
+	fi;
+#=======================
+# Board Compilation flags
+#=======================
+	@if [ "$(findstring db88f6500bp_config,$(RULE))" ] ; then\
+		echo "#define DB_88F6500" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTSIZE_512K" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTROM" >> $(obj)include/config.h ;	\
+		if [ x$(DDR3) == x1 ]; then	\
+			echo "MV_DDR_FREQ=533db_kw2" >> $(obj)include/config.mk ;\
+		else	\
+			echo "MV_DDR_FREQ=400db_kw2" >> $(obj)include/config.mk ;\
+		fi;	\
+		echo "NAND_TECH=M" >> $(obj)include/config.mk ;	\
+		echo "BLK_SIZE=128" >> $(obj)include/config.mk ;	\
+		echo "  * Configured for DB-88F6500-BP"; \
+	elif [ "$(findstring rd88f6510sfu_config,$(RULE))" ] ; then \
+		echo "#define RD_88F6510" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTSIZE_512K" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTROM" >> $(obj)include/config.h ;	\
+		echo "MV_DDR_FREQ=266rd_kw2" >> $(obj)include/config.mk ;	\
+		echo "NAND_TECH=M" >> $(obj)include/config.mk ;	\
+		echo "BLK_SIZE=128" >> $(obj)include/config.mk ;	\
+		echo "  * Configured for RD-88F6510-SFU"; \
+	elif [ "$(findstring rd88f6560gw_config,$(RULE))" ] ; then \
+		echo "#define RD_88F6560" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTSIZE_512K" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTROM" >> $(obj)include/config.h ;	\
+		echo "MV_DDR_FREQ=533rd_kw2" >> $(obj)include/config.mk ;	\
+		echo "NAND_TECH=M" >> $(obj)include/config.mk ;	\
+		echo "BLK_SIZE=128" >> $(obj)include/config.mk ;	\
+		echo "  * Configured for RD-88F6560-GW"; \
+	elif [ "$(findstring db88f6560pcac_config,$(RULE))" ] ; then \
+		echo "#define DB_88F6560_PCAC" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTSIZE_512K" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTROM" >> $(obj)include/config.h ;	\
+		echo "#define MV_PEX_END_POINT_MODE" >> $(obj)include/config.h ;\
+		echo "MV_DDR_FREQ=533db_pcac_kw2" >> $(obj)include/config.mk ;	\
+		echo "NAND_TECH=M" >> $(obj)include/config.mk ;	\
+		echo "BLK_SIZE=128" >> $(obj)include/config.mk ;	\
+		echo "  * Configured for DB-88F6560-PCAC"; \
+	elif [ "$(findstring rd88f6530mdu_config,$(RULE))" ] ; then \
+		echo "#define RD_88F6530" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTSIZE_512K" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTROM" >> $(obj)include/config.h ;	\
+		echo "MV_DDR_FREQ=400rdmdu_kw2" >> $(obj)include/config.mk ;	\
+		echo "NAND_TECH=S" >> $(obj)include/config.mk ;  \
+		echo "BLK_SIZE=128" >> $(obj)include/config.mk ;    \
+		echo "  * Configured for RD-88F6530-MDU"; \
+	elif [ "$(findstring db88f6601bp_config,$(RULE))" ] ; then\
+		echo "#define DB_88F6601" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTSIZE_512K" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTROM" >> $(obj)include/config.h ;	\
+		echo "MV_DDR_FREQ=400db_A-MC" >> $(obj)include/config.mk ;\
+		echo "  * Configured for DB-88F6601-BP"; \
+	elif [ "$(findstring rd88f6601mc_config,$(RULE))" ] ; then\
+		echo "#define RD_88F6601" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTSIZE_512K" >> $(obj)include/config.h ; \
+		echo "#define MV_BOOTROM" >> $(obj)include/config.h ;	\
+		echo "MV_DDR_FREQ=400rd_A-MC" >> $(obj)include/config.mk ;\
+		echo "  * Configured for RD-88F6601-MC"; \
+	elif [ "$(findstring kw2_test,$(RULE))" ] ; then \
+		echo "#define DB_88F6192A" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTSIZE_512K" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTROM" >> $(obj)include/config.h ;	\
+		echo "MV_DDR_FREQ=400rd_kw2" >> $(obj)include/config.mk ;	\
+		echo "  * Configured for DB-88F6192A-BP"; \
+	else \
+		echo "  * Error no board was configured"; \
+	fi;
+
+#==============================
+# Little Endian Cross Compiler
+#==============================
+ifeq ($(BE),)
+	@echo "  * Little Endian byte ordering ";
+endif
+#==============================
+# Big Endian Cross Compiler
+#==============================
+ifeq ($(BE),1)
+	@echo "#define __BE" >> include/config.h;
+	@echo "#define MV_KW2_BE_ETH_WA" >> include/config.h;
+	@echo "BIG_ENDIAN =y" >> include/config.mk;
+	@echo "LDFLAGS += -EB" >> include/config.mk;
+	@echo "  * Big Endian byte ordering ";
+endif
+
+#================
+# CPU DDR Access
+#================
+	@if [ x$(DDR_XBAR) == x1 ]; then \
+		echo "DDR_ACCESS=_xbar" >> $(obj)include/config.mk ;	\
+		echo "  * CPU DRAM access through XBAR " ;		\
+	fi;
+
+#=================
+# DDR3 support
+#=================
+ifeq ($(DDR3),1)
+	@echo "DDR_TYPE=ddr3" >> $(obj)include/config.mk;
+	@echo "  * DDR3 Support";
+else
+	@echo "DDR_TYPE=ddr2" >> $(obj)include/config.mk;
+	@echo "  * DDR2 Support";
+endif
+
+#=================
+# USB support
+#=================
+ifeq ($(USB),1)
+	@echo "#define MV_USB" >> $(obj)include/config.h;
+	@echo "  * With USB support";
+endif
+
+#=================
+# NAND support
+#=================
+# Boot from NAND support
+ifeq ($(NANDBOOT),1)
+	@echo "  * Boot from NAND support";
+	@echo "#define MV_NAND_BOOT" >> $(obj)include/config.h ;
+	@echo "NAND_BOOT = y" >> $(obj)include/config.mk ;
+	cp board/mv_feroceon/config_kw2/u-boot-sec256k.lds cpu/arm926ejs/u-boot.lds;
+endif
+
+ifeq ($(NAND),1)
+	@echo "  * NAND support";
+	@echo "#define MV_NAND" >> $(obj)include/config.h;
+
+##NFC	@echo "      + NAND PIO Mode support";
+##NFC	@echo "#define MV_NAND_PIO_MODE" >> $(obj)include/config.h;
+##NFC	@echo "      + 1 CS NAND support" ;
+##NFC	@echo "#define MV_NAND_1CS_MODE" >> $(obj)include/config.h ;
+##NFC	@echo "      + 4 bit ECC NAND support" ;
+##NFC	@echo "#define MV_NAND_4BIT_MODE" >> $(obj)include/config.h ;
+
+# NAND Small Page support
+
+ifeq ($(NANDSP),1)
+	@echo "  * Small Page NAND support";
+	@echo "#define MV_SMALL_PAGE" >> $(obj)include/config.h ;
+	@echo "CONFIG_NAND_SP = y" >> $(obj)include/config.mk
+else
+	@echo "  * Large Page NAND support";
+	@echo "#define MV_LARGE_PAGE" >> $(obj)include/config.h ;
+	@echo "CONFIG_NAND_LP = y" >> $(obj)include/config.mk
+endif
+
+#=================
+# NFC support
+#=================
+ifeq ($(NFC),1)
+	@echo "  * NAND Flash Controller Support";
+	@echo "#define CONFIG_MV_NFC_SUPPORT" >> $(obj)include/config.h
+else
+	@echo "  * Legacy NAND Flash Controller Support";
+	@echo "#define CONFIG_MV_LEGACY_NAND" >> $(obj)include/config.h
+endif
+endif
+
+#=================
+# SPI support
+#=================
+ifeq ($(SPI),1)
+	@echo "  * SPI support";
+	@echo "#define MV_SEC_256K" >> $(obj)include/config.h ;
+	@echo "#define MV_SPI" >> $(obj)include/config.h;
+endif
+# Boot from SPI support
+ifeq ($(SPIBOOT),1)
+	@echo "  * Boot from SPI support";
+	@echo "#define MV_SEC_256K" >> $(obj)include/config.h ;
+	@echo "#define MV_SPI" >> $(obj)include/config.h;
+	@echo "#define MV_SPI_BOOT" >> $(obj)include/config.h;
+	@echo "SPI_BOOT = y" >> $(obj)include/config.mk;
+	cp board/mv_feroceon/config_kw2/u-boot-sec256k.lds cpu/arm926ejs/u-boot.lds;
+endif
+
+#=================
+# NOR support
+#=================
+# Boot from NOR support
+ifeq ($(NORBOOT),1)
+	@echo "  * Boot from NOR support";
+	@echo "#define MV_SEC_128K" >> $(obj)include/config.h ;
+	@echo "#define MV_NOR_BOOT" >> $(obj)include/config.h;
+	@echo "NOR_BOOT = y" >> $(obj)include/config.mk;
+	cp board/mv_feroceon/config_kw2/u-boot-sec128k.lds cpu/arm926ejs/u-boot.lds;
+endif
+ifeq ($(NOR),1)
+	@echo "  * NOR support";
+	@echo "#define MV_SEC_128K" >> $(obj)include/config.h ;
+	@echo "#define MV_NOR" >> $(obj)include/config.h;
+endif
+
+#=================
+# BOOTROM support
+#=================
+ifeq ($(BOOTROM),1)
+	@echo "  * BOOTROM support";
+	@echo "#define MV_BOOTROM" >> $(obj)include/config.h ;
+ifeq ($(NBOOT),1)
+	@cp board/mv_feroceon/config_kw2/u-boot-sec64k-header-nand.lds board/mv_feroceon/config_kw2/u-boot.lds;
+else
+	@cp board/mv_feroceon/config_kw2/u-boot-sec64k-header.lds board/mv_feroceon/config_kw2/u-boot.lds;
+endif
+endif
+
+	echo "#include <configs/mv_kw2.h>" >> $(obj)include/config.h;
+
+#=================
+# JFFS2 support
+#=================
+ifeq ($(JFFS2),1)
+	@echo "  * JFFS2 support";
+	@echo "#define MV_JFFS2" >> $(obj)include/config.h
+	@echo "MV_JFFS2_SUPPORT = y" >> $(obj)include/config.mk
+endif
+
+#########################################################################
+## END of Marvell KW2 based Socs
+#########################################################################
+#########################################################################
 ## 74xx/7xx Systems
 #########################################################################
 
@@ -3670,8 +3975,9 @@ clean:
 	       $(obj)examples/standalone/timer
 	@rm -f $(obj)examples/api/demo{,.bin}
 	@rm -f $(obj)tools/bmp_logo	   $(obj)tools/easylogo/easylogo  \
-	       $(obj)tools/env/{fw_printenv,fw_setenv}			  \
-	       $(obj)tools/envcrc					  \
+	       $(obj)tools/env/{fw_printenv,fw_setenv}		\
+	       $(obj)tools/envcrc					\
+	       $(obj)tools/doimage				\
 	       $(obj)tools/gdb/{astest,gdbcont,gdbsend}			  \
 	       $(obj)tools/gen_eth_addr    $(obj)tools/img2srec		  \
 	       $(obj)tools/mkimage	   $(obj)tools/mpc86x_clk	  \
@@ -3702,6 +4008,7 @@ clobber:	clean
 		$(obj)cscope.* $(obj)*.*~
 	@rm -f $(obj)u-boot $(obj)u-boot.map $(obj)u-boot.hex $(ALL)
 	@rm -f $(obj)tools/{env/crc32.c,inca-swap-bytes}
+	@rm -f u-boot-${MV_OUTPUT}
 	@rm -f $(obj)cpu/mpc824x/bedbug_603e.c
 	@rm -f $(obj)include/asm/proc $(obj)include/asm/arch $(obj)include/asm
 	@[ ! -d $(obj)nand_spl ] || find $(obj)nand_spl -name "*" -type l -print | xargs rm -f

@@ -34,7 +34,7 @@
 #include <spi_flash.h>
 
 #include "spi_flash_internal.h"
-
+/*#define debug(fmt,args...)	printf (fmt ,##args)*/
 /* MX25xx-specific commands */
 #define CMD_MX25XX_WREN		0x06	/* Write Enable */
 #define CMD_MX25XX_WRDI		0x04	/* Write Disable */
@@ -48,8 +48,12 @@
 #define CMD_MX25XX_CE		0xc7	/* Chip Erase */
 #define CMD_MX25XX_DP		0xb9	/* Deep Power-down */
 #define CMD_MX25XX_RES		0xab	/* Release from DP, and Read Signature */
+#define CMD_MX25XX_EN4B		0xb7	/* Enter 4-byte mode */
 
 #define MACRONIX_SR_WIP		(1 << 0)	/* Write-in-Progress */
+
+#define MX_PROTECT_ALL		0x3C
+#define MX_SRWD			0x80
 
 struct macronix_spi_flash_params {
 	u16 idcode;
@@ -57,6 +61,7 @@ struct macronix_spi_flash_params {
 	u16 pages_per_sector;
 	u16 sectors_per_block;
 	u16 nr_blocks;
+	u8  addr_cycles;
 	const char *name;
 };
 
@@ -71,13 +76,14 @@ static inline struct macronix_spi_flash *to_macronix_spi_flash(struct spi_flash
 	return container_of(flash, struct macronix_spi_flash, flash);
 }
 
-static const struct macronix_spi_flash_params macronix_spi_flash_table[] = {
+static struct macronix_spi_flash_params macronix_spi_flash_table[] = {
 	{
 		.idcode = 0x2015,
 		.page_size = 256,
 		.pages_per_sector = 16,
 		.sectors_per_block = 16,
 		.nr_blocks = 32,
+		.addr_cycles = 3,
 		.name = "MX25L1605D",
 	},
 	{
@@ -86,6 +92,7 @@ static const struct macronix_spi_flash_params macronix_spi_flash_table[] = {
 		.pages_per_sector = 16,
 		.sectors_per_block = 16,
 		.nr_blocks = 64,
+		.addr_cycles = 3,
 		.name = "MX25L3205D",
 	},
 	{
@@ -94,6 +101,7 @@ static const struct macronix_spi_flash_params macronix_spi_flash_table[] = {
 		.pages_per_sector = 16,
 		.sectors_per_block = 16,
 		.nr_blocks = 128,
+		.addr_cycles = 3,
 		.name = "MX25L6405D",
 	},
 	{
@@ -102,7 +110,17 @@ static const struct macronix_spi_flash_params macronix_spi_flash_table[] = {
 		.pages_per_sector = 16,
 		.sectors_per_block = 16,
 		.nr_blocks = 256,
+		.addr_cycles = 3,
 		.name = "MX25L12805D",
+	},
+	{
+		.idcode = 0x2019,
+		.page_size = 256,
+		.pages_per_sector = 16,
+		.sectors_per_block = 16,
+		.nr_blocks = 512,
+		.addr_cycles = 3,
+		.name = "MX25L25635E",
 	},
 	{
 		.idcode = 0x2618,
@@ -110,6 +128,7 @@ static const struct macronix_spi_flash_params macronix_spi_flash_table[] = {
 		.pages_per_sector = 16,
 		.sectors_per_block = 16,
 		.nr_blocks = 256,
+		.addr_cycles = 3,
 		.name = "MX25L12855E",
 	},
 };
@@ -154,18 +173,30 @@ static int macronix_read_fast(struct spi_flash *flash,
 	struct macronix_spi_flash *mcx = to_macronix_spi_flash(flash);
 	unsigned long page_addr;
 	unsigned long page_size;
-	u8 cmd[5];
+	u8 cmd[6];
 
 	page_size = mcx->params->page_size;
 	page_addr = offset / page_size;
 
 	cmd[0] = CMD_READ_ARRAY_FAST;
-	cmd[1] = page_addr >> 8;
-	cmd[2] = page_addr;
-	cmd[3] = offset % page_size;
-	cmd[4] = 0x00;
+	switch  (mcx->params->addr_cycles) {
+		case 4:
+			cmd[1] = page_addr >> 16;
+			cmd[2] = page_addr >> 8;
+			cmd[3] = page_addr;
+			cmd[4] = offset % page_size;
+			cmd[5] = 0x00;
+			break;
+		case 3:
+		default:
+			cmd[1] = page_addr >> 8;
+			cmd[2] = page_addr;
+			cmd[3] = offset % page_size;
+			cmd[4] = 0x00;
+			break;
+	}
 
-	return spi_flash_read_common(flash, cmd, sizeof(cmd), buf, len);
+	return spi_flash_read_common(flash, cmd, mcx->params->addr_cycles + 2, buf, len);
 }
 
 static int macronix_write(struct spi_flash *flash,
@@ -178,7 +209,7 @@ static int macronix_write(struct spi_flash *flash,
 	size_t chunk_len;
 	size_t actual;
 	int ret;
-	u8 cmd[4];
+	u8 cmd[5];
 
 	page_size = mcx->params->page_size;
 	page_addr = offset / page_size;
@@ -193,15 +224,26 @@ static int macronix_write(struct spi_flash *flash,
 	ret = 0;
 	for (actual = 0; actual < len; actual += chunk_len) {
 		chunk_len = min(len - actual, page_size - byte_addr);
-
+		
 		cmd[0] = CMD_MX25XX_PP;
-		cmd[1] = page_addr >> 8;
-		cmd[2] = page_addr;
-		cmd[3] = byte_addr;
+		switch  (mcx->params->addr_cycles) {
+			case 4:
+				cmd[1] = page_addr >> 16;
+				cmd[2] = page_addr >> 8;
+				cmd[3] = page_addr;
+				cmd[4] = byte_addr;
+				break;
+			case 3:
+			default:
+				cmd[1] = page_addr >> 8;
+				cmd[2] = page_addr;
+				cmd[3] = byte_addr;
+				break;
+		}
 
 		debug
-		    ("PP: 0x%p => cmd = { 0x%02x 0x%02x%02x%02x } chunk_len = %d\n",
-		     buf + actual, cmd[0], cmd[1], cmd[2], cmd[3], chunk_len);
+		    ("PP: 0x%p => cmd = { 0x%02x 0x%02x%02x%02x%02x } chunk_len = %d\n",
+		     buf + actual, cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], chunk_len);
 
 		ret = spi_flash_cmd(flash->spi, CMD_MX25XX_WREN, NULL, 0);
 		if (ret < 0) {
@@ -209,7 +251,7 @@ static int macronix_write(struct spi_flash *flash,
 			break;
 		}
 
-		ret = spi_flash_cmd_write(flash->spi, cmd, 4,
+		ret = spi_flash_cmd_write(flash->spi, cmd, mcx->params->addr_cycles + 1,
 					  buf + actual, chunk_len);
 		if (ret < 0) {
 			debug("SF: Macronix Page Program failed\n");
@@ -237,9 +279,9 @@ int macronix_erase(struct spi_flash *flash, u32 offset, size_t len)
 {
 	struct macronix_spi_flash *mcx = to_macronix_spi_flash(flash);
 	unsigned long sector_size;
-	size_t actual;
+	size_t current;
 	int ret;
-	u8 cmd[4];
+	u8 cmd[5];
 
 	/*
 	 * This function currently uses sector erase only.
@@ -251,14 +293,21 @@ int macronix_erase(struct spi_flash *flash, u32 offset, size_t len)
 			* mcx->params->sectors_per_block;
 
 	if (offset % sector_size || len % sector_size) {
-		debug("SF: Erase offset/length not multiple of sector size\n");
+		printf("SF: Erase offset/length not multiple of sector size\n");
 		return -1;
 	}
 
 	len /= sector_size;
 	cmd[0] = CMD_MX25XX_BE;
-	cmd[2] = 0x00;
-	cmd[3] = 0x00;
+	switch  (mcx->params->addr_cycles) {
+		case 3:
+		default:
+			cmd[2] = 0x00;
+		case 4:
+			cmd[3] = 0x00;
+			cmd[4] = 0x00;
+			break;
+	}
 
 	ret = spi_claim_bus(flash->spi);
 	if (ret) {
@@ -267,8 +316,20 @@ int macronix_erase(struct spi_flash *flash, u32 offset, size_t len)
 	}
 
 	ret = 0;
-	for (actual = 0; actual < len; actual++) {
-		cmd[1] = (offset / sector_size) + actual;
+	for (current = 0; current < len; current++) {
+		switch (mcx->params->addr_cycles) {
+			case 3:
+			default:
+				cmd[1] = (offset>>16) + ((sector_size>>16) * current);
+				break;
+			case 4:
+				cmd[1] = (offset>>24) + ((sector_size>>24) * current);
+				cmd[2] = (offset>>16) + ((sector_size>>16) * current);
+				break;
+		}
+
+		debug ("Erase => cmd = { 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x } current sector = %d\n",
+				 cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], current);
 
 		ret = spi_flash_cmd(flash->spi, CMD_MX25XX_WREN, NULL, 0);
 		if (ret < 0) {
@@ -276,7 +337,7 @@ int macronix_erase(struct spi_flash *flash, u32 offset, size_t len)
 			break;
 		}
 
-		ret = spi_flash_cmd_write(flash->spi, cmd, 4, NULL, 0);
+		ret = spi_flash_cmd_write(flash->spi, cmd, mcx->params->addr_cycles + 1, NULL, 0);
 		if (ret < 0) {
 			debug("SF: Macronix page erase failed\n");
 			break;
@@ -296,13 +357,65 @@ int macronix_erase(struct spi_flash *flash, u32 offset, size_t len)
 	return ret;
 }
 
+#ifdef CONFIG_SPI_FLASH_PROTECTION
+int macronix_protect(struct spi_flash *flash, int enable)
+{
+	//struct macronix_spi_flash *mcx = to_macronix_spi_flash(flash);
+	int ret;
+	u8 cmd[2];
+	u8 buf[1];
+
+	ret = spi_claim_bus(flash->spi);
+	if (ret) {
+		debug("SF: Unable to claim SPI bus\n");
+		return ret;
+	}
+	cmd[0] = CMD_MX25XX_RDSR;
+	spi_flash_read_common(flash, cmd, 1, buf, 1);
+	
+
+	debug("SF: RDSR value 0x%x\n", buf[1]);
+	ret = 0;
+
+	cmd[0] = CMD_MX25XX_WRSR;
+	if (enable == 1)
+		cmd[1] = MX_SRWD | MX_PROTECT_ALL;
+	else
+		cmd[1] = MX_SRWD;
+
+	ret = spi_flash_cmd(flash->spi, CMD_MX25XX_WREN, NULL, 0);
+	if (ret < 0) {
+		debug("SF: Enabling Write failed\n");
+		return ret;
+	}
+
+	ret = spi_flash_cmd_write(flash->spi, cmd, 2, NULL, 0);
+	if (ret < 0) {
+		debug("SF: Macronix Write Status Register failed\n");
+		return ret;
+	}
+
+	ret = macronix_wait_ready(flash, SPI_FLASH_PROG_TIMEOUT);
+	if (ret < 0) {
+		debug("SF: Macronix page programming timed out\n");
+		return ret;
+	}
+
+/*	debug("SF: Macronix: Successfully Write Status Register %u bytes @ 0x%x\n",
+	      len, offset);*/
+
+	spi_release_bus(flash->spi);
+	return ret;
+}
+#endif
+
 struct spi_flash *spi_flash_probe_macronix(struct spi_slave *spi, u8 *idcode)
 {
-	const struct macronix_spi_flash_params *params;
+	struct macronix_spi_flash_params *params;
 	struct macronix_spi_flash *mcx;
 	unsigned int i;
 	u16 id = idcode[2] | idcode[1] << 8;
-
+		
 	for (i = 0; i < ARRAY_SIZE(macronix_spi_flash_table); i++) {
 		params = &macronix_spi_flash_table[i];
 		if (params->idcode == id)
@@ -327,9 +440,39 @@ struct spi_flash *spi_flash_probe_macronix(struct spi_slave *spi, u8 *idcode)
 	mcx->flash.write = macronix_write;
 	mcx->flash.erase = macronix_erase;
 	mcx->flash.read = macronix_read_fast;
-	mcx->flash.size = params->page_size * params->pages_per_sector
-	    * params->sectors_per_block * params->nr_blocks;
+#ifdef CONFIG_SPI_FLASH_PROTECTION
+	mcx->flash.protect = macronix_protect;
+#endif
+	mcx->flash.size = (params->page_size * params->pages_per_sector
+	    * params->sectors_per_block * params->nr_blocks);
 
+	/* enable 4-byte addressing if the device exceeds 16MiB */
+	if (mcx->flash.size > 0x1000000) {
+		int ret;
+
+		printf("SF: Enabling 4-Byte address mode\n");
+		params->addr_cycles = 4;
+		ret = spi_claim_bus(mcx->flash.spi);
+		if (ret) {
+			printf("SF: Unable to claim SPI bus\n");
+			goto probe_done;
+		}
+	
+		ret = spi_flash_cmd(mcx->flash.spi, CMD_MX25XX_EN4B, NULL, 0);
+		if (ret < 0) {
+			printf("SF: Enabling 4-Byte address mode failed\n");
+			spi_release_bus(mcx->flash.spi);
+			goto probe_done;
+		}
+
+		ret = macronix_wait_ready(&mcx->flash, SPI_FLASH_PROG_TIMEOUT);
+		if (ret < 0)
+			debug("SF: Macronix page programming timed out\n");
+
+		spi_release_bus(mcx->flash.spi);
+	}
+
+probe_done:
 	printf("SF: Detected %s with page size %u, total %u bytes\n",
 	      params->name, params->page_size, mcx->flash.size);
 

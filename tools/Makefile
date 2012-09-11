@@ -102,6 +102,14 @@ OBJ_FILES-$(CONFIG_INCA_IP) += inca-swap-bytes.o
 OBJ_FILES-$(CONFIG_NETCONSOLE) += ncb.o
 OBJ_FILES-y += os_support.o
 
+ifeq ($(VENDOR),mv_feroceon)
+ifeq ($(BOARD),config_kw)
+	TOOLSUBDIRS += doimage_kw
+endif
+ifeq ($(BOARD),config_kw2)
+	TOOLSUBDIRS += doimage_kw2
+endif
+endif
 # Don't build by default
 #ifeq ($(ARCH),ppc)
 #BIN_FILES-y += mpc86x_clk$(SFX)
