@@ -130,24 +130,24 @@ typedef struct {
 
 /* Define the different Ethernet & Sata complex connection options */
 typedef enum {
-	ESC_OPT_RGMIIA_MAC0 = 0x00001,		/* RGMIIA originated from MAC0 */
-	ESC_OPT_RGMIIA_MAC1 = 0x00002,		/* RGMIIA originated from MAC1 */
-	ESC_OPT_RGMIIA_SW_P5 = 0x00004,		/* RGMIIA originated from switch port 5. */
-	ESC_OPT_RGMIIA_SW_P6 = 0x00008,		/* RGMIIA originated from switch port 6. */
-	ESC_OPT_RGMIIB_MAC0 = 0x00010,		/* RGMIIB originated from MAC0 */
-	ESC_OPT_MAC0_2_SW_P4 = 0x00020,		/* MAC0 connected to switch port 4. */
-	ESC_OPT_MAC1_2_SW_P5 = 0x00040,		/* MAC1 connected to switch port 5. */
-	ESC_OPT_GEPHY_MAC1 = 0x00080,		/* GE/FE Phy originated from MAC1 */
-	ESC_OPT_GEPHY_SW_P0 = 0x00100,		/* GE/FE Phy originated from switch port 0 */
-	ESC_OPT_GEPHY_SW_P5 = 0x00200,		/* GE/FE Phy originated from switch port 5 */
-	ESC_OPT_FE3PHY = 0x00400,		/* 3xFE switch phys */
-	ESC_OPT_SGMII_2_SW_P1 = 0x00800,	/* SGMII from switch port 1 */
-	ESC_OPT_SGMII = 0x01000,		/* SGMII from MAC0 */
-	ESC_OPT_QSGMII = 0x02000,		/* QSGMII option */
-	ESC_OPT_SATA = 0x04000,			/* Sata option */
-	ESC_OPT_SGMII_2_5 = 0x08000,		/* SGMII from MAC0 */
-	ESC_OPT_GEPHY_MAC0 = 0x10000,		/* Avanta-MC GE/FE Phy originated from MAC0 */ 
-	ESC_OPT_LP_SERDES_FE_GE_PHY = 0x20000,	/* Avanta-MC LP_SERDES Phy connected to onboard phy */
+	ESC_OPT_RGMIIA_MAC0 = 0x00001,	/* RGMIIA originated from MAC0 */
+	ESC_OPT_RGMIIA_MAC1 = 0x00002,	/* RGMIIA originated from MAC1 */
+	ESC_OPT_RGMIIA_SW_P5 = 0x00004,	/* RGMIIA originated from switch port 5. */
+	ESC_OPT_RGMIIA_SW_P6 = 0x00008,	/* RGMIIA originated from switch port 6. */
+	ESC_OPT_RGMIIB_MAC0 = 0x00010,	/* RGMIIB originated from MAC0 */
+	ESC_OPT_MAC0_2_SW_P4 = 0x00020,	/* MAC0 connected to switch port 4. */
+	ESC_OPT_MAC1_2_SW_P5 = 0x00040,	/* MAC1 connected to switch port 5. */
+	ESC_OPT_GEPHY_MAC1 = 0x00080,	/* GE/FE Phy originated from MAC1 */
+	ESC_OPT_GEPHY_SW_P0 = 0x00100,	/* GE/FE Phy originated from switch port 0 */
+	ESC_OPT_GEPHY_SW_P5 = 0x00200,	/* GE/FE Phy originated from switch port 5 */
+	ESC_OPT_FE3PHY = 0x00400,	/* 3xFE switch phys */
+	ESC_OPT_PCS = 0x00800,		/* PCS from MAC0 */
+	ESC_OPT_SGMII = 0x01000,	/* SGMII from MAC0 */
+	ESC_OPT_QSGMII = 0x02000,	/* QSGMII option */
+	ESC_OPT_SATA = 0x04000,		/* Sata option */
+	ESC_OPT_SGMII_2_5 = 0x08000,	/* SGMII from MAC0 */
+	ESC_OPT_GEPHY_MAC0 = 0x10000,			/* AVANTA-MC  GE/FE Phy originated from MAC0 */ 
+	ESC_OPT_LP_SERDES_FE_GE_PHY = 0x20000,	/* AVANTA-MC  LP SERDES Phy connected to onboard phy */ 
 	ESC_OPT_AUTO = 0x40000,
 	ESC_OPT_ILLEGAL = 0x80000,
 	ESC_OPT_ALL = 0xFFFFF

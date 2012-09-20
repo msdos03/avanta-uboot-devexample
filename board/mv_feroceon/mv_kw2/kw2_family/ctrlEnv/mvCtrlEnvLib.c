@@ -627,10 +627,8 @@ MV_STATUS mvCtrlEthSataComplexBuildConfig(MV_U32 brdModules, MV_ETH_COMPLEX_IF_S
 		enabled |= ESC_OPT_SGMII;
 
 		/* SGMII connected to Switch P1 */
-		if ((ifSrc->swSrc == EC_MAC0_SRC) || (ifSrc->swSrc == EC_MAC0_MAC1_SRC)) {
-			enabled |= ESC_OPT_SGMII_2_SW_P1;
+		if ((ifSrc->swSrc == EC_MAC0_SRC) || (ifSrc->swSrc == EC_MAC0_MAC1_SRC))
 			swExist = 1;
-		}
 	}
 
 	if (swExist) {

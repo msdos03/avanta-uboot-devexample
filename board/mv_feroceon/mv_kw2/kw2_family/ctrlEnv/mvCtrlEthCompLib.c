@@ -227,12 +227,6 @@ MV_STATUS mvEthCompMac2SwitchConfig(MV_U32 ethCompCfg, MV_BOOL muxCfgOnly)
 	/* GbE-MAC-0 to Switch P4 (1000Mbps)    */
 	/* GbE-MAC-1 to Switch P5 (1000Mbps)    */
 
-	/* Force switch reset to load updated configuration */
-	if (MV_REG_READ(MV_ETHCOMP_CTRL_REG(1)) & ETHCC_SWTCH_RESET_MASK) {
-		MV_REG_BIT_RESET(MV_ETHCOMP_CTRL_REG(1), ETHCC_SWTCH_RESET_MASK);
-		mvOsDelay(10);
-	}
-
 	if (muxCfgOnly == MV_FALSE) {
 		/* Set switch phy address */
 		reg = MV_REG_READ(MV_ETHCOMP_CTRL_REG(1));
@@ -267,8 +261,6 @@ MV_STATUS mvEthCompMac2SwitchConfig(MV_U32 ethCompCfg, MV_BOOL muxCfgOnly)
 			portEnabled |= BIT1 | BIT2 | BIT3;
 		if (ethCompCfg & ESC_OPT_QSGMII)
 			portEnabled |= BIT0 | BIT1 | BIT2 | BIT3;
-		if (ethCompCfg & ESC_OPT_SGMII_2_SW_P1)
-			portEnabled |= BIT1; 
 		portEnabled |= BIT4 | BIT5;
 
 		reg |= (portEnabled << ETHCC_SW_PRT_STATE_OFFSET);	/* 0x7E */
@@ -1095,7 +1087,7 @@ MV_STATUS mvEthCompSwP1ToSgmiiConfig(MV_U32 ethCompCfg)
 {
 	MV_U32 reg, port;
 
-	if (!(ethCompCfg & ESC_OPT_SGMII_2_SW_P1))
+	if (!(ethCompCfg & (ESC_OPT_SGMII | ESC_OPT_SGMII_2_5)))
 		return MV_OK;
 
 	/* 3.10. Switch P1 to LP_SERDES_PHY, using TBI
@@ -1176,7 +1168,7 @@ static MV_STATUS mvEthCompSerdesConfig(MV_U32 ethCompCfg)
 	 * Ethernet_Complex_Control_0 register, field "LpphyMode" to "lpphyMode".
 	 */
 	if ((ethCompCfg & (ESC_OPT_SGMII | ESC_OPT_SGMII_2_5)) &&
-	    (!(ethCompCfg & ESC_OPT_SGMII_2_SW_P1)))
+	    (!(ethCompCfg & ESC_OPT_MAC0_2_SW_P4)))
 		tmp = 0x0;
 	else if (ethCompCfg & ESC_OPT_QSGMII)
 		tmp = 0x2;
@@ -1591,13 +1583,14 @@ MV_STATUS mvEthernetComplexInit(void)
 
 		/* SGMII */
 		if (ethCompCfg & (ESC_OPT_SGMII | ESC_OPT_SGMII_2_5)) {
-			if (ethCompCfg & ESC_OPT_SGMII_2_SW_P1) {
+			if (ethCompCfg & ESC_OPT_MAC0_2_SW_P4) {
 				/*  Switch port 1 to SGMII. */
 				mvEthCompSwP1ToSgmiiConfig(ethCompCfg);
 			} else {
 				/*  MAC0 to SGMII. */
 				mvEthCompMac0ToSgmiiConfig(ethCompCfg);
 			}
+
 		}
 
 		/*  Reset the switch after all configurations are done. */
