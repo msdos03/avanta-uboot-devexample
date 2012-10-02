@@ -146,6 +146,11 @@ extern MV_U32 nandEnvBase;
 #endif
 void mvDramWinConfig(void);
 
+#ifdef LARGEKERNEL
+#define  LOAD_ADDR_STR "0x3000000"
+#else
+#define  LOAD_ADDR_STR "0x2000000"
+#endif
 /* Define for SDK 2.0 */
 //int raise(void) {return 0;}
 
@@ -340,7 +345,7 @@ void dual_image_vars_set(void)
 	setenv_if_undefined("imgB_ubi_mtd", "5");
 	setenv_if_undefined("imgA_ubi_name", "rootfsU");
 	setenv_if_undefined("imgB_ubi_name", "rootfsB");
-	setenv_if_undefined("imgA_addr", "0x200000");
+	setenv_if_undefined("imgA_addr", LOAD_ADDR_STR);
 	setenv_if_undefined("imgB_addr", "0x6600000");
 
 	setenv_if_undefined("get_mtd_list",
@@ -703,39 +708,39 @@ ethaddr=${ethaddr} eth1addr=${eth1addr} ethmtu=${ethmtu} eth1mtu=${eth1mtu} ${ne
 	env = getenv("bootcmd");
 	if(!env)
 #if defined(MV_INCLUDE_TDM) && defined(MV_INC_BOARD_QD_SWITCH)
-		setenv("bootcmd","tftpboot 0x2000000 ${image_name};\
+		setenv("bootcmd","tftpboot "LOAD_ADDR_STR" ${image_name};\
 setenv bootargs ${console} ${bootargs_root} nfsroot=${serverip}:${rootpath} \
-ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig} ${mvPhoneConfig};  bootm 0x2000000; ");
+ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig} ${mvPhoneConfig};  bootm "LOAD_ADDR_STR"; ");
 #elif defined(MV_INC_BOARD_QD_SWITCH)
-		setenv("bootcmd","tftpboot 0x2000000 ${image_name};\
+		setenv("bootcmd","tftpboot "LOAD_ADDR_STR" ${image_name};\
 setenv bootargs ${console} ${bootargs_root} nfsroot=${serverip}:${rootpath} \
-ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig};  bootm 0x2000000; ");
+ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig};  bootm "LOAD_ADDR_STR"; ");
 #elif defined(MV_INCLUDE_TDM)
-		setenv("bootcmd","tftpboot 0x2000000 ${image_name};\
+		setenv("bootcmd","tftpboot "LOAD_ADDR_STR" ${image_name};\
 setenv bootargs ${console} ${bootargs_root} nfsroot=${serverip}:${rootpath} \
-ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig} ${mvPhoneConfig};  bootm 0x2000000; ");
+ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig} ${mvPhoneConfig};  bootm "LOAD_ADDR_STR"; ");
 #else
 
-		setenv("bootcmd","tftpboot 0x2000000 ${image_name};\
+		setenv("bootcmd","tftpboot "LOAD_ADDR_STR" ${image_name};\
 setenv bootargs ${console} ${bootargs_root} nfsroot=${serverip}:${rootpath} \
-ip=${ipaddr}:${serverip}${bootargs_end};  bootm 0x2000000; ");
+ip=${ipaddr}:${serverip}${bootargs_end};  bootm "LOAD_ADDR_STR"; ");
 #endif
 #endif /* (CONFIG_BOOTDELAY >= 0) */
 
 	env = getenv("standalone");
 	if(!env)
 #if defined(MV_INCLUDE_TDM) && defined(MV_INC_BOARD_QD_SWITCH)
-		setenv("standalone","fsload 0x2000000 ${image_name};setenv bootargs ${console} root=/dev/mtdblock0 rw \
-ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig} ${mvPhoneConfig}; bootm 0x2000000;");
+		setenv("standalone","fsload "LOAD_ADDR_STR" ${image_name};setenv bootargs ${console} root=/dev/mtdblock0 rw \
+ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig} ${mvPhoneConfig}; bootm "LOAD_ADDR_STR";");
 #elif defined(MV_INC_BOARD_QD_SWITCH)
-		setenv("standalone","fsload 0x2000000 ${image_name};setenv bootargs ${console} root=/dev/mtdblock0 rw \
-ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig}; bootm 0x2000000;");
+		setenv("standalone","fsload "LOAD_ADDR_STR" ${image_name};setenv bootargs ${console} root=/dev/mtdblock0 rw \
+ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig}; bootm "LOAD_ADDR_STR";");
 #elif defined(MV_INCLUDE_TDM)
-		setenv("standalone","fsload 0x2000000 ${image_name};setenv bootargs ${console} root=/dev/mtdblock0 rw \
-ip=${ipaddr}:${serverip}${bootargs_end} ${mvPhoneConfig}; bootm 0x2000000;");
+		setenv("standalone","fsload "LOAD_ADDR_STR" ${image_name};setenv bootargs ${console} root=/dev/mtdblock0 rw \
+ip=${ipaddr}:${serverip}${bootargs_end} ${mvPhoneConfig}; bootm "LOAD_ADDR_STR";");
 #else
-		setenv("standalone","fsload 0x2000000 ${image_name};setenv bootargs ${console} root=/dev/mtdblock0 rw \
-ip=${ipaddr}:${serverip}${bootargs_end}; bootm 0x2000000;");
+		setenv("standalone","fsload "LOAD_ADDR_STR" ${image_name};setenv bootargs ${console} root=/dev/mtdblock0 rw \
+ip=${ipaddr}:${serverip}${bootargs_end}; bootm "LOAD_ADDR_STR";");
 #endif
 
 	/* Set boodelay to 3 sec, if Monitor extension are disabled */
@@ -1372,6 +1377,3 @@ void mvDramWinConfig(void)
 		mvAhbToMbusWinEnable(0,MV_FALSE); /* disable crossbar*/ 
 	}
 }
-
-
-

@@ -298,20 +298,28 @@ BINCPY = cp -f u-boot.bin u-boot-${MV_OUTPUT}.bin
 ELFCPY = cp -f u-boot u-boot-${MV_OUTPUT}
 SRECCPY = cp -f u-boot.srec u-boot-${MV_OUTPUT}.srec
 
+ifeq ($(LARGEKERNEL),1)
+DEST_ADDR=0x1000000
+EXEC_ADDR=0x1080000
+else
+DEST_ADDR=0x600000
+EXEC_ADDR=0x680000
+endif
+
 DRAM_REGS_FILE=dramregs_$(MV_DDR_FREQ)_$(DDR_TYPE)$(DDR_ACCESS).txt
 ifeq ($(CONFIG_NAND_SP),y)
-DO_IMAGE_NAND = ./tools/doimage -T nand -D 0x600000 -E 0x680000 -P 512 -L ${BLK_SIZE} -N ${NAND_TECH} -R \
+DO_IMAGE_NAND = ./tools/doimage -T nand -D ${DEST_ADDR} -E ${EXEC_ADDR} -P 512 -L ${BLK_SIZE} -N ${NAND_TECH} -R \
 $(DRAM_REGS_FILE) u-boot-${MV_OUTPUT}.bin u-boot-${MV_OUTPUT}_$(MV_DDR_FREQ)_$(DDR_TYPE)_nand.bin
 endif
 ifeq ($(CONFIG_NAND_LP),y)
-DO_IMAGE_NAND = ./tools/doimage -T nand -D 0x600000 -E 0x680000 -P 2048 -L ${BLK_SIZE} -N ${NAND_TECH} -R \
+DO_IMAGE_NAND = ./tools/doimage -T nand -D ${DEST_ADDR} -E ${EXEC_ADDR} -P 2048 -L ${BLK_SIZE} -N ${NAND_TECH} -R \
 $(DRAM_REGS_FILE) u-boot-${MV_OUTPUT}.bin u-boot-${MV_OUTPUT}_$(MV_DDR_FREQ)_$(DDR_TYPE)_nand.bin
 endif
-DO_IMAGE_UART = ./tools/doimage -T uart -D 0x600000 -E 0x680000 -R \
+DO_IMAGE_UART = ./tools/doimage -T uart -D ${DEST_ADDR} -E ${EXEC_ADDR} -R \
 $(DRAM_REGS_FILE) u-boot-${MV_OUTPUT}.bin u-boot-${MV_OUTPUT}_$(MV_DDR_FREQ)_$(DDR_TYPE)_uart.bin
-DO_IMAGE_SPI = ./tools/doimage -T flash -D 0x600000 -E 0x680000 -R \
+DO_IMAGE_SPI = ./tools/doimage -T flash -D ${DEST_ADDR} -E ${EXEC_ADDR} -R \
 $(DRAM_REGS_FILE) u-boot-${MV_OUTPUT}.bin u-boot-${MV_OUTPUT}_$(MV_DDR_FREQ)_$(DDR_TYPE)_spi.bin
-DO_IMAGE_NOR = ./tools/doimage -T flash -D 0x600000 -E 0x680000 -R \
+DO_IMAGE_NOR = ./tools/doimage -T flash -D ${DEST_ADDR} -E ${EXEC_ADDR} -R \
 $(DRAM_REGS_FILE) u-boot-${MV_OUTPUT}.bin u-boot-${MV_OUTPUT}_$(MV_DDR_FREQ)_$(DDR_TYPE)_nor.bin
 
 all:		$(ALL)
@@ -2887,6 +2895,14 @@ ifeq ($(NOR),1)
 	@echo "  * NOR support";
 	@echo "#define MV_SEC_128K" >> $(obj)include/config.h ;
 	@echo "#define MV_NOR" >> $(obj)include/config.h;
+endif
+
+#=================
+# LARGEKERNEL support
+#=================
+ifeq ($(LARGEKERNEL),1)
+	@echo "  * LARGEKERNEL support";
+	@echo "#define LARGEKERNEL" >> $(obj)include/config.h ;
 endif
 
 #=================
