@@ -223,6 +223,8 @@ void mvBoardEgigaPhyInit(void)
 			portEnabled |= BIT1 | BIT2 | BIT3;
 		if (ethComplex & ESC_OPT_QSGMII)
 			portEnabled |= BIT0 | BIT1 | BIT2 | BIT3;
+		if (ethComplex & ESC_OPT_SGMII_2_SW_P1)
+			portEnabled |= BIT1;
 		mvEthKW2SwitchBasicInit(portEnabled);
 
 		if (ethComplex & ESC_OPT_QSGMII) {

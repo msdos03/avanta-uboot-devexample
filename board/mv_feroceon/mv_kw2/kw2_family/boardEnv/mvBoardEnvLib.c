@@ -347,7 +347,11 @@ MV_BOOL mvBoardIsPortInSgmii(MV_U32 ethPortNum)
 			return MV_TRUE;
 		return MV_FALSE;
 	}
+
 	if (RD_88F6601_MC_ID == mvBoardIdGet())
+		return MV_FALSE;
+
+	if ((ethPortNum > 0) || (ethCompOpt & ESC_OPT_SGMII_2_SW_P1))
 		return MV_FALSE;
 
 	return ((ethCompOpt & (ESC_OPT_SGMII | ESC_OPT_SGMII_2_5)) ? MV_TRUE : MV_FALSE);
@@ -840,6 +844,11 @@ MV_STATUS mvBoardSwitchInfoUpdate(MV_VOID)
 			BOARD_INFO(boardId)->pSwitchInfo[swIdx].switchPort[1] = 2;
 			BOARD_INFO(boardId)->pSwitchInfo[swIdx].switchPort[2] = 3;
 			i = 3;
+		}
+		else if (ethCompOpt & ESC_OPT_SGMII_2_SW_P1) {
+			BOARD_INFO(boardId)->pSwitchInfo[swIdx].switchPort[0] = -1;
+			BOARD_INFO(boardId)->pSwitchInfo[swIdx].switchPort[1] = 0;
+			i = 2;
 		}
 
 		if (ethCompOpt & ESC_OPT_GEPHY_SW_P0)
@@ -1689,9 +1698,6 @@ MV_VOID mvBoardEthComplexConfigSet(MV_U32 ethConfig)
 			BOARD_INFO(boardId)->pBoardMacInfo[0].boardMacSpeed = BOARD_MAC_SPEED_1000M;
 		if (mvBoardIsInternalSwitchConnected(1))
 			BOARD_INFO(boardId)->pBoardMacInfo[1].boardMacSpeed = BOARD_MAC_SPEED_1000M;
-/* 		if (ethConfig & (ESC_OPT_SGMII | ESC_OPT_SGMII_2_5))
-			BOARD_INFO(boardId)->pBoardMacInfo[0].boardMacSpeed = BOARD_MAC_SPEED_1000M;
-*/
 	}
 	return;
 }
@@ -2258,8 +2264,12 @@ MV_VOID mvBoardMppModuleTypePrint(MV_VOID)
 		mvOsOutput("       QSGMII Module.\n");
 
 	/* SGMII */
-	if (ethConfig & ESC_OPT_SGMII)
-		mvOsOutput("       SGMII Module.\n");
+	if (ethConfig & ESC_OPT_SGMII) {
+		if (ethConfig & ESC_OPT_SGMII_2_SW_P1)
+			mvOsOutput("       SGMII Module on Switch port #1.\n");
+		else
+			mvOsOutput("       SGMII Module on MAC0.\n");
+	}
 
 	/* SGMII-2.5G */
 	if (ethConfig & ESC_OPT_SGMII_2_5)
@@ -3243,6 +3253,7 @@ MV_STATUS mvBoardEthSataModulesScan(MV_U32 *modules, MV_ETH_COMPLEX_IF_SOURCES *
 
 	if ((!(result & MV_BOARD_MODULE_QSGMII_ID)) &&
 	    (!((result & MV_BOARD_MODULE_SGMII_ID) && (ethSrcCfg->swSrc == EC_MAC0_SRC))) &&
+	    (!((result & MV_BOARD_MODULE_SGMII_ID) && (ethSrcCfg->swSrc == EC_MAC0_MAC1_SRC))) &&
 	    (ethSrcCfg->swSrc != EC_SRC_NONE))
 		result |= MV_BOARD_MODULE_4FE_PHY_ID;
 

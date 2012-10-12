@@ -177,6 +177,10 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 	if (!flash)
 		goto err_manufacturer_probe;
 
+#if defined(MV88F6601)
+	spi_init_done(flash->size);
+#endif
+
 	spi_release_bus(spi);
 
 	return flash;
