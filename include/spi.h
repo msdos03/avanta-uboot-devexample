@@ -197,4 +197,12 @@ static inline int spi_w8r8(struct spi_slave *slave, unsigned char byte)
 	return ret < 0 ? ret : din[1];
 }
 
+/*-----------------------------------------------------------------------
+ * Complete SPI initialization.
+ * This function is provided by the board code to complete all required SPI
+ * initialization tasks, for example: set read direct mode once we know the
+ * flash size etc.
+ */
+void spi_init_done(unsigned int size);
+
 #endif	/* _SPI_H_ */

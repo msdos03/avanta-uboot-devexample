@@ -37,7 +37,7 @@ ror "Both CONFIG_ENV_SECT_SIZE and CONFIG_ENV_SIZE undefined
 /************/
 /* VERSIONS */
 /************/
-#define CONFIG_IDENT_STRING	" Marvell version: 4.1.1_PQ"
+#define CONFIG_IDENT_STRING	" Marvell version: 4.1.2_PQ"
 
 /* version number passing when loading Kernel */
 #define VER_NUM 0x09080000           /* 2009.08 */

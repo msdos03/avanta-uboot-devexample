@@ -244,4 +244,19 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 
 	return 0;
 }
+
+#if defined(MV88F6601)
+void spi_init_done(unsigned int size)
+{
+	u32 config;
+
+	/* Enable SPI direct read/write mode */
+	if (size > 0x1000000) {
+		config = MV_REG_READ(MV_SPI_IF_CONFIG_REG(0));
+		config |= (0x3 << 8);
+		MV_REG_WRITE(MV_SPI_IF_CONFIG_REG(0), config);
+	}
+}
+#endif /* MV88F6601 */
+
 #endif

@@ -128,7 +128,7 @@ disclaimer.
 #define PEX1_IO_SIZE _16M
 
 /* Device: CS0 - NAND, CS1 - SPI, CS2 - Boot ROM, CS3 - Boot device */
-#define NFLASH_CS_BASE 0xf9000000
+#define NFLASH_CS_BASE 0xfa000000
 #define NFLASH_CS_SIZE _2M
 
 #define NOR_CS_BASE	0x98000000
@@ -143,10 +143,10 @@ disclaimer.
 #endif
 
 #define SPI_CS_BASE 0xf8000000
-#define SPI_CS_SIZE _16M
+#define SPI_CS_SIZE _32M
 
 #define DEVICE_CS1_BASE SPI_CS_BASE
-#define DEVICE_CS1_SIZE _16M
+#define DEVICE_CS1_SIZE _32M
 
 #define DEVICE_CS2_BASE 0xf4000000
 #define DEVICE_CS2_SIZE _1M
