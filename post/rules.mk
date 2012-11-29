@@ -22,6 +22,7 @@
 #
 
 include $(TOPDIR)/config.mk
+include $(TOPDIR)/board/mv_feroceon/config_kw2/mvRules.mk
 
 COBJS	:= $(COBJS-y)
 AOBJS	:= $(AOBJS-y)
