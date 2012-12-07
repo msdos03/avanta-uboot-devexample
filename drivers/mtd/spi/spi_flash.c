@@ -16,6 +16,15 @@ size_t print1block=4096;
 int countDot=0;
 #endif
 
+#ifdef CONFIG_MTD_DEVICE
+#include <linux/mtd/mtd.h>
+
+#define MCX_PAGE_SIZE      256
+#define MCX_PAGE_PER_BLOCK 256
+
+struct mtd_info nor_mtd;
+#endif
+
 int spi_flash_cmd(struct spi_slave *spi, u8 cmd, void *response, size_t len)
 {
 	unsigned long flags = SPI_XFER_BEGIN;
@@ -176,6 +185,21 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 
 	if (!flash)
 		goto err_manufacturer_probe;
+
+#ifdef CONFIG_MTD_DEVICE
+	/*
+	 * Add MTD device for the mtdparts infrastructure.
+	 */
+	memset(&nor_mtd, 0, sizeof(struct mtd_info));
+
+	nor_mtd.name = "nor0";
+	nor_mtd.size = flash->size;
+	nor_mtd.writesize = MCX_PAGE_SIZE;
+	nor_mtd.erasesize = MCX_PAGE_SIZE * MCX_PAGE_PER_BLOCK;
+	nor_mtd.priv = flash;
+
+	add_mtd_device(&nor_mtd);
+#endif
 
 #if defined(MV88F6601)
 	spi_init_done(flash->size);

@@ -130,11 +130,11 @@ extern unsigned long flash_add_base_addr (uint flash_index, ulong flash_base_add
 //extern MV_VOID mvBoardEgigaPhySwitchInit(void);
 #endif 
 
-#if defined(CONFIG_CMD_NAND)
+//#if defined(CONFIG_CMD_NAND)
 /* Define for SDK 2.0 */
 int __aeabi_unwind_cpp_pr0(int a,int b,int c) {return 0;}
 int __aeabi_unwind_cpp_pr1(int a,int b,int c) {return 0;}
-#endif
+//#endif
 
 extern nand_info_t nand_info[];       /* info for NAND chips */
 
@@ -422,6 +422,19 @@ void misc_init_r_env(void){
 		else
 			setenv("console","console=ttyS0,115200");
 	}
+
+#ifdef CONFIG_MTD_PARTITIONS
+	env = getenv("mtdids");
+	if(!env) {
+		setenv("mtdids", MTDIDS_DEFAULT);
+	}
+	env = getenv("mtdparts");
+	if(!env) {
+		setenv("mtdparts", MTDPARTS_DEFAULT);
+	}
+	setenv("partition", NULL);
+#endif
+
 /*#if defined(MV_SPI_BOOT)
 
 	sprintf(buff,"console=ttyS0,115200 mtdparts=spi_flash:0x%x@0(uboot)ro,0x%x@0x%x(root)",
@@ -717,7 +730,7 @@ setenv bootargs ${console} ${bootargs_root} nfsroot=${serverip}:${rootpath} \
 ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig};  bootm "LOAD_ADDR_STR"; ");
 #elif defined(MV_INCLUDE_TDM)
 		setenv("bootcmd","tftpboot "LOAD_ADDR_STR" ${image_name};\
-setenv bootargs ${console} ${bootargs_root} nfsroot=${serverip}:${rootpath} \
+setenv bootargs ${console} ${mtdparts} ${bootargs_root} nfsroot=${serverip}:${rootpath} \
 ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig} ${mvPhoneConfig};  bootm "LOAD_ADDR_STR"; ");
 #else
 
@@ -1017,7 +1030,11 @@ int misc_init_r (void)
 	/* Init the PHY or Switch of the board */
 	mvBoardEgigaPhyInit();
 #endif /* #if defined(MV_INCLUDE_UNM_ETH) || defined(MV_INCLUDE_GIG_ETH) */
-	
+
+#ifdef CONFIG_MTD_DEVICE
+	mtdparts_init();
+#endif
+
 	return 0;
 }
 

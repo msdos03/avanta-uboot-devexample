@@ -450,6 +450,17 @@ extern unsigned int mvTclkGet(void);
 	#define CONFIG_ENV_SPI_BUS		0
 	//#define MV_SPI_CONN_TO_EXT_FLASH
 
+	#define CONFIG_CMD_MTDPARTS
+	#define CONFIG_MTD_DEVICE	/* needed for mtdparts commands */
+	#define CONFIG_MTD_PARTITIONS
+	#define MTDIDS_DEFAULT		"nor0=spi_flash"
+	#define MTDPARTS_DEFAULT	"mtdparts=spi_flash:512k(u-boot),"	\
+					"128k(env1),"			\
+					"128k(env2),"			\
+					"14m(image1),"		\
+					"14m(image2),"		\
+					"-(user_data)"
+
 	/* Boot from SPI settings */
 	#if defined(MV_SPI_BOOT)
 		#define CONFIG_ENV_IS_IN_SPI_FLASH
