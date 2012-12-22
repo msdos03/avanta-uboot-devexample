@@ -111,6 +111,7 @@ extern unsigned int mvTclkGet(void);
 #define CONFIG_CMD_RCVR
 #define CONFIG_CMD_SAR
 //#define CONFIG_CMD_UBIFS
+#define CONFIG_CMD_PRISM
 
 #if (defined(MV_INCLUDE_PEX) | defined(MV_INCLUDE_PCI))
 #define CONFIG_PCI           /* pci support               */

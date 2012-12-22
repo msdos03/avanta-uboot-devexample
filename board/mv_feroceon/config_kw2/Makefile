@@ -38,7 +38,7 @@ HAL_IF_OBJS = $(HAL_IF_DIR)/mvSysCesa.o $(HAL_IF_DIR)/mvSysDdr.o \
 
 
 SOC_OBJS = $(SOC_DIR)/mv_cmd.o $(SOC_DIR)/mv_dram.o $(SOC_DIR)/mv_main.o $(SOC_DIR)/mv_phy.o \
-		$(SOC_DIR)/cmd_sar.o $(SOC_ENV_DIR)/mvCtrlEnvLib.o \
+		$(SOC_DIR)/cmd_sar.o $(SOC_ENV_DIR)/mvCtrlEnvLib.o $(SOC_DIR)/prism_cmd.o\
 		$(SOC_ENV_DIR)/mvCtrlEnvAddrDec.o $(SOC_ENV_DIR)/mvCtrlEthCompLib.o \
 		$(SOC_SYS_DIR)/mvAhbToMbus.o $(SOC_SYS_DIR)/mvCpuIf.o \
 		$(SOC_CPU_DIR)/mvCpu.o $(SOC_DEVICE_DIR)/mvDevice.o
