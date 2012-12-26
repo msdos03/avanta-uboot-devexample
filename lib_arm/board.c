@@ -49,6 +49,9 @@
 #include <nand.h>
 #include <onenand_uboot.h>
 #include <mmc.h>
+#ifdef CONFIG_POST
+#include <post.h>
+#endif
 
 #if defined(CONFIG_MARVELL)
  extern unsigned int whoAmI(void);
@@ -388,6 +391,21 @@ void start_armboot (void)
 			hang ();
 		}
 	}
+
+#ifdef CONFIG_POST
+	/* For ARM, relocation happens in start.S. When this function is
+	 * called, relocation has already happened. So no need to do two
+	 * step post_run on ROM and RAM.
+	 */
+	post_bootmode_init();
+	/* POST_ROM is not necessarily needed, but since memory test is defined
+	 * as POST_ROM test in general, we will run both POST_ROM and POST_RAM
+	 * tests.
+	 */
+	post_run (NULL, POST_ROM | post_bootmode_get(0));
+	post_run (NULL, POST_RAM | post_bootmode_get(0));
+	post_output_backlog();
+#endif
 
 	/* armboot_start is defined in the board-specific linker script */
 	mem_malloc_init (_armboot_start - CONFIG_SYS_MALLOC_LEN);

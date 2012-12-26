@@ -60,6 +60,10 @@ typedef	struct	global_data {
 	phys_size_t	ram_size;	/* RAM size alior: was unsigned long ram_size; in 1.1.4 code*/
 	unsigned int ddr_clk;
 #endif
+#if defined(CONFIG_POST) || defined(CONFIG_LOGBUFFER)
+	unsigned long	post_log_word;  /* Record POST activities */
+	unsigned long	post_init_f_time;  /* When post_init_f started */
+#endif
 
 } gd_t;
 

@@ -456,6 +456,26 @@ int memory_post_test (int flags)
 {
 	int ret = 0;
 	bd_t *bd = gd->bd;
+#if defined(CONFIG_ARM) && defined(CONFIG_MARVELL)
+	unsigned long memstart = CONFIG_SYS_MEMTEST_START;
+	unsigned long memsize = CONFIG_SYS_MEMTEST_END + 1 -
+			CONFIG_SYS_MEMTEST_START;
+	if (flags & POST_SLOWTEST) {
+		ret = memory_post_tests (memstart, memsize);
+	} else {
+
+		unsigned long i;
+
+		for (i = 0; i < (memsize >> 20) && ret == 0; i++) {
+			if (ret == 0)
+				ret = memory_post_tests (memstart + i << 20,
+							 0x800);
+			if (ret == 0)
+				ret = memory_post_tests (memstart + (i << 20)
+							 + 0xff800, 0x800);
+		}
+	}
+#else
 	unsigned long memsize = (bd->bi_memsize >= 256 << 20 ?
 				 256 << 20 : bd->bi_memsize) - (1 << 20);
 
@@ -476,6 +496,7 @@ int memory_post_test (int flags)
 				ret = memory_post_tests ((i << 20) + 0xff800, 0x800);
 		}
 	}
+#endif
 
 	return ret;
 }

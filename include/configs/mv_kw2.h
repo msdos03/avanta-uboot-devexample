@@ -90,6 +90,11 @@ extern unsigned int mvTclkGet(void);
 #define CONFIG_SYS_64BIT_VSPRINTF
 #define CONFIG_SYS_64BIT_STRTOUL
 
+/******************/
+/*  POST support  */
+/******************/
+#define CONFIG_POST	(CONFIG_SYS_POST_ETHER | CONFIG_SYS_POST_MEMORY)
+
 /* commands */
 
 #define CONFIG_BOOTP_MASK	(CONFIG_BOOTP_DEFAULT | \
@@ -205,8 +210,8 @@ extern unsigned int mvTclkGet(void);
 /* we also check for the env parameter CASset.					  */
 #define MV_MIN_CAL
 
-#define CONFIG_SYS_MEMTEST_START     0x00400000
-#define CONFIG_SYS_MEMTEST_END       0x007fffff
+#define CONFIG_SYS_MEMTEST_START     0x00000000
+#define CONFIG_SYS_MEMTEST_END       (TEXT_BASE - 1 - (1 << 20))
 
 /********/
 /* RTC  */
@@ -349,7 +354,11 @@ extern unsigned int mvTclkGet(void);
  * have to be in the first 8 MB of memory, since this is
  * the maximum mapped by the Linux kernel during initialization.
  */
+#ifdef LARGEKERNEL
+#define	CONFIG_SYS_BOOTMAPSZ		(16<<20)	/* Initial Memory map for Linux */
+#else
 #define	CONFIG_SYS_BOOTMAPSZ		(8<<20)	/* Initial Memory map for Linux */
+#endif
 
 #define BRIDGE_REG_BASE_BOOTM 0xfbe00000 /* this paramaters are used when booting the linux kernel */ 
 

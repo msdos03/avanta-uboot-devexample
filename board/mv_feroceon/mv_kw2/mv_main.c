@@ -1394,3 +1394,36 @@ void mvDramWinConfig(void)
 		mvAhbToMbusWinEnable(0,MV_FALSE); /* disable crossbar*/ 
 	}
 }
+
+
+#ifdef CONFIG_POST
+typedef	struct	post_data {
+	unsigned long	boot_mode;  /* Boot mode */
+} pd_t;
+
+/*
+ * Returns 1 if keys pressed to start the power-on long-running tests
+ * Called from board_init_f().
+ */
+int post_hotkeys_pressed(void)
+{
+	return 0;               /* No hotkeys supported */
+}
+#endif /* CONFIG_POST */
+
+#if defined(CONFIG_POST) || defined(CONFIG_LOGBUFFER)
+void post_word_store (ulong a)
+{
+	DECLARE_GLOBAL_DATA_PTR;
+	pd_t *pd = (pd_t *)(gd + 1);
+	pd->boot_mode = a;
+	return;
+}
+
+ulong post_word_load (void)
+{
+	DECLARE_GLOBAL_DATA_PTR;
+	pd_t *pd = (pd_t *)(gd + 1);
+	return pd->boot_mode;
+}
+#endif  /* CONFIG_POST || CONFIG_LOGBUFFER*/
