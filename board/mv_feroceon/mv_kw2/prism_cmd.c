@@ -10,8 +10,16 @@
  *          |       |      -------- prbs_rx
  *          |       |
  *          |       ------ gbe ---- help
+ *          |       |       |
+ *          |       |       ------- loopback
+ *          |       |
+ *          |       ------ sff ---- help
  *          |               |
- *          |               ------- loopback
+ *          |               ------- vbi
+ *          |               |
+ *          |               ------- vei
+ *          |               |
+ *          |               ------- csum
  *          |
  *          ---- help
  *
@@ -85,6 +93,8 @@
 #endif /*  CONFIG_MV_ETH_LEGACY */
 
 #if defined(CONFIG_CMD_PRISM)
+#include "prism_sff.h"
+
 #define FOUR_SPACE "    "
 typedef int (*exec_func_t) (int level, int argc, char *argv[]);
 
@@ -112,6 +122,41 @@ static const struct prism_cmd_entry parent##_##name = \
 /* MACRO for adding a command without syntax, usually a command group. */
 #define PRISM_CMD_PHONY(parent, name, desc, syntax, sub_cmds) \
 static const struct prism_cmd_entry parent##_##name = {#name, desc, syntax, NULL, sub_cmds}
+
+/* SFF field info */
+typedef struct sff_field_info_ {
+	char *name;          /* field name */
+	uint  start_daddr;   /* starting data address of the section */
+	uint  off;           /* offset */
+	uchar dlen;          /* data length */
+	int   (*func)(char *, uchar *);    /* ptr of function */
+} sff_field_info;
+
+/* diag sff commands */
+PRISM_CMD_LEAF(prism_diag_sff, vbi,
+	       "prism board list sfp basic id (0-63) of 0xA0 addr", NULL);
+
+PRISM_CMD_LEAF(prism_diag_sff, vei,
+	       "prism board list sfp extended id (64-95) of 0xA0 addr", NULL);
+
+PRISM_CMD_LEAF(prism_diag_sff, csum,
+	       "prism board sff verifying checksum verification\n"
+	       "ccb - verify CC_BASE at offset 63 of 0xA0 addr\n"
+	       "cce - verify CC_EXT at offset 95 of 0xA0 addr\n"
+	       "ccd - verify CC_DMI at offset 95 of 0xA2 addr",
+	       "<checksum types - ccb cce ccd>\n");
+
+static const struct prism_cmd_entry *prism_diag_sff_sub_cmds[] =
+{
+	&prism_diag_sff_vbi,
+	&prism_diag_sff_vei,
+	&prism_diag_sff_csum,
+	NULL
+};
+
+PRISM_CMD_PHONY(prism_diag, sff,
+	       "prism board SFF diagnostics",
+	       NULL, prism_diag_sff_sub_cmds);
 
 /* diag pon commands */
 PRISM_CMD_LEAF(prism_diag_pon, loopback,
@@ -157,6 +202,7 @@ static const struct prism_cmd_entry *prism_diag_sub_cmds[] =
 {
 	&prism_diag_gbe,
 	&prism_diag_pon,
+	&prism_diag_sff,
 	NULL
 };
 
@@ -294,10 +340,114 @@ static int do_prism_diag_gbe_loopback(int level, int argc, char *argv[])
 	return 0;
 }
 
+static int sff_print_digits(char *pentry, uchar *pbuf)
+{
+	int i;
+	sff_field_info *pfield = (sff_field_info *)pentry;
+	int	addr = pfield->start_daddr + pfield->off;
+
+	printf("%03d/0x%02X  %s:", addr, addr, pfield->name);
+	for (i = 0;	i < pfield->dlen; i++) {
+		printf(" 0x%02X", pbuf[i]);
+	}
+	printf("\n");
+	return(0);
+}
+
+#define SFF_STR_MAX_LEN		40
+static int sff_print_str(char *pentry, uchar *pbuf)
+{
+	sff_field_info *pfield = (sff_field_info *)pentry;
+	int	addr = pfield->start_daddr + pfield->off;
+	uchar	sff_str[SFF_STR_MAX_LEN];
+
+	if (pfield->dlen < SFF_STR_MAX_LEN) {
+		memcpy(sff_str, pbuf, pfield->dlen);
+		sff_str[pfield->dlen] = '\0';
+		printf("%03d/0x%02X  %s: %s\n", addr, addr, pfield->name, sff_str);
+	}
+	else
+		printf("dlen is > %d (dlen=%d)\n", SFF_STR_MAX_LEN, pfield->dlen);
+	return(0);
+}
+
+static int sff_read_print_group(
+	sff_addr *psff_addr, sff_field_info *pfields, int entries)
+{
+	uchar sff_buf[SFF_BUF_LEN];
+	sff_field_info *pfield;
+	int	i, ret;
+
+	/* read and print the vendor general information.
+	 * buffer all read data, so we can make sure data is read only once.
+	 */
+	ret = i2c_read(
+	        psff_addr->chip, psff_addr->daddr, SFF_ADDR_LEN,
+	        sff_buf, psff_addr->nbytes);
+	if (ret != 0) {
+		printf("Error - failed to access the sff addr.\n");
+		return(ret);
+	}
+	/* print out the field data per table setting */
+	for (i = 0, pfield = &pfields[0]; i < entries; i++, pfield++) {
+		/* pass the staring addr of the field to calling routine */
+		(pfield->func)((char *)pfield, (sff_buf + pfield->off));
+	}
+
+	return(ret);
+} /* end of sff_read_print_group */
+
+static int do_prism_diag_sff_vbi(int level, int argc, char *argv[])
+{
+	int	ret;
+	sff_addr	sff_info = {"vbi", SFF_ADDR_A0, SFF_A0_BASE_ID,  A0_BASE_ID_L};
+	static const sff_field_info sfp_serial_id[] = {
+		{"id",       SFF_A0_BASE_ID, 0,  1,  sff_print_digits},
+		{"ext id",   SFF_A0_BASE_ID, 1,  1,  sff_print_digits},
+		{"conn",     SFF_A0_BASE_ID, 2,  1,  sff_print_digits},
+		{"ven name", SFF_A0_BASE_ID, 20, 16, sff_print_str},
+		{"ven pn",   SFF_A0_BASE_ID, 40, 16, sff_print_str},
+		{"ven rev",  SFF_A0_BASE_ID, 56, 4,  sff_print_str}
+	};
+
+	SFF_DBG("%s\n", __func__);
+	ret = sff_read_print_group(&sff_info,
+	                           (sff_field_info *)sfp_serial_id,
+	                           (sizeof(sfp_serial_id)/sizeof(sff_field_info)));
+
+	return(ret);
+}
+
+static int do_prism_diag_sff_vei(int level, int argc, char *argv[])
+{
+	int	ret;
+	sff_addr	sff_info = {"vei", SFF_ADDR_A0, SFF_A0_EXT_ID, A0_EXT_ID_L};
+	static const sff_field_info sfp_ext_id[] = {
+		{"ven sn",     SFF_A0_EXT_ID, 4, 16,  sff_print_str},
+		{"date code",  SFF_A0_EXT_ID, 20, 8,  sff_print_str}
+	};
+
+	SFF_DBG("%s\n", __func__);
+	ret = sff_read_print_group(&sff_info,
+	                           (sff_field_info *)sfp_ext_id,
+	                           (sizeof(sfp_ext_id)/sizeof(sff_field_info)));
+
+	return(ret);
+}
+
+static int do_prism_diag_sff_csum(int level, int argc, char *argv[])
+{
+	int	ret;
+
+	SFF_DBG("%s: argc=%d, argv[0]=%s\n", __func__, argc, argv[4]);
+	ret = sff_read_verify_checksum(argv[4]);
+	return(ret);
+}
+
 U_BOOT_CMD(
         prism,
 	/* Don't forget to check maxargs when new commands are added. */
-	7, 0, do_prism,
+	14, 0, do_prism,
         "prism - prism specific commands\n",
         "prism - prism specific commands\n"
 );

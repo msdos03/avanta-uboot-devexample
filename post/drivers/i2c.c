@@ -40,6 +40,29 @@
 #include <i2c.h>
 
 #if CONFIG_POST & CONFIG_SYS_POST_I2C
+#include "prism_sff.h"
+
+static int i2c_checksum_verification(unsigned int addr)
+{
+	int	ret1, ret;
+
+	switch (addr) {
+	case SFF_ADDR_A0:
+		/* verify CC_BASE at offset 63 and CC_EXT at offset 95 of 0xA0 addr */
+		ret = sff_read_verify_checksum(CC_BASE);
+		ret1 = sff_read_verify_checksum(CC_EXT);
+		if (ret1 != 0)	ret = ret1;
+		break;
+	case SFF_ADDR_A2:
+		/* verify CC_DMI at offset 95 of 0xA2 addr */
+		ret = sff_read_verify_checksum(CC_DMI);
+		break;
+	default:
+		ret = 0;			/* always good: no checksum verification */
+		break;
+	}
+	return(ret);
+}
 
 int i2c_post_test (int flags)
 {
@@ -59,8 +82,13 @@ int i2c_post_test (int flags)
 #else	/* I2C_ADDR_LIST */
 			for (j=0; j<sizeof(i2c_addr_list); ++j) {
 				if (i == i2c_addr_list[j]) {
-					good++;
-					i2c_miss_list[j] = 0xFF;
+					if (i2c_checksum_verification(i) == 0) {
+						good++;
+						i2c_miss_list[j] = 0xFF;
+					} else {
+						/* The chip responded but got bad checksum */
+						i2c_miss_list[j] = 0xFF;
+					}
 					break;
 				}
 			}
@@ -80,7 +108,7 @@ int i2c_post_test (int flags)
 		for (j=0; j<sizeof(i2c_miss_list); ++j) {
 			if (i2c_miss_list[j] != 0xFF) {
 				post_log ("I2C: addr %02X did not respond\n",
-						i2c_miss_list[j]);
+						(i2c_miss_list[j]<<1));
 			}
 		}
 	}

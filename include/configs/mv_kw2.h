@@ -93,7 +93,8 @@ extern unsigned int mvTclkGet(void);
 /******************/
 /*  POST support  */
 /******************/
-#define CONFIG_POST	(CONFIG_SYS_POST_ETHER | CONFIG_SYS_POST_MEMORY)
+#define CONFIG_POST  (CONFIG_SYS_POST_ETHER | CONFIG_SYS_POST_MEMORY | \
+                      CONFIG_SYS_POST_I2C)
 
 /* commands */
 
