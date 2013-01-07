@@ -559,6 +559,11 @@ extern "C" {
 #define NETA_GMAC_PORT_RGMII_BIT            4
 #define NETA_GMAC_PORT_RGMII_MASK           (1 << NETA_GMAC_PORT_RGMII_BIT)
 
+#if defined(CONFIG_CMD_PRISM)
+#define NETA_GMAC_LOOPBACK_EN_BIT           5
+#define NETA_GMAC_LOOPBACK_EN_MASK          (1 << NETA_GMAC_LOOPBACK_EN_BIT)
+#endif
+
 #define NETA_GMAC_PORT_RESET_BIT            6
 #define NETA_GMAC_PORT_RESET_MASK           (1 << NETA_GMAC_PORT_RESET_BIT)
 /*-------------------------------------------------------------------------------*/

@@ -403,7 +403,6 @@ void start_armboot (void)
 	 * tests.
 	 */
 	post_run (NULL, POST_ROM | post_bootmode_get(0));
-	post_run (NULL, POST_RAM | post_bootmode_get(0));
 	post_output_backlog();
 #endif
 
@@ -557,7 +556,13 @@ extern void davinci_eth_set_mac_addr (const u_int8_t *addr);
 	reset_phy();
 #endif
 #endif
-
+#ifdef CONFIG_POST
+	/*
+	 * For GBE post test is invoke loopback test, we will run POST_RAM tests
+	 * after ehternet is initialized
+	 */
+	post_run (NULL, POST_RAM | post_bootmode_get(0));
+#endif
 #ifdef CONFIG_CMD_RCVR
 	recoveryCheck(); 
 #endif
