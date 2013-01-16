@@ -40,6 +40,7 @@
 #include <i2c.h>
 
 #if CONFIG_POST & CONFIG_SYS_POST_I2C
+#if defined(CONFIG_ARM) && defined(CONFIG_MARVELL)
 #include "prism_sff.h"
 
 static int i2c_checksum_verification(unsigned int addr)
@@ -63,6 +64,7 @@ static int i2c_checksum_verification(unsigned int addr)
 	}
 	return(ret);
 }
+#endif  /* defined(CONFIG_ARM) && defined(CONFIG_MARVELL) */
 
 int i2c_post_test (int flags)
 {
@@ -82,6 +84,7 @@ int i2c_post_test (int flags)
 #else	/* I2C_ADDR_LIST */
 			for (j=0; j<sizeof(i2c_addr_list); ++j) {
 				if (i == i2c_addr_list[j]) {
+#if defined(CONFIG_ARM) && defined(CONFIG_MARVELL)
 					if (i2c_checksum_verification(i) == 0) {
 						good++;
 						i2c_miss_list[j] = 0xFF;
@@ -89,6 +92,10 @@ int i2c_post_test (int flags)
 						/* The chip responded but got bad checksum */
 						i2c_miss_list[j] = 0xFF;
 					}
+#else
+					good++;
+					i2c_miss_list[j] = 0xFF;
+#endif  /* defined(CONFIG_ARM) && defined(CONFIG_MARVELL) */
 					break;
 				}
 			}
