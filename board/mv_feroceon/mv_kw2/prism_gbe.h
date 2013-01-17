@@ -44,7 +44,11 @@
 	#define GBE_ERR_LOG               GBE_LOG
 #endif  /* end of CONFIG_POST & CONFIG_SYS_POST_ETHER */
 
-#define MAX_PACKET_LENGTH    256				/* Exclude CRC field */
+#define GBE_LPBK_TIMEOUT_INTERVAL 5      /* 5 msec */
+#define GBE_LPBK_TIMEOUT_LOOPS    30
+
+#define MAX_LPBK_PACKETS     3
+#define MAX_PACKET_LENGTH    1510        /* Exclude CRC field */
 static uchar *prism_tx_buf = NULL;
 static uchar *prism_rx_buf = NULL;
 
@@ -229,8 +233,7 @@ static int gbe_set_loopback_mode(struct eth_device *dev, int port, MV_BOOL isLpb
 			break;
 		}
 
-		res = mvNetaPortEnable(port);
-		if (res != 0) {
+		if ((res = mvNetaPortEnable(port)) != 0) {
 			PRISM_DBG("mvNetaPortEnable() failed");
 			break;
 		}
@@ -240,12 +243,9 @@ static int gbe_set_loopback_mode(struct eth_device *dev, int port, MV_BOOL isLpb
 
 		value = MV_REG_READ(NETA_GMAC_STATUS_REG(port));
 		if (!(value & NETA_GMAC_LINK_UP_MASK)) {
-			PRISM_DBG("egiga%d link is down (value=0x%x)", port, value);
-			break;
+			GBE_ERR_LOG("egiga%d link is down (value=0x%x)", port, value);
+			res = 1;    /* fail */
 		}
-
-		prism_tx_len = MAX_PACKET_LENGTH;
-		prism_rx_len = 0;
 	} while (0);
 
 	return res;
@@ -334,17 +334,20 @@ static void gbe_recv_packet(uchar *packet, unsigned dest, unsigned src, unsigned
 #define PORT_UNUSED_S  48222	 /* Unused port number */
 #define PORT_UNUSED_C  48223   /* Unused port number */
 #define MAC_ADDR_LEN   6
-static int gbe_send_packet(struct eth_device *dev)
+static int gbe_send_packet(struct eth_device *dev, int pkt_len)
 {
 	int i;
 	int rand_data = (int)get_timer(0);
+	int payload_len;
+
+	gbe_res = GBE_DIAG_CONTINUE;
+	prism_tx_len = pkt_len;
+	prism_rx_len = 0;
 
 	/* Set up ethernet header */
 	/* To minimize the modification, setup the packet to
 	 * be an IP protocol frame which is known by NetLoop()
 	 */
-	int payload_len;
-
 	memcpy(NetOurEther, dev->enetaddr, MAC_ADDR_LEN);
 	i = NetSetEther(prism_tx_buf, NetBcastAddr, PROT_IP);
 	payload_len = prism_tx_len - i - IP_HDR_SIZE;
@@ -416,9 +419,9 @@ static void gbe_loopback_uninit(struct eth_device *dev, int port, MV_BOOL isLpbk
 static int gbe_loopback_test(int port, MV_BOOL isLpbk)
 {
 	struct eth_device *dev;
-	int res = 1;
-	int i;
+	int i, j, res = 1;
 	MV_BOOL isForceLinkUpChanged = MV_FALSE;
+	int pkt_lens[MAX_LPBK_PACKETS] = {60, 507, 1510};   /* not include CRC len */
 
 	do {
 		PRISM_DBG("--> normal mode \n");
@@ -426,7 +429,7 @@ static int gbe_loopback_test(int port, MV_BOOL isLpbk)
 
 		if (isLpbk == MV_TRUE) {
 			/* For gbe loopback diag command, we would like to run w/o link also.
-			 * Let set to "force link up"
+			 * Let's set to "force link up"
 			 */
 			if ((res = gbe_set_force_up_link(port, &isForceLinkUpChanged)) != 0) {
 				break;
@@ -437,39 +440,43 @@ static int gbe_loopback_test(int port, MV_BOOL isLpbk)
 			break;
 
 		if (isLpbk == MV_TRUE) {
-			res = gbe_set_loopback_mode(dev, port, MV_TRUE);
-			if (res != 0)
-				break;		/* failed. exit */
-
-			/* send test packet */
-			res = gbe_send_packet(dev);
-			if (res != 0) {
-				GBE_ERR_LOG("egiga%d test failed\n", port);
-				break;
-			}
+			if ((res = gbe_set_loopback_mode(dev, port, MV_TRUE)) != 0)
+				break;     /* failed. exit */
 		} else {
 			/* test receive only */
 			NetSetHandler(gbe_recv_packet);
 		}
 
-		/* Wait until either timeout or packet received */
-		for (i = 30; (i > 0) && (gbe_res == GBE_DIAG_CONTINUE); i--) {
-			/*
-			 * Check the ethernet for a new packet. If a packet is received,
-			 * the gbe_recv_packet() will be invoked.
-			 */
-			dev->recv(dev);
-			mvOsSleep(5);		/* delay for 5ms */
-		}
+		for (j = 0; j < MAX_LPBK_PACKETS; j++) {
+			if (isLpbk == MV_TRUE) {
+				/* send test packet */
+				if ((res = gbe_send_packet(dev, pkt_lens[j])) != 0) {
+					GBE_ERR_LOG("egiga%d test failed\n", port);
+					break;     /* failed. exit */
+				}
+			}
 
-		if (gbe_res == GBE_DIAG_CONTINUE) {
-			GBE_ERR_LOG("failed to receive timed out (gbe_res=%d)\n", gbe_res);
-			res = 1;
-		}
+			/* Wait until either timeout or packet received */
+			for (i = GBE_LPBK_TIMEOUT_LOOPS;
+			     (i > 0) && (gbe_res == GBE_DIAG_CONTINUE); i--) {
+				/*
+				 * Check the ethernet for a new packet. If a packet is received,
+				 * the gbe_recv_packet() will be invoked.
+				 */
+				dev->recv(dev);
+				mvOsSleep(GBE_LPBK_TIMEOUT_INTERVAL);    /* delay for 5ms */
+			}
 
-		if ((gbe_res == GBE_DIAG_SUCCESS) && (isLpbk == MV_TRUE)) {
-			res = gbe_packet_check();
-		}
+			if (gbe_res == GBE_DIAG_CONTINUE) {
+				GBE_ERR_LOG("failed to receive timed out (gbe_res=%d)\n", gbe_res);
+				res = 1;
+				break;     /* failed. exit */
+			}
+
+			if ((gbe_res == GBE_DIAG_SUCCESS) && (isLpbk == MV_TRUE)) {
+				res = gbe_packet_check();
+			}
+		}  /* end of for(j) */
 
 	} while (0);
 
