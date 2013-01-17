@@ -10,18 +10,20 @@
 #include <i2c.h>
 #include <malloc.h>
 #include <asm/byteorder.h>
+#include "mvTypes.h"
 
 /**************************************************
  * Definitions
  **************************************************/
-#ifdef SFF_CMD_DBG
-	#define SFF_DBG(format, args...)  \
+#if defined(SFF_CMD_DBG)
+	#if defined(PRISM_DBG)
+		#undef PRISM_DBG
+	#endif
+	#define PRISM_DBG(format, args...)  \
 		printf("%s: "format"\n", __func__, ## args)
-#else
-	#define SFF_DBG(format, args...)
+#elif !defined(PRISM_DBG)
+	#define PRISM_DBG(format, args...)
 #endif
-
-typedef enum _bool{false, true} bool;
 
 #define SFF_ADDR_A0    0x50      /* A0 = 10100000X   b7:1 address, b0 r/w bit */
 #define SFF_ADDR_A2    0x51      /* A0 = 10100001X   b7:1 address, b0 r/w bit */
@@ -41,7 +43,7 @@ typedef enum _bool{false, true} bool;
 #else
 	#define SFF_LOG(format, args...)  printf(format"\n", ## args)
 	#define SFF_ERR_LOG               SFF_LOG
-#endif /* end of CONFIG_POST & CONFIG_SYS_POST_I2C */
+#endif  /* end of CONFIG_POST & CONFIG_SYS_POST_I2C */
 
 /* SFF field starting data address and data length */
 /* A0 starting address per group */
@@ -112,25 +114,25 @@ static uchar checksum8(uchar *start, uchar len, uchar csum)
 
 static int sff_read_verify_checksum(char *csum_name)
 {
-	int ret;
+	int ret = 1;	/* default fail */
 	int i;
 	uchar sff_buf[SFF_BUF_LEN];
 	uchar	csum = 0;
 	csum_vfy_func_entry *ptable = (csum_vfy_func_entry *)sff_csum_vfy_sub_cmds;
-	bool	found = false;
+	MV_BOOL	found = MV_FALSE;
 
 	do {
 		/* Lookup the command table and find the sub-cmd entry */
 		for (i = 0; i < SIZEOF_CSUM_VFY_SUB_CMD_TBL; i++, ptable++) {
-			SFF_DBG("name=%s, len=%d\n", ptable->name, (int)strlen(ptable->name));
+			PRISM_DBG("name=%s, len=%d\n", ptable->name, (int)strlen(ptable->name));
 			if (!strncmp(csum_name, ptable->name, (int)strlen(ptable->name))) {
 				/* Found the diag func, return entry address */
-				found = true;
+				found = MV_TRUE;
 				break;
 			}
 		}
-		if (found != true) {
-			SFF_DBG("Invalid command....\n");
+		if (found != MV_TRUE) {
+			PRISM_DBG("Invalid command....\n");
 			break;			/* not found. exit */
 		}
 
@@ -148,7 +150,7 @@ static int sff_read_verify_checksum(char *csum_name)
 
 		/* Calculate 8-bit checksum */
 		csum = checksum8(sff_buf, (ptable->nbytes-1), 0);
-		SFF_DBG("calculated csum=0x%02X, csum=0x%02X",
+		PRISM_DBG("calculated csum=0x%02X, csum=0x%02X",
 		        csum, sff_buf[ptable->nbytes-1]);
 		if (csum != sff_buf[ptable->nbytes-1]) {
 			SFF_ERR_LOG("csum mismatched - chip=0x%02x, off= 0x%02x, csum=0x%02x, "
@@ -162,7 +164,7 @@ static int sff_read_verify_checksum(char *csum_name)
 			ret = 0;	/* success */
 		}
 
-	} while (false);
+	} while (0);
 
 	return(ret);
 } /* end of sff_read_print_group */

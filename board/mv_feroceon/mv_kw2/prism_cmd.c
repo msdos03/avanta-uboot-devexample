@@ -77,6 +77,7 @@
 #include <common.h>
 #include <command.h>
 #include <pci.h>
+#include <net.h>
 
 #include "mvTypes.h"
 #include "mvCtrlEnvLib.h"
@@ -94,6 +95,7 @@
 
 #if defined(CONFIG_CMD_PRISM)
 #include "prism_sff.h"
+#include "prism_gbe.h"
 
 #define FOUR_SPACE "    "
 typedef int (*exec_func_t) (int level, int argc, char *argv[]);
@@ -180,12 +182,22 @@ static const struct prism_cmd_entry *prism_diag_pon_sub_cmds[] =
 };
 
 PRISM_CMD_PHONY(prism_diag, pon,
-        "prism board PON diagnostics",
-	NULL, prism_diag_pon_sub_cmds);
+	      "prism board PON diagnostics",
+	      NULL, prism_diag_pon_sub_cmds);
 
 /* diag gbe commands */
 PRISM_CMD_LEAF(prism_diag_gbe, loopback,
-        "prism board GbE loopback diagnostics", NULL);
+	      "prism board GbE loopback diagnostics\n"
+#ifdef GBE_CMD_DBG
+	      "port - port number to test <range: 0 - 1>\n"
+	      "opt  - lpbk or ro\n"
+	      "example\n"
+	      "    loopback 0 lpbk",
+	      "<port> <opt>\n");
+#else
+	      "port - port number to test <range: 0 - 1>",
+	      "<port>\n");
+#endif
 
 static const struct prism_cmd_entry *prism_diag_gbe_sub_cmds[] =
 {
@@ -194,8 +206,8 @@ static const struct prism_cmd_entry *prism_diag_gbe_sub_cmds[] =
 };
 
 PRISM_CMD_PHONY(prism_diag, gbe,
-        "prism board GbE diagnostics",
-	NULL, prism_diag_gbe_sub_cmds);
+	      "prism board GbE diagnostics",
+	      NULL, prism_diag_gbe_sub_cmds);
 
 /* diag commands */
 static const struct prism_cmd_entry *prism_diag_sub_cmds[] =
@@ -207,8 +219,8 @@ static const struct prism_cmd_entry *prism_diag_sub_cmds[] =
 };
 
 PRISM_CMD_PHONY(prism, diag,
-        "prism board diagnostics",
-	NULL, prism_diag_sub_cmds);
+	      "prism board diagnostics",
+	      NULL, prism_diag_sub_cmds);
 
 /* root command */
 static const struct prism_cmd_entry *prism_sub_cmds[] =
@@ -218,8 +230,8 @@ static const struct prism_cmd_entry *prism_sub_cmds[] =
 };
 
 PRISM_CMD_PHONY(root, prism,
-        "prism specific commands",
-	NULL, prism_sub_cmds);
+	      "prism specific commands",
+	      NULL, prism_sub_cmds);
 
 void do_help(int level, int argc, char *argv[],
 	     const struct prism_cmd_entry *cmd)
@@ -333,11 +345,52 @@ static int do_prism_diag_pon_prbs_tx(int level, int argc, char *argv[])
 	return 0;
 }
 
+#ifdef GBE_CMD_DBG
+ #define MAX_GBE_LPBK_PARAMS	6
+#else
+ #define MAX_GBE_LPBK_PARAMS	5
+#endif
 static int do_prism_diag_gbe_loopback(int level, int argc, char *argv[])
 {
-	// TODO(kedong) Fill the register sequences.
-	printf("do_prism_diag_gbe_loopback\n");
-	return 0;
+	int ret = 1;
+	int port;
+	char *pport_str = argv[4];
+	char *pcmd_opt = argv[5];
+
+	do {
+		if (argc > MAX_GBE_LPBK_PARAMS) {
+			printf("Error - too many input parameters\n");
+			break;
+		}
+
+		PRISM_DBG("do_prism_diag_gbe_loopback - port=%s, opt=%s", argv[4], argv[5]);
+		/* validate the port number */
+		if ((strlen(pport_str) != 1) || (*pport_str < '0') || (*pport_str > '1')) {
+			printf("Error - invalid port number (port=%s)\n", pport_str);
+			break;
+		}
+
+		/* get port number */
+		port = *pport_str - '0';
+
+#ifdef GBE_CMD_DBG
+		if (strcmp(pcmd_opt, "lpbk") == 0) {
+			/* gbe loopback test */
+			ret = gbe_loopback_test(port, MV_TRUE);
+		} else if (strcmp(pcmd_opt, "ro") == 0) {
+			/* gbe receive-only test */
+			ret = gbe_loopback_test(port, MV_FALSE);
+		} else {
+			printf("Error - invalid opt (opt=%s)\n", argv[5]);
+		}
+#else
+		ret = gbe_loopback_test(port, MV_TRUE);
+#endif
+	} while (0);
+
+	printf("%s: gbe loopback test %s\n", __func__, (ret == 0)? "success" : "fail");
+
+	return ret;
 }
 
 static int sff_print_digits(char *pentry, uchar *pbuf)
@@ -410,7 +463,7 @@ static int do_prism_diag_sff_vbi(int level, int argc, char *argv[])
 		{"ven rev",  SFF_A0_BASE_ID, 56, 4,  sff_print_str}
 	};
 
-	SFF_DBG("%s\n", __func__);
+	PRISM_DBG("%s\n", __func__);
 	ret = sff_read_print_group(&sff_info,
 	                           (sff_field_info *)sfp_serial_id,
 	                           (sizeof(sfp_serial_id)/sizeof(sff_field_info)));
@@ -427,7 +480,7 @@ static int do_prism_diag_sff_vei(int level, int argc, char *argv[])
 		{"date code",  SFF_A0_EXT_ID, 20, 8,  sff_print_str}
 	};
 
-	SFF_DBG("%s\n", __func__);
+	PRISM_DBG("%s\n", __func__);
 	ret = sff_read_print_group(&sff_info,
 	                           (sff_field_info *)sfp_ext_id,
 	                           (sizeof(sfp_ext_id)/sizeof(sff_field_info)));
@@ -439,7 +492,7 @@ static int do_prism_diag_sff_csum(int level, int argc, char *argv[])
 {
 	int	ret;
 
-	SFF_DBG("%s: argc=%d, argv[0]=%s\n", __func__, argc, argv[4]);
+	PRISM_DBG("%s: argc=%d, argv[0]=%s\n", __func__, argc, argv[4]);
 	ret = sff_read_verify_checksum(argv[4]);
 	return(ret);
 }
