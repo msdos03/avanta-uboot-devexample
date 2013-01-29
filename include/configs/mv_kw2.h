@@ -465,9 +465,12 @@ extern unsigned int mvTclkGet(void);
 	#define CONFIG_MTD_DEVICE	/* needed for mtdparts commands */
 	#define CONFIG_MTD_PARTITIONS
 	#define MTDIDS_DEFAULT		"nor0=spi_flash"
-	#define MTDPARTS_DEFAULT	"mtdparts=spi_flash:512k(u-boot),"	\
-					"128k(env1),"			\
-					"128k(env2),"			\
+	#define MTDPARTS_DEFAULT	"mtdparts=spi_flash:768k(uboot),"	\
+					"256k(env),"			\
+					"128k(var1),"			\
+					"128k(var2),"			\
+					"128k(sysvar1),"	\
+					"128k(sysvar2),"	\
 					"14m(image1),"		\
 					"14m(image2),"		\
 					"-(user_data)"
