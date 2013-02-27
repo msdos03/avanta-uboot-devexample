@@ -45,6 +45,7 @@
 #define CMD_M25PXX_BE		0xc7	/* Bulk Erase */
 #define CMD_M25PXX_DP		0xb9	/* Deep Power-down */
 #define CMD_M25PXX_RES		0xab	/* Release from DP, and Read Signature */
+#define CMD_M25PXX_EN4BYTEADDR	0xb7	/* Enter 4-byte address mode */
 
 #define STM_ID_M25P16		0x15
 #define STM_ID_M25P20		0x12
@@ -459,8 +460,47 @@ struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 * idcode)
 	stm->flash.size = params->page_size * params->pages_per_sector
 	    * params->nr_sectors;
 
+	if (stm->params->addr_cycles == 4) {
+		int ret;
+
+		printf("SF: Entering 4-byte address mode\n");
+
+		ret = spi_claim_bus(stm->flash.spi);
+		if (ret) {
+			printf("SF: Unable to claim SPI bus\n");
+			goto free;
+		}
+
+		ret = spi_flash_cmd(stm->flash.spi, CMD_M25PXX_WREN, NULL, 0);
+		if (ret < 0) {
+			printf("SF: Enabling Write failed\n");
+			goto release;
+		}
+
+		ret = spi_flash_cmd(stm->flash.spi, CMD_M25PXX_EN4BYTEADDR, NULL, 0);
+		if (ret < 0) {
+			printf("SF: Entering 4-byte address mode failed\n");
+			spi_release_bus(stm->flash.spi);
+			goto release;
+		}
+
+		ret = stmicro_wait_ready(&stm->flash, SPI_FLASH_PROG_TIMEOUT);
+		if (ret < 0) {
+			printf("SF: Entering 4-byte address mode timed out\n");
+			goto release;
+		}
+
+		spi_release_bus(stm->flash.spi);
+	}
+
 	printf("SF: Detected %s with page size %u, total %u bytes\n",
 	      params->name, params->page_size, stm->flash.size);
 
 	return &stm->flash;
+
+release:
+	spi_release_bus(stm->flash.spi);
+free:
+	free(stm);
+	return NULL;
 }
