@@ -353,8 +353,8 @@ int stmicro_erase(struct spi_flash *flash, u32 offset, size_t len)
 		cmd[1] = (offset>>16) + ((sector_size>>16) * current);
 			break;
 		case 4:
-			cmd[1] = (offset>>24) + ((sector_size>>24) * current);
-			cmd[2] = (offset>>16) + ((sector_size>>16) * current);
+			cmd[1] = (offset + (sector_size * current)) >> 24;
+			cmd[2] = (offset + (sector_size * current)) >> 16;
 			break;
 		}
 
