@@ -53,6 +53,8 @@
 #define STM_ID_M25P40		0x13
 #define STM_ID_M25P64		0x17
 #define STM_ID_M25P80		0x14
+
+#define STM_ID_N25Q256		0x19
  
 #define STMICRO_SR_WIP		(1 << 0)	/* Write-in-Progress */
 #ifdef	MV88F6601
@@ -151,6 +153,14 @@ static const struct stmicro_spi_flash_params stmicro_spi_flash_table[] = {
 		.name = "M25P128",
 
 #endif
+	},
+	{
+		.idcode1 = STM_ID_N25Q256,
+		.page_size = 256,
+		.pages_per_sector = 256,
+		.nr_sectors = 512,
+		.addr_cycles = 4,
+		.name = "N25Q256",
 	},
 };
 
