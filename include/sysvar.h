@@ -69,6 +69,10 @@ typedef enum _bool{false, true} bool;
 #define SYSVAR_READONLY_ERR -13
 #define SYSVAR_EXISTED_ERR  -14
 
+#define PAGE_SIZE           256
+#define SYSVAR_VALUE        256
+
+
 struct sysvar_list {
   char name[SYSVAR_NAME + 1]; /* name of system variable */
   char *value;                /* value of system variable */
@@ -110,5 +114,13 @@ extern void print_var(struct sysvar_buf *buf);
 
 extern void clear_buf(struct sysvar_buf *buf);
 extern void dump_buf(struct sysvar_buf *buf, int start, int len);
+
+
+extern int sf_open(bool load);
+extern int sf_close(void);
+extern int sf_loadvar(void);
+extern int sf_savevar(struct sysvar_buf *buf, int idx);
+extern int sf_getvar(char *name, char *value, int len);
+extern int sf_setvar(struct sysvar_buf *buf, int idx, char *name, char *value);
 
 #endif  /* _SYSVAR_H_ */

@@ -8,30 +8,15 @@
 
 #include "sysvar.h"
 
-#define PAGE_SIZE           256
-#define SYSVAR_VALUE        256
-
 #define SYSVAR_RO_MEM       0x00000100
 #define SYSVAR_RW_MEM       SYSVAR_RO_MEM + SYSVAR_BLOCK_SIZE
 
 struct spi_flash *sf_dev = NULL;
 struct sysvar_buf ro_buf;
 struct sysvar_buf rw_buf;
-static const long sysvar_offset[SYSVAR_SPI_BLOCK] = {
+const long sysvar_offset[SYSVAR_SPI_BLOCK] = {
   SYSVAR_RW_OFFSET0, SYSVAR_RW_OFFSET1, SYSVAR_RO_OFFSET0, SYSVAR_RO_OFFSET1
 };
-
-static int data_recovery(struct sysvar_buf *buf, int idx);
-static int data_load(struct sysvar_buf *buf, int idx);
-static int data_save(struct sysvar_buf *buf, int *idx);
-
-static int open_sf(bool load);
-static void close_sf(void);
-
-static int loadvar(void);
-static int savevar(struct sysvar_buf *buf, int idx);
-static int getvar(char *name, char *value, int len);
-static int setvar(struct sysvar_buf *buf, int idx, char *name, char *value);
 
 /*
  * print_msg - print the message string
@@ -60,7 +45,7 @@ static void print_err(char *err, int idx) {
 /*
  * data_recovery - system variables recovering routine
  */
-static int data_recovery(struct sysvar_buf *buf, int idx) {
+int data_recovery(struct sysvar_buf *buf, int idx) {
   int i, j, ret;
 
   /* load the system variables */
@@ -102,14 +87,13 @@ recovery_err:
   clear_buf(buf);
 
   printf("\n");
-  print_err("recovery", idx);
   return 0;
 }
 
 /*
  * data_load - load the data from SPI flash to data buffer
  */
-static int data_load(struct sysvar_buf *buf, int idx) {
+int data_load(struct sysvar_buf *buf, int idx) {
   int i, j;
 
   /* load the system variables */
@@ -134,7 +118,7 @@ load_err:
 /*
  * data_save - save the data from data buffer to SPI flash
  */
-static int data_save(struct sysvar_buf *buf, int *idx) {
+int data_save(struct sysvar_buf *buf, int *idx) {
   int i, j, ret;
 
   /* save the system variables */
@@ -167,9 +151,9 @@ static int data_save(struct sysvar_buf *buf, int *idx) {
 }
 
 /*
- * open_sf - open SPI flash and read the data to buffer
+ * sf_open - open SPI flash and read the data to buffer
  */
-static int open_sf(bool load) {
+int sf_open(bool load) {
   /* check SPI flash */
   if (sf_dev != NULL)
     return 0;
@@ -225,20 +209,20 @@ static int open_sf(bool load) {
 
   /* load data from SPI flash to data buffer */
   if (load) {
-    if (loadvar())
+    if (sf_loadvar())
       goto open_err;
   }
   return 0;
 
 open_err:
-  close_sf();
+  sf_close();
   return 1;
 }
 
 /*
- * close_sf - close SPI flash and release the data buffer
+ * sf_close - close SPI flash and release the data buffer
  */
-static void close_sf(void) {
+int sf_close(void) {
   /* release data lists */
   if (rw_buf.list != NULL) {
     clear_var(&rw_buf);
@@ -256,12 +240,13 @@ static void close_sf(void) {
     unmap_physmem(ro_buf.data, ro_buf.data_len);
 
   sf_dev = NULL;
+  return 0;
 }
 
 /*
- * loadvar - load the data from SPI flash to data buffer
+ * sf_loadvar - load the data from SPI flash to data buffer
  */
-static int loadvar(void) {
+int sf_loadvar(void) {
   if (data_load(&rw_buf, SYSVAR_RW_BUF))
     return 1;
 
@@ -285,12 +270,12 @@ static int loadvar(void) {
 }
 
 /*
- * savevar - save the data from data buffer to SPI flash
+ * sf_savevar - save the data from data buffer to SPI flash
  */
-static int savevar(struct sysvar_buf *buf, int idx) {
+int sf_savevar(struct sysvar_buf *buf, int idx) {
   int save_idx[2];
 
-  if (open_sf(true))
+  if (sf_open(true))
     return 1;
 
   /* move the data from data list to data buffer */
@@ -323,12 +308,12 @@ static int savevar(struct sysvar_buf *buf, int idx) {
 }
 
 /*
- * getvar - get or print the system variable from data list
+ * sf_getvar - get or print the system variable from data list
  */
-static int getvar(char *name, char *value, int len) {
+int sf_getvar(char *name, char *value, int len) {
   struct sysvar_list *var = NULL;
 
-  if (open_sf(true))
+  if (sf_open(true))
     return 1;
 
   if (name == NULL) {
@@ -350,7 +335,7 @@ static int getvar(char *name, char *value, int len) {
     goto get_data;
 
   /* system variable not found */
-  printf("## Error: '%s' not found\n", name);
+  printf("## SYSVAR: '%s' not found\n", name);
   return 1;
 
 get_data:
@@ -358,13 +343,13 @@ get_data:
 }
 
 /*
- * setvar - add or delete the system variable in data list
+ * sf_setvar - add or delete the system variable in data list
  */
-static int setvar(struct sysvar_buf *buf, int idx, char *name, char *value) {
+int sf_setvar(struct sysvar_buf *buf, int idx, char *name, char *value) {
   struct sysvar_list *var = NULL;
   int ret = 0;
 
-  if (open_sf(true))
+  if (sf_open(true))
     return 1;
 
   if (name != NULL) {
@@ -426,15 +411,15 @@ static int setvar(struct sysvar_buf *buf, int idx, char *name, char *value) {
 /*
  * do_loadvar - load system variables from SPI flash
  *
- * loadvar command:
- *    loadvar - load system variables from persistent storage
+ * sf_loadvar command:
+ *    sf_loadvar - load system variables from persistent storage
  */
-static int do_loadvar(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
-  if (open_sf(false))
+int do_loadvar(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
+  if (sf_open(false))
     return 1;
 
   /* load system variables from SPI flash */
-  return loadvar();
+  return sf_loadvar();
 }
 
 U_BOOT_CMD(
@@ -446,13 +431,13 @@ U_BOOT_CMD(
 /*
  * do_savevar - save system variables(RW) to SPI flash
  *
- * savevar command:
- *    savevar - save system variables(RW) to SPI flash
+ * sf_savevar command:
+ *    sf_savevar - save system variables(RW) to SPI flash
  */
-static int do_savevar(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_savevar(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
   /* save system variables(RW) */
-  return savevar(&rw_buf, SYSVAR_RW_BUF);
+  return sf_savevar(&rw_buf, SYSVAR_RW_BUF);
 }
 
 U_BOOT_CMD(
@@ -468,15 +453,15 @@ U_BOOT_CMD(
  *    printvar name - print system variable with name
  *    printvar      - print all system variables
  */
-static int do_printvar(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
+int do_printvar(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
   char value[SYSVAR_VALUE];
 
-  if (open_sf(true))
+  if (sf_open(true))
     return 1;
 
   if (argv[1] == NULL) {
     /* print all system variables */
-    getvar(NULL, NULL, 0);
+    sf_getvar(NULL, NULL, 0);
 
     printf("\nSV: System Variables(RO): %d/%d bytes\n",
       ro_buf.used_len, ro_buf.total_len);
@@ -484,7 +469,7 @@ static int do_printvar(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
       rw_buf.used_len, rw_buf.total_len);
   } else {
     /* get a system variable */
-    if (getvar(argv[1], value, SYSVAR_VALUE) == 0) {
+    if (sf_getvar(argv[1], value, SYSVAR_VALUE) == 0) {
       printf("%s=%s\n", argv[1], value);
       printf("\nSV: System Variable: %d bytes\n",
         (int)(SYSVAR_NAME + 2 + strlen(value)));
@@ -504,23 +489,23 @@ U_BOOT_CMD(
 /*
  * do_setvar - add or delete system variables(RW)
  *
- * setvar command:
- *    setvar name value - add system variable with name:value
- *    setvar name       - delete system variable with name
- *    setvar            - delete all system variables
+ * sf_setvar command:
+ *    sf_setvar name value - add system variable with name:value
+ *    sf_setvar name       - delete system variable with name
+ *    sf_setvar            - delete all system variables
  */
-static int do_setvar(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
+int do_setvar(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
   int ret = 0;
 
   if (argc == 3) {
     /* add a system variable(RW) */
-    ret = setvar(&rw_buf, SYSVAR_RW_BUF, argv[1], argv[2]);
+    ret = sf_setvar(&rw_buf, SYSVAR_RW_BUF, argv[1], argv[2]);
   } else if (argc == 2) {
     /* delete a system variable(RW) */
-    ret = setvar(&rw_buf, SYSVAR_RW_BUF, argv[1], NULL);
+    ret = sf_setvar(&rw_buf, SYSVAR_RW_BUF, argv[1], NULL);
   } else {
     /* delete all system variables(RW) */
-    ret = setvar(&rw_buf, SYSVAR_RW_BUF, NULL, NULL);
+    ret = sf_setvar(&rw_buf, SYSVAR_RW_BUF, NULL, NULL);
   }
   return ret;
 }
@@ -528,7 +513,7 @@ static int do_setvar(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
 U_BOOT_CMD(
   setvar, 3, 0, do_setvar,
   "set system variables(RW)",
-  "name value ...\n"
+  "setvar name value ...\n"
   "    - set system variable(RW) 'name' to 'value ...'\n"
   "setvar name\n"
   "    - delete system variable(RW) 'name'\n"
@@ -539,11 +524,11 @@ U_BOOT_CMD(
 /*
  * sysvar_dump - dump the data buffer in binary/ascii format
  */
-static void sysvar_dump(struct sysvar_buf *buf, int idx, bool load) {
+void sysvar_dump(struct sysvar_buf *buf, int idx, bool load) {
   extern char console_buffer[];
   int start = 0;
 
-  if (open_sf(load))
+  if (sf_open(load))
     return 1;
 
   printf("System Variables(%s):\n", (idx < SYSVAR_RO_BUF) ? "RW" : "RO");
@@ -584,11 +569,11 @@ static void sysvar_dump(struct sysvar_buf *buf, int idx, bool load) {
 /*
  * sysvar_io - SPI flash IO operations
  */
-static int sysvar_io(int argc, char *argv[]) {
+int sysvar_io(int argc, char *argv[]) {
   struct sysvar_buf *buf;
   int i, idx, ret = 0;
 
-  if (open_sf(false))
+  if (sf_open(false))
     return 1;
 
   if (strcmp(argv[1], "0") == 0) {
@@ -641,20 +626,20 @@ static int sysvar_io(int argc, char *argv[]) {
 /*
  * do_sysvar - system variable debug functions
  */
-static int do_sysvar(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
+int do_sysvar(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
   if (argc < 2)
     goto usage;
 
   if (strcmp(argv[1], "set") == 0) {
     if (argc == 4) {
       /* add a system variable(RO) */
-      return setvar(&ro_buf, SYSVAR_RO_BUF, argv[2], argv[3]);
+      return sf_setvar(&ro_buf, SYSVAR_RO_BUF, argv[2], argv[3]);
     } else if (argc == 3) {
       /* delete a system variable(RO) */
-      return setvar(&ro_buf, SYSVAR_RO_BUF, argv[2], NULL);
+      return sf_setvar(&ro_buf, SYSVAR_RO_BUF, argv[2], NULL);
     } else if (argc == 2) {
       /* delete all system variables(RO) */
-      return setvar(&ro_buf, SYSVAR_RO_BUF, NULL, NULL);
+      return sf_setvar(&ro_buf, SYSVAR_RO_BUF, NULL, NULL);
     } else {
       goto usage;
     }
@@ -662,7 +647,7 @@ static int do_sysvar(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
 
   if (strcmp(argv[1], "save") == 0 && argc == 2) {
     /* save system variables(RO) */
-    return savevar(&ro_buf, SYSVAR_RO_BUF);
+    return sf_savevar(&ro_buf, SYSVAR_RO_BUF);
   }
 
   if (strcmp(argv[1], "dump") == 0 && argc == 3) {

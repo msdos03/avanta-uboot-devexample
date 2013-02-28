@@ -92,6 +92,10 @@ disclaimer.
 #include <netdev.h>
 #include <command.h>
 
+#ifdef CONFIG_MTD_PARTITIONS
+#include "sysvar.h"
+#endif
+
 /* #define MV_DEBUG */
 #ifdef MV_DEBUG
 #define DB(x) x
@@ -723,21 +727,37 @@ ethaddr=${ethaddr} eth1addr=${eth1addr} ethmtu=${ethmtu} eth1mtu=${eth1mtu} ${ne
 #if defined(MV_INCLUDE_TDM) && defined(MV_INC_BOARD_QD_SWITCH)
 		setenv("bootcmd","tftpboot "LOAD_ADDR_STR" ${image_name};\
 setenv bootargs ${console} ${bootargs_root} nfsroot=${serverip}:${rootpath} \
-ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig} ${mvPhoneConfig};  bootm "LOAD_ADDR_STR"; ");
+ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig} ${mvPhoneConfig};bootm "LOAD_ADDR_STR";");
 #elif defined(MV_INC_BOARD_QD_SWITCH)
 		setenv("bootcmd","tftpboot "LOAD_ADDR_STR" ${image_name};\
 setenv bootargs ${console} ${bootargs_root} nfsroot=${serverip}:${rootpath} \
-ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig};  bootm "LOAD_ADDR_STR"; ");
+ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig};bootm "LOAD_ADDR_STR"; ");
 #elif defined(MV_INCLUDE_TDM)
 		setenv("bootcmd","tftpboot "LOAD_ADDR_STR" ${image_name};\
 setenv bootargs ${console} ${mtdparts} ${bootargs_root} nfsroot=${serverip}:${rootpath} \
-ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig} ${mvPhoneConfig};  bootm "LOAD_ADDR_STR"; ");
+ip=${ipaddr}:${serverip}${bootargs_end} ${mvNetConfig} ${mvPhoneConfig};bootm "LOAD_ADDR_STR";");
 #else
-
 		setenv("bootcmd","tftpboot "LOAD_ADDR_STR" ${image_name};\
 setenv bootargs ${console} ${bootargs_root} nfsroot=${serverip}:${rootpath} \
-ip=${ipaddr}:${serverip}${bootargs_end};  bootm "LOAD_ADDR_STR"; ");
+ip=${ipaddr}:${serverip}${bootargs_end};bootm "LOAD_ADDR_STR";");
 #endif
+
+	char value[SYSVAR_VALUE];
+	if (sf_getvar("BOOT_SIDE", value, SYSVAR_VALUE) == 0) {
+		printf("BOOT_SIDE = %s ", value);
+		if (value[0] == '2' && value[1] == '\0') {
+			printf("Boot from MTD image2 ...\n");
+			setenv("bootcmd","sf read "LOAD_ADDR_STR" 0xF80000 0xE00000;\
+setenv bootargs ${console} ${mtdparts} debug=1 ${mvNetConfig} ${mvPhoneConfig};\
+bootm "LOAD_ADDR_STR";");
+		}
+		else if (value[0] == '1' && value[1] == '\0') {
+			printf("Boot from MTD image1 ...\n");
+			setenv("bootcmd","sf read "LOAD_ADDR_STR" 0x180000 0xE00000;\
+setenv bootargs ${console} ${mtdparts} debug=1 ${mvNetConfig} ${mvPhoneConfig};\
+bootm "LOAD_ADDR_STR";");
+		}
+	}
 #endif /* (CONFIG_BOOTDELAY >= 0) */
 
 	env = getenv("standalone");
