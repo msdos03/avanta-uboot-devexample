@@ -2670,6 +2670,7 @@ db88f6560pcac_config \
 rd88f6530mdu_config \
 db88f6601bp_config \
 rd88f6601mc_config \
+gflt200_config \
 kw2_test:
 	@$(MAKE) -s mv_kw2 RULE=$@
 mv_kw2:	unconfig
@@ -2699,6 +2700,9 @@ mv_kw2:	unconfig
 	elif [ "$(findstring test,$(RULE))" ] ; then \
 		echo "#define MV88F6192" > $(obj)include/config.h ;	\
 		echo "  * Configured for MV88F6192"; \
+	elif [ "$(findstring gflt200,$(RULE))" ] ; then \
+		echo "#define MV88F6601" > $(obj)include/config.h ;	\
+		echo "  * Configured for MV88F6601"; \
 	else \
 		echo "  * Error Marvell SoC not configured!"; \
 	fi;
@@ -2768,6 +2772,12 @@ mv_kw2:	unconfig
 		echo "#define MV_BOOTROM" >> $(obj)include/config.h ;	\
 		echo "MV_DDR_FREQ=400rd_kw2" >> $(obj)include/config.mk ;	\
 		echo "  * Configured for DB-88F6192A-BP"; \
+	elif [ "$(findstring gflt200_config,$(RULE))" ] ; then\
+		echo "#define GFLT200" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTSIZE_512K" >> $(obj)include/config.h ; \
+		echo "#define MV_BOOTROM" >> $(obj)include/config.h ;	\
+		echo "MV_DDR_FREQ=400rd_A-MC" >> $(obj)include/config.mk ;\
+		echo "  * Configured for GFLT200"; \
 	else \
 		echo "  * Error no board was configured"; \
 	fi;
