@@ -419,8 +419,11 @@ void print_var(struct sysvar_buf *buf) {
 
   while (curr != NULL) {
     /* print variable name */
-    printf("%s(%s)=%s\n", curr->name,
-           buf->readonly ? "RO" : "RW", curr->value);
+    printf("%s(%s)=", curr->name,
+           buf->readonly ? "RO" : "RW");
+    /* puts value in case CONFIG_SYS_PBSIZE < SYSVAR_VALUE */
+    puts(curr->value);
+    putc('\n');
     curr = curr->next;
   }
 }

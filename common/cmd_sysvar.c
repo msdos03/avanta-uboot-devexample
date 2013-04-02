@@ -470,7 +470,10 @@ int do_printvar(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
   } else {
     /* get a system variable */
     if (sf_getvar(argv[1], value, SYSVAR_VALUE) == 0) {
-      printf("%s=%s\n", argv[1], value);
+      printf("%s=", argv[1]);
+      /* puts value in case CONFIG_SYS_PBSIZE < SYSVAR_VALUE */
+      puts(value);
+      putc('\n');
       printf("\nSV: System Variable: %d bytes\n",
         (int)(SYSVAR_NAME + 2 + strlen(value)));
     }
