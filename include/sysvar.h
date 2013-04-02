@@ -70,7 +70,7 @@ typedef enum _bool{false, true} bool;
 #define SYSVAR_EXISTED_ERR  -14
 
 #define PAGE_SIZE           256
-#define SYSVAR_VALUE        256
+#define SYSVAR_VALUE        2048
 
 
 struct sysvar_list {
