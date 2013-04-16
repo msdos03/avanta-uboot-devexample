@@ -307,20 +307,45 @@ EXEC_ADDR=0x680000
 endif
 
 DRAM_REGS_FILE=dramregs_$(MV_DDR_FREQ)_$(DDR_TYPE)$(DDR_ACCESS).txt
+
+################################################################################
+# DO_IMAGE_TEMPLATE -- the macro to generate do_image wrapper for different
+#                      target images.
+#
+# Argument 1 is target image [spi, nand, nor, uart]
+################################################################################
+define DO_IMAGE_TEMPLATE
+ifeq ($(1),spi)
+	$(1)_IMAGE_TYPE := flash
+else ifeq ($(1),nor)
+	$(1)_IMAGE_TYPE := flash
+else
+	$(1)_IMAGE_TYPE := $(1)
+endif
+
+ifeq ($(1),nand)
 ifeq ($(CONFIG_NAND_SP),y)
-DO_IMAGE_NAND = ./tools/doimage -T nand -D ${DEST_ADDR} -E ${EXEC_ADDR} -P 512 -L ${BLK_SIZE} -N ${NAND_TECH} -R \
-$(DRAM_REGS_FILE) u-boot-${MV_OUTPUT}.bin u-boot-${MV_OUTPUT}_$(MV_DDR_FREQ)_$(DDR_TYPE)_nand.bin
+	NAND_ARGS := -P 512 -L $(BLK_SIZE) -N $(NAND_TECH)
 endif
 ifeq ($(CONFIG_NAND_LP),y)
-DO_IMAGE_NAND = ./tools/doimage -T nand -D ${DEST_ADDR} -E ${EXEC_ADDR} -P 2048 -L ${BLK_SIZE} -N ${NAND_TECH} -R \
-$(DRAM_REGS_FILE) u-boot-${MV_OUTPUT}.bin u-boot-${MV_OUTPUT}_$(MV_DDR_FREQ)_$(DDR_TYPE)_nand.bin
+	NAND_ARGS := -P 2048 -L $(BLK_SIZE) -N $(NAND_TECH)
 endif
-DO_IMAGE_UART = ./tools/doimage -T uart -D ${DEST_ADDR} -E ${EXEC_ADDR} -R \
-$(DRAM_REGS_FILE) u-boot-${MV_OUTPUT}.bin u-boot-${MV_OUTPUT}_$(MV_DDR_FREQ)_$(DDR_TYPE)_uart.bin
-DO_IMAGE_SPI = ./tools/doimage -T flash -D ${DEST_ADDR} -E ${EXEC_ADDR} -R \
-$(DRAM_REGS_FILE) u-boot-${MV_OUTPUT}.bin u-boot-${MV_OUTPUT}_$(MV_DDR_FREQ)_$(DDR_TYPE)_spi.bin
-DO_IMAGE_NOR = ./tools/doimage -T flash -D ${DEST_ADDR} -E ${EXEC_ADDR} -R \
-$(DRAM_REGS_FILE) u-boot-${MV_OUTPUT}.bin u-boot-${MV_OUTPUT}_$(MV_DDR_FREQ)_$(DDR_TYPE)_nor.bin
+endif
+
+do_image_$(1) = ./tools/doimage -T $$($(1)_IMAGE_TYPE) -D $(DEST_ADDR) \
+	-E $(EXEC_ADDR) $(NAND_ARGS) -R $(DRAM_REGS_FILE) \
+	u-boot-$(MV_OUTPUT).bin \
+	u-boot-$(MV_OUTPUT)_$(MV_DDR_FREQ)_$(DDR_TYPE)_$(1).bin && \
+	ln -sf u-boot-$(MV_OUTPUT)_$(MV_DDR_FREQ)_$(DDR_TYPE)_$(1).bin \
+	u-boot-$(1).bin
+endef
+
+# The following two lines will generate four variables
+# do_image_nand, do_image_spi, do_image_nor, do_image_uart.
+# The reason that variable is preferred than functions is
+# because the function output does not go to the standard output.
+IMAGE_TYPES = nand spi nor uart
+$(foreach image,$(IMAGE_TYPES),$(eval $(call DO_IMAGE_TEMPLATE,$(image))))
 
 all:		$(ALL)
 
@@ -334,18 +359,16 @@ $(obj)u-boot.srec:	$(obj)u-boot
 $(obj)u-boot.bin:	$(obj)u-boot
 		$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@
 		$(BINCPY)
-
 ifeq ($(NAND_BOOT), y)
-		$(DO_IMAGE_NAND)
+		$(do_image_nand)
 endif
 ifeq ($(SPI_BOOT), y)
-		$(DO_IMAGE_SPI)
+		$(do_image_spi)
 endif
 ifeq ($(NOR_BOOT), y)
-		$(DO_IMAGE_NOR)
+		$(do_image_nor)
 endif
-
-		$(DO_IMAGE_UART)
+		$(do_image_uart)
 
 $(obj)u-boot.ldr:	$(obj)u-boot
 		$(obj)tools/envcrc --binary > $(obj)env-ldr.o
