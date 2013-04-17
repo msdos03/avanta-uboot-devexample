@@ -121,6 +121,15 @@ load_err:
 int data_save(struct sysvar_buf *buf, int *idx) {
   int i, j, ret;
 
+#ifdef CONFIG_SPI_FLASH_PROTECTION
+  printf("SV: Unprotecting flash\n");
+  ret = spi_flash_protect(sf_dev, 0);
+  if (ret) {
+    printf("## Error: failed to unprotect flash\n");
+    return 1;
+  }
+#endif
+
   /* save the system variables */
   for (j = 0; j < 2; j++) {
     i = idx[j];
@@ -147,6 +156,16 @@ int data_save(struct sysvar_buf *buf, int *idx) {
       return 1;
     }
   }
+
+#ifdef CONFIG_SPI_FLASH_PROTECTION
+  printf("SV: Protecting flash\n");
+  ret = spi_flash_protect(sf_dev, 1);
+  if (ret) {
+    printf("## Error: failed to protect flash\n");
+    return 1;
+  }
+#endif
+
   return 0;
 }
 
