@@ -818,6 +818,10 @@ ip=${ipaddr}:${serverip}${bootargs_end}; bootm "LOAD_ADDR_STR";");
 	sprintf(ethaddr_1,"00:50:43:%02x:%02x:%02x",xl,xi,xj);
 	sprintf(pon_addr,"00:50:43:%02x:%02x:%02x",xj,xk,xl);
 
+	/* sf_getvar overwrites the buffer only when the sysvar exists */
+	sf_getvar("ETH_MAC_ADDR", ethaddr_0, sizeof(ethaddr_0));
+	sf_getvar("PON_MAC_ADDR", pon_addr, sizeof(pon_addr));
+
 	/* MAC addresses */
 	env = getenv("ethaddr");
 	if(!env)
