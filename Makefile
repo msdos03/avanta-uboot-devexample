@@ -336,7 +336,7 @@ do_image_$(1) = ./tools/doimage -T $$($(1)_IMAGE_TYPE) -D $(DEST_ADDR) \
 	-E $(EXEC_ADDR) $(NAND_ARGS) -R $(DRAM_REGS_FILE) \
 	u-boot-$(MV_OUTPUT).bin \
 	u-boot-$(MV_OUTPUT)_$(MV_DDR_FREQ)_$(DDR_TYPE)_$(1).bin && \
-	ln -sf u-boot-$(MV_OUTPUT)_$(MV_DDR_FREQ)_$(DDR_TYPE)_$(1).bin \
+	ln -f u-boot-$(MV_OUTPUT)_$(MV_DDR_FREQ)_$(DDR_TYPE)_$(1).bin \
 	u-boot-$(1).bin
 endef
 
