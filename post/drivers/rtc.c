@@ -73,6 +73,7 @@ static int rtc_post_skip (ulong * diff)
 	}
 }
 
+#if CONFIG_SYS_POST_RTC_MONTH_BOUNDARIES
 static void rtc_post_restore (struct rtc_time *tm, unsigned int sec)
 {
 	time_t t = mktime (tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour,
@@ -83,12 +84,14 @@ static void rtc_post_restore (struct rtc_time *tm, unsigned int sec)
 
 	rtc_set (&ntm);
 }
+#endif /* CONFIG_SYS_POST_RTC_MONTH_BOUNDARIES */
 
 int rtc_post_test (int flags)
 {
 	ulong diff;
 	unsigned int i;
 	struct rtc_time svtm;
+#if CONFIG_SYS_POST_RTC_MONTH_BOUNDARIES
 	static unsigned int daysnl[] =
 			{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 	static unsigned int daysl[] =
@@ -96,6 +99,7 @@ int rtc_post_test (int flags)
 	unsigned int ynl = 1999;
 	unsigned int yl = 2000;
 	unsigned int skipped = 0;
+#endif /* CONFIG_SYS_POST_RTC_MONTH_BOUNDARIES */
 	int reliable;
 
 	/* Time reliability */
@@ -122,6 +126,7 @@ int rtc_post_test (int flags)
 		}
 	}
 
+#if CONFIG_SYS_POST_RTC_MONTH_BOUNDARIES
 	/* Passing month boundaries */
 
 	if (rtc_post_skip (&diff) != 0) {
@@ -179,6 +184,7 @@ int rtc_post_test (int flags)
 		}
 	}
 	rtc_post_restore (&svtm, skipped);
+#endif /* CONFIG_SYS_POST_RTC_MONTH_BOUNDARIES */
 
 	/* If come here, then RTC operates correcty, check the correctness
 	 * of the time it reports.
