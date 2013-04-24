@@ -2951,7 +2951,11 @@ else
 endif
 endif
 
-	echo "#include <configs/mv_kw2.h>" >> $(obj)include/config.h;
+	@if [ "$(findstring gflt200_config,$(RULE))" ] ; then \
+		echo "#include <configs/gflt200.h>" >> $(obj)include/config.h ; \
+	else \
+		echo "#include <configs/mv_kw2.h>" >> $(obj)include/config.h ; \
+	fi ;
 
 #=================
 # JFFS2 support
