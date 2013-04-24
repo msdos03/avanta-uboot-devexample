@@ -4,6 +4,8 @@
 
 #undef MV_INCLUDE_RTC
 
+#define CONFIG_CMD_DIAG
+
 #define CONFIG_RTC_PCF8523
 #define CONFIG_SYS_I2C_RTC_ADDR	0x68
 
