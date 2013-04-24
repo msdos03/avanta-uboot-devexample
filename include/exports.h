@@ -33,7 +33,9 @@ void forceenv (char *varname, char *varvalue);
 void *realloc(void*, size_t);
 void *calloc(size_t, size_t);
 void *memalign(size_t, size_t);
+#if defined (MV_INCLUDE_RTC) || defined(CONFIG_RTC_DS1338_DS1339)
 u32 mvGetRtcSec(void);
+#endif
 #endif
 #if defined(CONFIG_CMD_I2C)
 int i2c_write (uchar, uint, int , uchar* , int);

@@ -4,16 +4,16 @@ Copyright (C) Marvell International Ltd. and its affiliates
 ********************************************************************************
 Marvell GPL License Option
 
-If you received this File from Marvell, you may opt to use, redistribute and/or 
-modify this File in accordance with the terms and conditions of the General 
-Public License Version 2, June 1991 (the "GPL License"), a copy of which is 
-available along with the File in the license.txt file or by writing to the Free 
-Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 or 
-on the worldwide web at http://www.gnu.org/licenses/gpl.txt. 
+If you received this File from Marvell, you may opt to use, redistribute and/or
+modify this File in accordance with the terms and conditions of the General
+Public License Version 2, June 1991 (the "GPL License"), a copy of which is
+available along with the File in the license.txt file or by writing to the Free
+Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 or
+on the worldwide web at http://www.gnu.org/licenses/gpl.txt.
 
-THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE IMPLIED 
-WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE ARE EXPRESSLY 
-DISCLAIMED.  The GPL License provides additional details about this warranty 
+THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE IMPLIED
+WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE ARE EXPRESSLY
+DISCLAIMED.  The GPL License provides additional details about this warranty
 disclaimer.
 
 *******************************************************************************/
@@ -31,7 +31,7 @@ disclaimer.
 #include "rtc/ext_rtc/mvDS133x.h"
 #endif
 
-#if defined(CONFIG_CMD_DATE)
+#if defined (MV_INCLUDE_RTC) || defined(CONFIG_RTC_DS1338_DS1339)
 
 /* since this rtc dosen't support century we will use 20 as default */
 #define CENTURY 20
@@ -93,4 +93,4 @@ void rtc_reset (void)
 }
 
 
-#endif	/* CONFIG_CMD_DATE */
+#endif /* MV_INCLUDE_RTC || CONFIG_RTC_DS1338_DS1339 */

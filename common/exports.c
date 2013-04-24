@@ -38,7 +38,9 @@ void jumptable_init (void)
         gd->jt[XF_calloc] = (void *) calloc;
         gd->jt[XF_realloc] = (void *) realloc;
 	gd->jt[XF_memalign] = (void *) memalign;
+#if defined (MV_INCLUDE_RTC) || defined(CONFIG_RTC_DS1338_DS1339)
 	gd->jt[XF_mvGetRtcSec] = (void *) mvGetRtcSec;
+#endif
 #endif
 #if defined(CONFIG_CMD_I2C)
 	gd->jt[XF_i2c_write] = (void *) i2c_write;

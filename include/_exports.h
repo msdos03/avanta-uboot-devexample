@@ -34,6 +34,8 @@ EXPORT_FUNC(spi_xfer)
 EXPORT_FUNC(realloc)
 EXPORT_FUNC(calloc)
 EXPORT_FUNC(memalign)
+#if defined (MV_INCLUDE_RTC) || defined(CONFIG_RTC_DS1338_DS1339)
 EXPORT_FUNC(mvGetRtcSec)
+#endif
 #endif
 

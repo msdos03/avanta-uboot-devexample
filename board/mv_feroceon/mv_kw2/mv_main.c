@@ -57,10 +57,10 @@ disclaimer.
 
 #ifdef MV_INCLUDE_RTC
 #include "rtc/integ_rtc/mvRtc.h"
-#include "rtc.h"
 #elif CONFIG_RTC_DS1338_DS1339
 #include "rtc/ext_rtc/mvDS133x.h"
 #endif
+#include "rtc.h"
 
 #if defined(MV_INCLUDE_XOR)
 #include "xor/mvXor.h"
@@ -1082,6 +1082,7 @@ MV_U32 mvSysClkGet(void)
 	return gd->bus_clk;
 }
 
+#if defined (MV_INCLUDE_RTC) || defined(CONFIG_RTC_DS1338_DS1339)
 /* exported for EEMBC */
 MV_U32 mvGetRtcSec(void)
 {
@@ -1093,6 +1094,7 @@ MV_U32 mvGetRtcSec(void)
 #endif
 	return (time.minutes * 60) + time.seconds;
 }
+#endif /* MV_INCLUDE_RTC || CONFIG_RTC_DS1338_DS1339 */
 
 void reset_cpu(void)
 {
