@@ -4,16 +4,16 @@ Copyright (C) Marvell International Ltd. and its affiliates
 ********************************************************************************
 Marvell GPL License Option
 
-If you received this File from Marvell, you may opt to use, redistribute and/or 
-modify this File in accordance with the terms and conditions of the General 
-Public License Version 2, June 1991 (the "GPL License"), a copy of which is 
-available along with the File in the license.txt file or by writing to the Free 
-Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 or 
-on the worldwide web at http://www.gnu.org/licenses/gpl.txt. 
+If you received this File from Marvell, you may opt to use, redistribute and/or
+modify this File in accordance with the terms and conditions of the General
+Public License Version 2, June 1991 (the "GPL License"), a copy of which is
+available along with the File in the license.txt file or by writing to the Free
+Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 or
+on the worldwide web at http://www.gnu.org/licenses/gpl.txt.
 
-THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE IMPLIED 
-WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE ARE EXPRESSLY 
-DISCLAIMED.  The GPL License provides additional details about this warranty 
+THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE IMPLIED
+WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE ARE EXPRESSLY
+DISCLAIMED.  The GPL License provides additional details about this warranty
 disclaimer.
 
 *******************************************************************************/
@@ -1626,14 +1626,14 @@ U_BOOT_CMD(
 
 #endif
 
-#if defined(CONFIG_CMD_DIAG)
+#if 0
 
 #include "../diag/diag.h"
 extern diag_func_t *diag_sequence[];
 
 int mv_diag (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
-        int test_no = 0, no_of_tests = 0; 
+        int test_no = 0, no_of_tests = 0;
         diag_func_t **diag_func_ptr;
 
 
@@ -1681,7 +1681,7 @@ U_BOOT_CMD(
         "mv_diag [1|2|...]\n"
         "        - run specified test number\n"
 );
-#endif /*CFG_DIAG*/
+#endif
 
 
 static int do_mux(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
