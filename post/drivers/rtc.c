@@ -88,7 +88,11 @@ static void rtc_post_restore (struct rtc_time *tm, unsigned int sec)
 
 int rtc_post_test (int flags)
 {
+	char *env;
 	ulong diff;
+	ulong diff_min = 950;
+	ulong diff_max = 1050;
+	ulong loops = 5;
 	unsigned int i;
 	struct rtc_time svtm;
 #if CONFIG_SYS_POST_RTC_MONTH_BOUNDARIES
@@ -106,22 +110,31 @@ int rtc_post_test (int flags)
 	reliable = rtc_get (&svtm);
 
 	/* Time uniformity */
+	if ((env = getenv("rtc_post_loops")))
+		loops = simple_strtoul(env, NULL, 0);
+
+	if ((env = getenv("rtc_post_diff_min")))
+		diff_min = simple_strtoul(env, NULL, 0);
+
+	if ((env = getenv("rtc_post_diff_max")))
+		diff_max = simple_strtoul(env, NULL, 0);
+
 	if (rtc_post_skip (&diff) != 0) {
 		post_log ("Timeout while waiting for a new second !\n");
 
 		return -1;
 	}
 
-	for (i = 0; i < 5; i++) {
+	for (i = 0; i < loops; i++) {
 		if (rtc_post_skip (&diff) != 0) {
 			post_log ("Timeout while waiting for a new second !\n");
 
 			return -1;
 		}
 
-		if (diff < 950 || diff > 1050) {
-			post_log ("Invalid second duration !\n");
-
+		if (diff < diff_min || diff > diff_max) {
+			post_log ("Invalid second duration ! diff=%lu, range=[%lu, %lu]\n",
+					diff, diff_min, diff_max);
 			return -1;
 		}
 	}
