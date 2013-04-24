@@ -90,12 +90,6 @@ extern unsigned int mvTclkGet(void);
 #define CONFIG_SYS_64BIT_VSPRINTF
 #define CONFIG_SYS_64BIT_STRTOUL
 
-/******************/
-/*  POST support  */
-/******************/
-#define CONFIG_POST  (CONFIG_SYS_POST_ETHER | CONFIG_SYS_POST_MEMORY | \
-                      CONFIG_SYS_POST_I2C)
-
 /* commands */
 
 #define CONFIG_BOOTP_MASK	(CONFIG_BOOTP_DEFAULT | \
