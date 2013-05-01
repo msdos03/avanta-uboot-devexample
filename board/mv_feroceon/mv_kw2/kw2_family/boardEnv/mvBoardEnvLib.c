@@ -1441,6 +1441,33 @@ MV_32 mvBoarGpioPinNumGet(MV_BOARD_GPP_CLASS gppClass, MV_U32 index)
 	return MV_ERROR;
 }
 
+MV_STATUS mvBoardGppInfoGet(MV_BOARD_GPP_CLASS gppClass, MV_U32 index, MV_U8 *pinNum, MV_U8 *polarity)
+{
+	MV_U32 boardId, i;
+	MV_U32 indexFound = 0;
+
+	boardId = mvBoardIdGet();
+
+	if (!((boardId >= BOARD_ID_BASE) && (boardId < MV_MAX_BOARD_ID))) {
+		mvOsPrintf("%s: unknown board ID '%u'\n", __func__, boardId);
+		return MV_ERROR;
+	}
+
+	for (i = 0; i < BOARD_INFO(boardId)->numBoardGppInfo; i++) {
+		if (BOARD_INFO(boardId)->pBoardGppInfo[i].devClass == gppClass) {
+			if (indexFound == index) {
+				if (pinNum)
+					*pinNum = BOARD_INFO(boardId)->pBoardGppInfo[i].gppPinNum;
+				if (polarity)
+					*polarity = !BOARD_INFO(boardId)->pBoardGppInfo[i].activeLow;
+				return MV_OK;
+			}
+			indexFound++;
+		}
+	}
+	return MV_ERROR;
+}
+
 /*******************************************************************************
 * mvBoardReset - mvBoardReset
 *
