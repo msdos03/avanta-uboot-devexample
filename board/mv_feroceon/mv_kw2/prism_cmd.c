@@ -14,12 +14,14 @@
  *          |       |       ------- loopback
  *          |       |
  *          |       ------ sff ---- help
- *          |               |
- *          |               ------- vbi
- *          |               |
- *          |               ------- vei
- *          |               |
- *          |               ------- csum
+ *          |       |       |
+ *          |       |       ------- vbi
+ *          |       |       |
+ *          |       |       ------- vei
+ *          |       |       |
+ *          |       |       ------- csum
+ *          |       |
+ *          |       ------ leds
  *          |
  *          ---- help
  *
@@ -82,6 +84,7 @@
 #include "mvTypes.h"
 #include "mvCtrlEnvLib.h"
 #include "boardEnv/mvBoardEnvLib.h"
+#include "gpp/mvGpp.h"
 
 #if defined(MV_INCLUDE_UNM_ETH) || defined(MV_INCLUDE_GIG_ETH)
 #include "eth-phy/mvEthPhy.h"
@@ -209,12 +212,18 @@ PRISM_CMD_PHONY(prism_diag, gbe,
 	      "prism board GbE diagnostics",
 	      NULL, prism_diag_gbe_sub_cmds);
 
+/* diag leds command */
+PRISM_CMD_LEAF(prism_diag, leds,
+	       "prism board leds diagnostics",
+	       "<mode - off, on, blink [hz]>\n");
+
 /* diag commands */
 static const struct prism_cmd_entry *prism_diag_sub_cmds[] =
 {
 	&prism_diag_gbe,
 	&prism_diag_pon,
 	&prism_diag_sff,
+	&prism_diag_leds,
 	NULL
 };
 
@@ -495,6 +504,67 @@ static int do_prism_diag_sff_csum(int level, int argc, char *argv[])
 	PRISM_DBG("%s: argc=%d, argv[0]=%s\n", __func__, argc, argv[4]);
 	ret = sff_read_verify_checksum(argv[4]);
 	return(ret);
+}
+
+static void config_led(MV_U8 gpio, MV_U8 polarity,
+			int mode /* 0 = off, 1 = on, 2 = blink */, int hz)
+{
+	int shift = gpio % 32;
+	MV_U32 mask = 1 << shift;
+	MV_U32 group = gpio / 32;
+
+	switch (mode) {
+	case 0:
+		mvGppValueSet(group, mask, !polarity << shift);
+		mvGppBlinkEn(group, mask, 0);
+		break;
+	case 1:
+		mvGppValueSet(group, mask, polarity << shift);
+		mvGppBlinkEn(group, mask, 0);
+		break;
+	case 2:
+		if (hz > 0)
+			mvGppBlinkCntrSet(MV_GPP_BLINK_CNTR_A,
+						mvBoardTclkGet() / (hz * 2),
+						mvBoardTclkGet() / (hz * 2));
+
+		mvGppBlinkEn(group, mask, mask);
+		break;
+	}
+}
+
+static int do_prism_diag_leds(int level, int argc, char *argv[])
+{
+	int hz = 1;
+	int mode;
+	MV_U8 gpio;
+	MV_U8 polarity;
+	MV_U32 i;
+
+	if (argc == level) {
+		printf("Error - no mode specified\n");
+		return(1);
+	}
+
+	if (!strcmp(argv[level], "off"))
+		mode = 0;
+	else if (!strcmp(argv[level], "on"))
+		mode = 1;
+	else if (!strcmp(argv[level], "blink")) {
+		mode = 2;
+
+		if (argc > level + 1)
+			hz = simple_strtol(argv[level + 1], NULL, 0);
+	}
+	else {
+		printf("Error - invalid mode\n");
+		return(1);
+	}
+
+	for (i = 0; !mvBoardGppInfoGet(BOARD_GPP_LED, i, &gpio, &polarity); i++)
+		config_led(gpio, polarity, mode, hz);
+
+	return(0);
 }
 
 U_BOOT_CMD(
