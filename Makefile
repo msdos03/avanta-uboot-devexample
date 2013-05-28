@@ -2694,6 +2694,7 @@ rd88f6530mdu_config \
 db88f6601bp_config \
 rd88f6601mc_config \
 gflt200_config \
+gflt110_config \
 kw2_test:
 	@$(MAKE) -s mv_kw2 RULE=$@
 mv_kw2:	unconfig
@@ -2724,6 +2725,9 @@ mv_kw2:	unconfig
 		echo "#define MV88F6192" > $(obj)include/config.h ;	\
 		echo "  * Configured for MV88F6192"; \
 	elif [ "$(findstring gflt200,$(RULE))" ] ; then \
+		echo "#define MV88F6601" > $(obj)include/config.h ;	\
+		echo "  * Configured for MV88F6601"; \
+	elif [ "$(findstring gflt110,$(RULE))" ] ; then \
 		echo "#define MV88F6601" > $(obj)include/config.h ;	\
 		echo "  * Configured for MV88F6601"; \
 	else \
@@ -2801,6 +2805,12 @@ mv_kw2:	unconfig
 		echo "#define MV_BOOTROM" >> $(obj)include/config.h ;	\
 		echo "MV_DDR_FREQ=256mb_400mhz" >> $(obj)include/config.mk ;\
 		echo "  * Configured for GFLT200"; \
+	elif [ "$(findstring gflt110_config,$(RULE))" ] ; then\
+		echo "#define GFLT110" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTSIZE_512K" >> $(obj)include/config.h ; \
+		echo "#define MV_BOOTROM" >> $(obj)include/config.h ;	\
+		echo "MV_DDR_FREQ=400rd_A-MC" >> $(obj)include/config.mk ;\
+		echo "  * Configured for GFLT110"; \
 	else \
 		echo "  * Error no board was configured"; \
 	fi;
@@ -2953,6 +2963,8 @@ endif
 
 	@if [ "$(findstring gflt200_config,$(RULE))" ] ; then \
 		echo "#include <configs/gflt200.h>" >> $(obj)include/config.h ; \
+	elif [ "$(findstring gflt110_config,$(RULE))" ] ; then \
+		echo "#include <configs/gflt110.h>" >> $(obj)include/config.h ; \
 	else \
 		echo "#include <configs/mv_kw2.h>" >> $(obj)include/config.h ; \
 	fi ;
