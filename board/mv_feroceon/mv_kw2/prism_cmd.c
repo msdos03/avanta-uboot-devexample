@@ -20,6 +20,8 @@
  *          |       |       ------- vei
  *          |       |       |
  *          |       |       ------- csum
+ *          |       |       |
+ *          |       |       ------- vcc
  *          |       |
  *          |       ------ leds
  *          |
@@ -151,11 +153,15 @@ PRISM_CMD_LEAF(prism_diag_sff, csum,
 	       "ccd - verify CC_DMI at offset 95 of 0xA2 addr",
 	       "<checksum types - ccb cce ccd>\n");
 
+PRISM_CMD_LEAF(prism_diag_sff, vcc,
+	       "internally measured supply voltage in transceiver", NULL);
+
 static const struct prism_cmd_entry *prism_diag_sff_sub_cmds[] =
 {
 	&prism_diag_sff_vbi,
 	&prism_diag_sff_vei,
 	&prism_diag_sff_csum,
+	&prism_diag_sff_vcc,
 	NULL
 };
 
@@ -504,6 +510,18 @@ static int do_prism_diag_sff_csum(int level, int argc, char *argv[])
 	PRISM_DBG("%s: argc=%d, argv[0]=%s\n", __func__, argc, argv[4]);
 	ret = sff_read_verify_checksum(argv[4]);
 	return(ret);
+}
+
+static int do_prism_diag_sff_vcc(int level, int argc, char *argv[])
+{
+	int ret;
+	u16 vcc;
+
+	ret = i2c_read(SFF_ADDR_A2, 98, 1, &vcc, sizeof(vcc));
+	if (!ret)
+		printf("%hu\n", __be16_to_cpu(vcc));
+
+	return ret;
 }
 
 static void config_led(MV_U8 gpio, MV_U8 polarity,
