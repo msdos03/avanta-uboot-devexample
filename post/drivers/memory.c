@@ -466,6 +466,18 @@ int memory_post_test (int flags)
 
 		unsigned long i;
 
+		/*
+		 * the address line test is quick and only modifies the "target"
+		 * address, so run it for all memory.
+		 */
+		for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
+			if (ret == 0)
+				ret = memory_post_addrline (
+						(ulong *)memstart,
+						(ulong *)bd->bi_dram[i].start,
+						bd->bi_dram[i].size);
+		}
+
 		for (i = 0; i < (memsize >> 20) && ret == 0; i++) {
 			if (ret == 0)
 				ret = memory_post_tests (memstart + i << 20,
