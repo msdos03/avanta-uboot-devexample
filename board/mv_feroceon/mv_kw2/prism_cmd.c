@@ -23,7 +23,15 @@
  *          |       |       |
  *          |       |       ------- vcc
  *          |       |
- *          |       ------ leds
+ *          |       ------ leds ---- help
+ *          |               |
+ *          |               -------- off
+ *          |               |
+ *          |               -------- on
+ *          |               |
+ *          |               -------- blink
+ *          |               |
+ *          |               -------- list
  *          |
  *          ---- help
  *
@@ -221,7 +229,7 @@ PRISM_CMD_PHONY(prism_diag, gbe,
 /* diag leds command */
 PRISM_CMD_LEAF(prism_diag, leds,
 	       "prism board leds diagnostics",
-	       "<mode - off, on, blink [hz]>\n");
+	       "<mode - off, on, blink, list> [<name>] [<hz>]\n");
 
 /* diag commands */
 static const struct prism_cmd_entry *prism_diag_sub_cmds[] =
@@ -524,6 +532,13 @@ static int do_prism_diag_sff_vcc(int level, int argc, char *argv[])
 	return ret;
 }
 
+enum {
+	LEDS_MODE_OFF,
+	LEDS_MODE_ON,
+	LEDS_MODE_BLINK,
+	LEDS_MODE_LIST,
+};
+
 static void config_led(MV_U8 gpio, MV_U8 polarity,
 			int mode /* 0 = off, 1 = on, 2 = blink */, int hz)
 {
@@ -532,15 +547,15 @@ static void config_led(MV_U8 gpio, MV_U8 polarity,
 	MV_U32 group = gpio / 32;
 
 	switch (mode) {
-	case 0:
+	case LEDS_MODE_OFF:
 		mvGppValueSet(group, mask, !polarity << shift);
 		mvGppBlinkEn(group, mask, 0);
 		break;
-	case 1:
+	case LEDS_MODE_ON:
 		mvGppValueSet(group, mask, polarity << shift);
 		mvGppBlinkEn(group, mask, 0);
 		break;
-	case 2:
+	case LEDS_MODE_BLINK:
 		if (hz > 0)
 			mvGppBlinkCntrSet(MV_GPP_BLINK_CNTR_A,
 						mvBoardTclkGet() / (hz * 2),
@@ -555,9 +570,10 @@ static int do_prism_diag_leds(int level, int argc, char *argv[])
 {
 	int hz = 1;
 	int mode;
-	MV_U8 gpio;
-	MV_U8 polarity;
 	MV_U32 i;
+	const char *name = NULL;
+	MV_BOARD_INFO *info = mvBoardInfoGet();
+	MV_BOARD_GPP_INFO *gpp;
 
 	if (argc == level) {
 		printf("Error - no mode specified\n");
@@ -565,22 +581,37 @@ static int do_prism_diag_leds(int level, int argc, char *argv[])
 	}
 
 	if (!strcmp(argv[level], "off"))
-		mode = 0;
+		mode = LEDS_MODE_OFF;
 	else if (!strcmp(argv[level], "on"))
-		mode = 1;
+		mode = LEDS_MODE_ON;
 	else if (!strcmp(argv[level], "blink")) {
-		mode = 2;
+		mode = LEDS_MODE_BLINK;
 
-		if (argc > level + 1)
-			hz = simple_strtol(argv[level + 1], NULL, 0);
+		if (argc > level + 2)
+			hz = simple_strtol(argv[level + 2], NULL, 0);
 	}
+	else if (!strcmp(argv[level], "list"))
+		mode = LEDS_MODE_LIST;
 	else {
 		printf("Error - invalid mode\n");
 		return(1);
 	}
 
-	for (i = 0; !mvBoardGppInfoGet(BOARD_GPP_LED, i, &gpio, &polarity); i++)
-		config_led(gpio, polarity, mode, hz);
+	if (argc > level + 1)
+		name = argv[level + 1];
+
+	for (i = 0; i < info->numBoardGppInfo; i++) {
+		gpp = &info->pBoardGppInfo[i];
+
+		if ((gpp->devClass == BOARD_GPP_LED)
+			&& (!name || (gpp->name && !strcmp(name, gpp->name)))) {
+			if (mode == LEDS_MODE_LIST)
+				printf("%s\n", gpp->name);
+			else
+				config_led(gpp->gppPinNum, !gpp->activeLow,
+						mode, hz);
+		}
+	}
 
 	return(0);
 }
