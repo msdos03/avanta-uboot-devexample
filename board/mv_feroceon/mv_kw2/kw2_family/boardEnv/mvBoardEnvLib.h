@@ -345,6 +345,7 @@ typedef struct _boardGppInfo {
 	MV_BOARD_GPP_CLASS devClass;
 	MV_U8 gppPinNum;
 	MV_U8 activeLow;
+	const char *name;
 } MV_BOARD_GPP_INFO;
 
 typedef struct _boardTwsiInfo {
