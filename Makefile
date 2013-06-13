@@ -2809,7 +2809,7 @@ mv_kw2:	unconfig
 		echo "#define GFLT110" >> $(obj)include/config.h ;	\
 		echo "#define MV_BOOTSIZE_512K" >> $(obj)include/config.h ; \
 		echo "#define MV_BOOTROM" >> $(obj)include/config.h ;	\
-		echo "MV_DDR_FREQ=400rd_A-MC" >> $(obj)include/config.mk ;\
+		echo "MV_DDR_FREQ=256mb_400mhz_gflt110" >> $(obj)include/config.mk ;\
 		echo "  * Configured for GFLT110"; \
 	else \
 		echo "  * Error no board was configured"; \
