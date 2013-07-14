@@ -2296,7 +2296,23 @@ MV_VOID mvBoardMppModuleTypePrint(MV_VOID)
 		mvOsOutput("       3xFE PHY Module.\n");
 
 	/* Internal FE/GE Phy */
-	if (ethConfig & (ESC_OPT_GEPHY_MAC0 | ESC_OPT_GEPHY_MAC1 | ESC_OPT_GEPHY_SW_P0 | ESC_OPT_GEPHY_SW_P5 )) {
+	if (DB_88F6601_BP_ID == mvBoardIdGet()) {
+		if (ethConfig & ESC_OPT_GEPHY_MAC0) {
+			mvOsOutput("       GE-PHY on MAC0.\n");
+			mvOsOutput("       LP SERDES on MAC1.\n");
+		}
+		else {
+			mvOsOutput("       LP SERDES on MAC0.\n");
+			mvOsOutput("       MAC1 disconnected.\n");
+		}
+		/* LP SERDES  for DB 6601 */
+		if (ethConfig & ESC_OPT_LP_SERDES_FE_GE_PHY)
+			mvOsOutput("       LP SERDES connected to external PHY.\n");
+		else
+			mvOsOutput("       LP SERDES connected to SFP.\n");
+		return;
+	}
+	else if (ethConfig & (ESC_OPT_GEPHY_MAC0 | ESC_OPT_GEPHY_MAC1 | ESC_OPT_GEPHY_SW_P0 | ESC_OPT_GEPHY_SW_P5 )) {
 		if (ethConfig & ESC_OPT_GEPHY_MAC0) 
 			mvOsOutput("       GE-PHY on MAC0.\n");
 		if (ethConfig & ESC_OPT_GEPHY_MAC1)
@@ -2323,13 +2339,6 @@ MV_VOID mvBoardMppModuleTypePrint(MV_VOID)
 	if (ethConfig & ESC_OPT_SGMII_2_5)
 		mvOsOutput("       SGMII-2.5G Module.\n");
 
-	/* LP SERDES  for DB 6601 */
-	if (DB_88F6601_BP_ID == mvBoardIdGet()) {
-		if (ethConfig & ESC_OPT_GEPHY_MAC0) 
-			mvOsOutput("       LP SERDES on MAC1.\n");
-		else
-			mvOsOutput("       LP SERDES on MAC0.\n");
-	}
 
 
 	return;
