@@ -35,7 +35,12 @@
 #define CC_DMI         "ccd"
 
 #if (defined(CONFIG_POST) && defined(CONFIG_SYS_POST_I2C))
-	#define I2C_ADDR_LIST   {SFF_ADDR_A0, SFF_ADDR_A2, 0x64}
+	#define I2C_ADDR_LIST {						\
+		SFF_ADDR_A0,						\
+		SFF_ADDR_A2,						\
+		0x64,							\
+		CONFIG_SYS_I2C_RTC_ADDR,				\
+	}
 
 	#define SFF_LOG(format, args...)
 	#define SFF_ERR_LOG(format, args...) \
