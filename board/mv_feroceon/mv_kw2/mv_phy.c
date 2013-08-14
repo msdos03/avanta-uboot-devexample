@@ -197,8 +197,13 @@ void mvBoardEgigaPhyInit(void)
 	MV_U32 reg;
 	MV_U32 i;
 	char *env;
+	MV_BOARD_INFO *pBoardInfo;
 
 	mvSysEthPhyInit();
+
+	pBoardInfo = mvBoardInfoGet();
+	if (pBoardInfo->pBoardEgigaPhyInit)
+		pBoardInfo->pBoardEgigaPhyInit(pBoardInfo);
 
 	if (ethComplex & (ESC_OPT_RGMIIA_MAC0 | ESC_OPT_RGMIIB_MAC0))
 		mvEthPhyInit(0, MV_FALSE);

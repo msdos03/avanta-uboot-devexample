@@ -402,6 +402,7 @@ typedef struct {
 typedef struct _boardInfo {
 	char boardName[MV_BOARD_NAME_LEN];
 	MV_VOID (*pBoardEnvInit)(struct _boardInfo *);
+	MV_VOID (*pBoardEgigaPhyInit)(struct _boardInfo *);
 	MV_U8 numBoardMppTypeValue;
 	MV_BOARD_MPP_TYPE_INFO *pBoardMppTypeValue;
 	MV_U8 numBoardMppConfigValue;
