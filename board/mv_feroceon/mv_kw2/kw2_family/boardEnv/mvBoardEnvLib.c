@@ -137,8 +137,8 @@ MV_VOID mvBoardEnvInit(MV_VOID)
 	}
 
 	pBoardInfo = mvBoardInfoGet();
-	if (pBoardInfo->pBoardInit)
-		pBoardInfo->pBoardInit(pBoardInfo);
+	if (pBoardInfo->pBoardEnvInit)
+		pBoardInfo->pBoardEnvInit(pBoardInfo);
 
 	nandDev = boardGetDevCSNum(0, BOARD_DEV_NAND_FLASH);
 	if (nandDev != 0xFFFFFFFF) {

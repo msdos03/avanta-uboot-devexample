@@ -1248,7 +1248,7 @@ MV_BOARD_SPEC_INIT gflt200BoardSpecInit[] = {
 #define GFLT200_EVT1_BOARD_VER		(0)
 #define GFLT200_EVT2_BOARD_VER		(1 << 13)
 
-static MV_VOID gflt200BoardInit(MV_BOARD_INFO *pBoardInfo)
+static MV_VOID gflt200BoardEnvInit(MV_BOARD_INFO *pBoardInfo)
 {
 	mvGppTypeSet(0, GFLT200_GPP_BOARD_VER_MASK, GFLT200_GPP_BOARD_VER_MASK);
 
@@ -1291,7 +1291,7 @@ static MV_VOID gflt200BoardInit(MV_BOARD_INFO *pBoardInfo)
 
 MV_BOARD_INFO gflt200Info = {
 	.boardName = "GFLT200",
-	.pBoardInit = gflt200BoardInit,
+	.pBoardEnvInit = gflt200BoardEnvInit,
 	.numBoardMppTypeValue = MV_ARRAY_SIZE(gflt200InfoBoardMppTypeInfo),
 	.pBoardMppTypeValue = gflt200InfoBoardMppTypeInfo,
 	.intsGppMaskLow = 0,
