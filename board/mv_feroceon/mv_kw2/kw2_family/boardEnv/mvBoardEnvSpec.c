@@ -64,6 +64,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mvCommon.h"
 #include "mvBoardEnvLib.h"
 #include "mvBoardEnvSpec.h"
+#include "eth-phy/mvEthPhy.h"
 #include "gpp/mvGpp.h"
 #include "twsi/mvTwsi.h"
 
@@ -1289,9 +1290,38 @@ static MV_VOID gflt200BoardEnvInit(MV_BOARD_INFO *pBoardInfo)
 	}
 }
 
+static MV_VOID gflt200BoardEgigaPhyInit(MV_BOARD_INFO *pBoardInfo)
+{
+	printf("%s\n", __func__);
+
+	/* pass led control to internal phy */
+	MV_REG_WRITE(LED_MATRIX_CTRL_REG(0), 0x82);
+
+	switch (mvGppValueGet(0, GFLT200_GPP_BOARD_VER_MASK)) {
+	case GFLT200_EVT1_BOARD_VER:
+		/* link = mpp 24 = p2 = phy led[5] */
+		/* data = mpp 23 = p1 = phy led[4] */
+		mvEthPhyRegWrite(0, 22, 3);
+		mvEthPhyRegWrite(0, 19, 0x64);
+		mvEthPhyRegWrite(0, 22, 0);
+		break;
+
+	default:
+		/* fallthrough */
+	case GFLT200_EVT2_BOARD_VER:
+		/* link = mpp 14 = c2 = phy led[2] */
+		/* data = mpp 26 = c1 = phy led[1] */
+		mvEthPhyRegWrite(0, 22, 3);
+		mvEthPhyRegWrite(0, 16, 0x40);
+		mvEthPhyRegWrite(0, 22, 0);
+		break;
+	}
+}
+
 MV_BOARD_INFO gflt200Info = {
 	.boardName = "GFLT200",
 	.pBoardEnvInit = gflt200BoardEnvInit,
+	.pBoardEgigaPhyInit = gflt200BoardEgigaPhyInit,
 	.numBoardMppTypeValue = MV_ARRAY_SIZE(gflt200InfoBoardMppTypeInfo),
 	.pBoardMppTypeValue = gflt200InfoBoardMppTypeInfo,
 	.intsGppMaskLow = 0,
