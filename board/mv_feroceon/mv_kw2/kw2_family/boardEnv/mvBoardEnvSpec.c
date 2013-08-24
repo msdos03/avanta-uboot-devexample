@@ -1193,9 +1193,9 @@ MV_BOARD_GPP_INFO gflt200Evt1InfoBoardGppInfo[] = {
 MV_BOARD_GPP_INFO gflt200Evt2InfoBoardGppInfo[] = {
 	/* {{MV_BOARD_GPP_CLASS devClass, MV_U8 gppPinNum}} */
 	{BOARD_GPP_PON_XVR_TX, 17},
-	{BOARD_GPP_LED, 11, .name = "pon-red"},
-	{BOARD_GPP_LED, 12, .name = "pon-blue"},
-	{BOARD_GPP_LED, 14, .activeLow = 1, .name = "eth-link"},
+	{BOARD_GPP_LED, 9, .activeLow = 1, .name = "pon-blue"},
+	{BOARD_GPP_LED, 10, .activeLow = 1, .name = "pon-red"},
+	{BOARD_GPP_LED, 14, .activeLow = 0, .name = "eth-link"},
 	{BOARD_GPP_LED, 26, .activeLow = 1, .name = "eth-data"},
 };
 
