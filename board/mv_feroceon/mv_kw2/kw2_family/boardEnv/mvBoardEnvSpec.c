@@ -1292,8 +1292,6 @@ static MV_VOID gflt200BoardEnvInit(MV_BOARD_INFO *pBoardInfo)
 
 static MV_VOID gflt200BoardEgigaPhyInit(MV_BOARD_INFO *pBoardInfo)
 {
-	printf("%s\n", __func__);
-
 	/* pass led control to internal phy */
 	MV_REG_WRITE(LED_MATRIX_CTRL_REG(0), 0x82);
 
