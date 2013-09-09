@@ -378,6 +378,44 @@ void dual_image_vars_set(void)
 	return;
 }
 
+
+// Try to be compatible with both ginstall and prisminstall.
+// Prismintall sets a BOOT_SIDE sysvar, and ginstall sets
+// ACTIVATED_KERNEL_NAME, which is the same as the TV boxes.
+static void set_boot_variables() {
+	// Try to get the boot partition, either from BOOT_SIDE
+	// (set by prisminstall) or ACTIVATED_KERNEL_NAME (set by ginstall)
+	// First look for BOOT_SIDE.
+	char value[SYSVAR_VALUE];
+	if (sf_getvar("BOOT_SIDE", value, SYSVAR_VALUE) == 0) {
+		printf("BOOT_SIDE = %s ", value);
+		if (value[0] == '2' && value[1] == '\0') {
+			printf("Boot from MTD image2 ...\n");
+			setenv("bootcmd","sf read "LOAD_ADDR_STR" 0xF80000 0xE00000;"
+				   "setenv bootargs ${console} ${mtdparts} debug=1 ${mvNetConfig} ${mvPhoneConfig};"
+				   "bootm "LOAD_ADDR_STR";");
+			return;
+		}
+		if (value[0] == '1' && value[1] == '\0') {
+			printf("Boot from MTD image1 ...\n");
+			setenv("bootcmd","sf read "LOAD_ADDR_STR" 0x180000 0xE00000;"
+				   "setenv bootargs ${console} ${mtdparts} debug=1 ${mvNetConfig} ${mvPhoneConfig};"
+				   "bootm "LOAD_ADDR_STR";");
+			return;
+		}
+	}
+
+	// Now look for ACTIVATED_KERNEL_NAME.  Setenv that value and the bootscript
+	// will branch to the right boot location.
+	if (sf_getvar("ACTIVATED_KERNEL_NAME", value, SYSVAR_VALUE) == 0) {
+		setenv("ACTIVATED_KERNEL_NAME", value);
+	} else {
+		setenv("ACTIVATED_KERNEL_NAME", "kernel0");
+    }
+	return;
+}
+
+
 void misc_init_r_env(void){
 	char *env;
 	char tmp_buf[10];
@@ -742,22 +780,7 @@ setenv bootargs ${console} ${bootargs_root} nfsroot=${serverip}:${rootpath} \
 ip=${ipaddr}:${serverip}${bootargs_end};bootm "LOAD_ADDR_STR";");
 #endif
 
-	char value[SYSVAR_VALUE];
-	if (sf_getvar("BOOT_SIDE", value, SYSVAR_VALUE) == 0) {
-		printf("BOOT_SIDE = %s ", value);
-		if (value[0] == '2' && value[1] == '\0') {
-			printf("Boot from MTD image2 ...\n");
-			setenv("bootcmd","sf read "LOAD_ADDR_STR" 0xF80000 0xE00000;\
-setenv bootargs ${console} ${mtdparts} debug=1 ${mvNetConfig} ${mvPhoneConfig};\
-bootm "LOAD_ADDR_STR";");
-		}
-		else if (value[0] == '1' && value[1] == '\0') {
-			printf("Boot from MTD image1 ...\n");
-			setenv("bootcmd","sf read "LOAD_ADDR_STR" 0x180000 0xE00000;\
-setenv bootargs ${console} ${mtdparts} debug=1 ${mvNetConfig} ${mvPhoneConfig};\
-bootm "LOAD_ADDR_STR";");
-		}
-	}
+	set_boot_variables();
 #endif /* (CONFIG_BOOTDELAY >= 0) */
 
 	env = getenv("standalone");
