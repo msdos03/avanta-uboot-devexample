@@ -1311,6 +1311,7 @@ static MV_VOID gflt200BoardEgigaPhyInit(MV_BOARD_INFO *pBoardInfo)
 		/* data = mpp 26 = c1 = phy led[1] */
 		mvEthPhyRegWrite(0, 22, 3);
 		mvEthPhyRegWrite(0, 16, 0x40);
+		mvEthPhyRegWrite(0, 17, 0x10);
 		mvEthPhyRegWrite(0, 22, 0);
 		break;
 	}
