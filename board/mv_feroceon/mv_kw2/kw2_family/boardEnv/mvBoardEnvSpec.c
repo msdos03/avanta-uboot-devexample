@@ -1415,11 +1415,11 @@ MV_DEV_CS_INFO gflt110InfoBoardDeCsInfo[] = {
 
 MV_BOARD_MPP_INFO gflt110InfoBoardMppConfigValue[] = {
 	{{
-	  RD_88F6601_MPP0_7,
-	  RD_88F6601_MPP8_15,
-	  RD_88F6601_MPP16_23,
-	  RD_88F6601_MPP24_31,
-	  RD_88F6601_MPP32_37
+	  GFLT110_MPP0_7,
+	  GFLT110_MPP8_15,
+	  GFLT110_MPP16_23,
+	  GFLT110_MPP24_31,
+	  GFLT110_MPP32_37
 	  }
 	 }
 };
@@ -1437,8 +1437,25 @@ MV_BOARD_SPEC_INIT gflt110BoardSpecInit[] = {
 	}
 };
 */
+
+static MV_VOID gflt110BoardEgigaPhyInit(MV_BOARD_INFO *pBoardInfo)
+{
+	MV_U16 value = 0;
+
+	/* pass led control to internal phy */
+	MV_REG_WRITE(LED_MATRIX_CTRL_REG(0), 0x82);
+	/* link     = mpp 25 = C0_LED = phy led[0] */
+	/* activity = mpp 26 = C1_LED = phy led[1] */
+	mvEthPhyRegWrite(0, 22, 3);
+	mvEthPhyRegRead(0, 16, &value);
+	value = (value & ~0xff) | 0x37;
+	mvEthPhyRegWrite(0, 16, value);
+	mvEthPhyRegWrite(0, 22, 0);
+}
+
 MV_BOARD_INFO gflt110Info = {
 	.boardName = "GFLT110",
+	.pBoardEgigaPhyInit = gflt110BoardEgigaPhyInit,
 	.numBoardMppTypeValue = MV_ARRAY_SIZE(gflt110InfoBoardMppTypeInfo),
 	.pBoardMppTypeValue = gflt110InfoBoardMppTypeInfo,
 	.numBoardMppConfigValue = MV_ARRAY_SIZE(gflt110InfoBoardMppConfigValue),
