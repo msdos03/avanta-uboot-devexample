@@ -64,6 +64,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mvCommon.h"
 #include "mvBoardEnvLib.h"
 #include "mvBoardEnvSpec.h"
+#include "eth-phy/mvEthPhy.h"
 #include "gpp/mvGpp.h"
 #include "twsi/mvTwsi.h"
 
@@ -1192,9 +1193,9 @@ MV_BOARD_GPP_INFO gflt200Evt1InfoBoardGppInfo[] = {
 MV_BOARD_GPP_INFO gflt200Evt2InfoBoardGppInfo[] = {
 	/* {{MV_BOARD_GPP_CLASS devClass, MV_U8 gppPinNum}} */
 	{BOARD_GPP_PON_XVR_TX, 17},
-	{BOARD_GPP_LED, 11, .name = "pon-red"},
-	{BOARD_GPP_LED, 12, .name = "pon-blue"},
-	{BOARD_GPP_LED, 14, .activeLow = 1, .name = "eth-link"},
+	{BOARD_GPP_LED, 9, .activeLow = 1, .name = "pon-blue"},
+	{BOARD_GPP_LED, 10, .activeLow = 1, .name = "pon-red"},
+	{BOARD_GPP_LED, 14, .activeLow = 0, .name = "eth-link"},
 	{BOARD_GPP_LED, 26, .activeLow = 1, .name = "eth-data"},
 };
 
@@ -1248,7 +1249,7 @@ MV_BOARD_SPEC_INIT gflt200BoardSpecInit[] = {
 #define GFLT200_EVT1_BOARD_VER		(0)
 #define GFLT200_EVT2_BOARD_VER		(1 << 13)
 
-static MV_VOID gflt200BoardInit(MV_BOARD_INFO *pBoardInfo)
+static MV_VOID gflt200BoardEnvInit(MV_BOARD_INFO *pBoardInfo)
 {
 	mvGppTypeSet(0, GFLT200_GPP_BOARD_VER_MASK, GFLT200_GPP_BOARD_VER_MASK);
 
@@ -1289,9 +1290,37 @@ static MV_VOID gflt200BoardInit(MV_BOARD_INFO *pBoardInfo)
 	}
 }
 
+static MV_VOID gflt200BoardEgigaPhyInit(MV_BOARD_INFO *pBoardInfo)
+{
+	/* pass led control to internal phy */
+	MV_REG_WRITE(LED_MATRIX_CTRL_REG(0), 0x82);
+
+	switch (mvGppValueGet(0, GFLT200_GPP_BOARD_VER_MASK)) {
+	case GFLT200_EVT1_BOARD_VER:
+		/* link = mpp 24 = p2 = phy led[5] */
+		/* data = mpp 23 = p1 = phy led[4] */
+		mvEthPhyRegWrite(0, 22, 3);
+		mvEthPhyRegWrite(0, 19, 0x64);
+		mvEthPhyRegWrite(0, 22, 0);
+		break;
+
+	default:
+		/* fallthrough */
+	case GFLT200_EVT2_BOARD_VER:
+		/* link = mpp 14 = c2 = phy led[2] */
+		/* data = mpp 26 = c1 = phy led[1] */
+		mvEthPhyRegWrite(0, 22, 3);
+		mvEthPhyRegWrite(0, 16, 0x40);
+		mvEthPhyRegWrite(0, 17, 0x10);
+		mvEthPhyRegWrite(0, 22, 0);
+		break;
+	}
+}
+
 MV_BOARD_INFO gflt200Info = {
 	.boardName = "GFLT200",
-	.pBoardInit = gflt200BoardInit,
+	.pBoardEnvInit = gflt200BoardEnvInit,
+	.pBoardEgigaPhyInit = gflt200BoardEgigaPhyInit,
 	.numBoardMppTypeValue = MV_ARRAY_SIZE(gflt200InfoBoardMppTypeInfo),
 	.pBoardMppTypeValue = gflt200InfoBoardMppTypeInfo,
 	.intsGppMaskLow = 0,

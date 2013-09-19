@@ -566,6 +566,15 @@ static void config_led(MV_U8 gpio, MV_U8 polarity,
 	}
 }
 
+static void mux_led(MV_U8 mpp)
+{
+	MV_U32 reg = mvCtrlMppRegGet(mpp / 8);
+	MV_U32 val = MV_REG_READ(reg);
+
+	val &= ~(0xf << ((mpp % 8) * 4));
+	MV_REG_WRITE(reg, val);
+}
+
 static int do_prism_diag_leds(int level, int argc, char *argv[])
 {
 	int hz = 1;
@@ -607,9 +616,11 @@ static int do_prism_diag_leds(int level, int argc, char *argv[])
 			&& (!name || (gpp->name && !strcmp(name, gpp->name)))) {
 			if (mode == LEDS_MODE_LIST)
 				printf("%s\n", gpp->name);
-			else
+			else {
+				mux_led(gpp->gppPinNum);
 				config_led(gpp->gppPinNum, !gpp->activeLow,
 						mode, hz);
+			}
 		}
 	}
 
