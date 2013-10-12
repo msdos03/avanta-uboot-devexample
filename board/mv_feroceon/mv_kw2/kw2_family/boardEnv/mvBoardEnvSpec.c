@@ -64,8 +64,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mvCommon.h"
 #include "mvBoardEnvLib.h"
 #include "mvBoardEnvSpec.h"
+#include "cntmr/mvCntmr.h"
 #include "eth-phy/mvEthPhy.h"
 #include "gpp/mvGpp.h"
+#include "sys/mvCpuIf.h"
 #include "twsi/mvTwsi.h"
 
 /***************************************************************************
@@ -1319,6 +1321,9 @@ static MV_VOID gflt200BoardEgigaPhyInit(MV_BOARD_INFO *pBoardInfo)
 
 static MV_VOID gflt200BoardPreBootOs(MV_BOARD_INFO *pBoardInfo)
 {
+	mvCpuIfEnableWatchdogReset();
+	mvCntmrWrite(WATCHDOG, 0xffffffff);
+	mvCntmrEnable(WATCHDOG);
 }
 
 MV_BOARD_INFO gflt200Info = {
