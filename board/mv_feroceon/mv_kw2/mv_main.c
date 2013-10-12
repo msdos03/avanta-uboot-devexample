@@ -1453,3 +1453,11 @@ ulong post_word_load (void)
 	return pd->boot_mode;
 }
 #endif  /* CONFIG_POST || CONFIG_LOGBUFFER*/
+
+void board_pre_boot_os(void)
+{
+	MV_BOARD_INFO *pBoardInfo = mvBoardInfoGet();
+
+	if (pBoardInfo->pBoardPreBootOs)
+		pBoardInfo->pBoardPreBootOs(pBoardInfo);
+}
