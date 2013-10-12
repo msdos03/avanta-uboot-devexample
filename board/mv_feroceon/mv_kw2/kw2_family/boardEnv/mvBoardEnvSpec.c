@@ -67,7 +67,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cntmr/mvCntmr.h"
 #include "eth-phy/mvEthPhy.h"
 #include "gpp/mvGpp.h"
+#include "spi_flash.h"
 #include "sys/mvCpuIf.h"
+#include "sysvar.h"
 #include "twsi/mvTwsi.h"
 
 /***************************************************************************
@@ -1319,8 +1321,15 @@ static MV_VOID gflt200BoardEgigaPhyInit(MV_BOARD_INFO *pBoardInfo)
 	}
 }
 
+extern struct spi_flash *flash;
+
 static MV_VOID gflt200BoardPreBootOs(MV_BOARD_INFO *pBoardInfo)
 {
+	spi_flash_lock(flash, SYSVAR_RO_OFFSET0, SYSVAR_BLOCK_SIZE,
+			SPI_FLASH_LOCK_WRITE|SPI_FLASH_LOCK_DOWN);
+	spi_flash_lock(flash, SYSVAR_RO_OFFSET1, SYSVAR_BLOCK_SIZE,
+			SPI_FLASH_LOCK_WRITE|SPI_FLASH_LOCK_DOWN);
+
 	mvCpuIfEnableWatchdogReset();
 	mvCntmrWrite(WATCHDOG, 0xffffffff);
 	mvCntmrEnable(WATCHDOG);
