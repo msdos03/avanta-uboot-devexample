@@ -1317,10 +1317,15 @@ static MV_VOID gflt200BoardEgigaPhyInit(MV_BOARD_INFO *pBoardInfo)
 	}
 }
 
+static MV_VOID gflt200BoardPreBootOs(MV_BOARD_INFO *pBoardInfo)
+{
+}
+
 MV_BOARD_INFO gflt200Info = {
 	.boardName = "GFLT200",
 	.pBoardEnvInit = gflt200BoardEnvInit,
 	.pBoardEgigaPhyInit = gflt200BoardEgigaPhyInit,
+	.pBoardPreBootOs = gflt200BoardPreBootOs,
 	.numBoardMppTypeValue = MV_ARRAY_SIZE(gflt200InfoBoardMppTypeInfo),
 	.pBoardMppTypeValue = gflt200InfoBoardMppTypeInfo,
 	.intsGppMaskLow = 0,
