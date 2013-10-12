@@ -135,7 +135,7 @@ extern "C" {
 
 #define MV_GPP_MAX_PINS			96
 #define MV_GPP_MAX_GROUP    		3
-#define MV_CNTMR_MAX_COUNTER 		2
+#define MV_CNTMR_MAX_COUNTER 		3
 #define MV_UART_MAX_CHAN		2
 
 #define MV_XOR_6510_6530_MAX_UNIT	0
