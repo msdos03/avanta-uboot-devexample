@@ -114,8 +114,8 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 	MV_STATUS ret;
 	MV_U8* pdout = (MV_U8*)dout;
 	MV_U8* pdin = (MV_U8*)din;
-	int tmp_bitlen = bitlen;
 #if 0
+	int tmp_bitlen = bitlen;
 	unsigned int tmpdout, tmpdin;
 	int tm, isread = 0;
 
@@ -161,6 +161,7 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 	/* Verify that the SPI mode is in 8bit mode */
 	MV_REG_BIT_RESET(MV_SPI_IF_CONFIG_REG(0), MV_SPI_BYTE_LENGTH_MASK);
 
+#if 0
 	/* TX/RX in 8bit chanks */
 	
 	while (tmp_bitlen > 0)
@@ -179,6 +180,19 @@ int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
 
 		tmp_bitlen-=8;
 	}
+#else
+	if (dout && din)
+		ret = mvSpiReadWrite(0, din, dout, (bitlen + 7) / 8);
+	else if (dout)
+		ret = mvSpiWrite(0, dout, (bitlen + 7) / 8);
+	else if (din)
+		ret = mvSpiRead(0, din, (bitlen + 7) / 8);
+	else
+		ret = MV_OK;
+
+	if (ret)
+		return ret;
+#endif
 
 #if 0
     }
