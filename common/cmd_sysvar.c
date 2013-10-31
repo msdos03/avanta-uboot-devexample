@@ -57,6 +57,15 @@ int data_recovery(struct sysvar_buf *buf, int idx) {
 
     /* check crc32 and wc32 (write count) */
     if (check_var(buf, SYSVAR_LOAD_MODE) == SYSVAR_SUCCESS) {
+#ifdef CONFIG_SPI_FLASH_PROTECTION
+      printf("SV: Unprotecting flash\n");
+      ret = spi_flash_protect(sf_dev, 0);
+      if (ret) {
+        printf("## Error: failed to unprotect flash\n");
+        goto recovery_err;
+      }
+#endif
+
       /* erase SPI flash */
       ret = spi_flash_erase(sf_dev, sysvar_offset[j], buf->data_len);
       if (ret) {
@@ -76,6 +85,13 @@ int data_recovery(struct sysvar_buf *buf, int idx) {
         print_err("write", j);
         goto recovery_err;
       }
+
+#ifdef CONFIG_SPI_FLASH_PROTECTION
+     printf("SV: Protecting flash\n");
+     ret = spi_flash_protect(sf_dev, 1);
+     if (ret)
+       printf("## Error: failed to protect flash\n");
+#endif
 
       buf->loaded = true;
       print_msg("Data recovery was completed", SYSVAR_MESSAGE);
