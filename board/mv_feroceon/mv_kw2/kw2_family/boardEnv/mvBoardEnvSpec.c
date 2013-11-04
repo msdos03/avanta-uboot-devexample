@@ -1162,6 +1162,16 @@ MV_BOARD_INFO dbCustomerInfo = { };
 
 
 /***************************************************************************
+** Used by both gflt110 and gflt200 configs.
+****************************************************************************/
+static MV_VOID gfltConfigWatchDog()
+{
+	mvCpuIfEnableWatchdogReset();
+	mvCntmrWrite(WATCHDOG, 0xffffffff);
+	mvCntmrEnable(WATCHDOG);
+}
+
+/***************************************************************************
 ** gflt200 prism
 ****************************************************************************/
 /* NAND not supported  */
@@ -1329,10 +1339,7 @@ static MV_VOID gflt200BoardPreBootOs(MV_BOARD_INFO *pBoardInfo)
 			SPI_FLASH_LOCK_WRITE|SPI_FLASH_LOCK_DOWN);
 	spi_flash_lock(flash, SYSVAR_RO_OFFSET1, SYSVAR_BLOCK_SIZE,
 			SPI_FLASH_LOCK_WRITE|SPI_FLASH_LOCK_DOWN);
-
-	mvCpuIfEnableWatchdogReset();
-	mvCntmrWrite(WATCHDOG, 0xffffffff);
-	mvCntmrEnable(WATCHDOG);
+	gfltConfigWatchDog();
 }
 
 MV_BOARD_INFO gflt200Info = {
@@ -1472,9 +1479,15 @@ static MV_VOID gflt110BoardEgigaPhyInit(MV_BOARD_INFO *pBoardInfo)
 	mvEthPhyRegWrite(0, 22, 0);
 }
 
+static MV_VOID gflt110BoardPreBootOs(MV_BOARD_INFO *pBoardInfo)
+{
+	gfltConfigWatchDog();
+}
+
 MV_BOARD_INFO gflt110Info = {
 	.boardName = "GFLT110",
 	.pBoardEgigaPhyInit = gflt110BoardEgigaPhyInit,
+	.pBoardPreBootOs = gflt110BoardPreBootOs,
 	.numBoardMppTypeValue = MV_ARRAY_SIZE(gflt110InfoBoardMppTypeInfo),
 	.pBoardMppTypeValue = gflt110InfoBoardMppTypeInfo,
 	.numBoardMppConfigValue = MV_ARRAY_SIZE(gflt110InfoBoardMppConfigValue),
