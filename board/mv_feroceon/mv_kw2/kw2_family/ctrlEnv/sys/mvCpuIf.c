@@ -890,3 +890,18 @@ MV_VOID mvCpuIfEnablePex(MV_U32 pexIf)
 }
 
 #endif
+
+MV_VOID mvCpuIfEnableWatchdogReset(MV_VOID)
+{
+	MV_U32 val;
+
+	/* clear watchdog timer interrupt */
+	val = MV_REG_READ(CPU_AHB_MBUS_CAUSE_INT_REG);
+	val &= ~CAMCIR_ARM_WD_TIMER_INT_REQ;
+	MV_REG_WRITE(CPU_AHB_MBUS_CAUSE_INT_REG, val);
+
+	/* enable reset upon watchdog timer expiration */
+	val = MV_REG_READ(CPU_RSTOUTN_MASK_REG);
+	val |= CRMR_WD_RST_OUT_MASK;
+	MV_REG_WRITE(CPU_RSTOUTN_MASK_REG, val);
+}

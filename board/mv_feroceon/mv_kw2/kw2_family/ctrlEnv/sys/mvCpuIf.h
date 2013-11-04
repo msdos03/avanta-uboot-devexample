@@ -111,6 +111,7 @@ MV_U32 mvCpuIfPciRemap(MV_TARGET pciTarget, MV_ADDR_WIN *pAddrDecWin);
 MV_U32 mvCpuIfPciIfRemap(MV_TARGET pciTarget, MV_ADDR_WIN *pAddrDecWin);
 
 MV_VOID mvCpuIfAddDecShow(MV_VOID);
+MV_VOID mvCpuIfEnableWatchdogReset(MV_VOID);
 
 #ifdef __cplusplus
 }

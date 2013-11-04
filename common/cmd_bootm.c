@@ -166,6 +166,12 @@ void __arch_lmb_reserve(struct lmb *lmb)
 }
 void arch_lmb_reserve(struct lmb *lmb) __attribute__((weak, alias("__arch_lmb_reserve")));
 
+void __board_pre_boot_os(void)
+{
+	/* please define platform specific board_pre_boot_os() */
+}
+void board_pre_boot_os(void) __attribute__((weak, alias("__board_pre_boot_os")));
+
 #if defined(__ARM__)
   #define IH_INITRD_ARCH IH_ARCH_ARM
 #elif defined(__avr32__)
@@ -672,6 +678,8 @@ int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		show_boot_progress (-8);
 		return 1;
 	}
+
+	board_pre_boot_os();
 
 	boot_fn(0, argc, argv, &images);
 

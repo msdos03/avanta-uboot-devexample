@@ -46,6 +46,8 @@
 #define CMD_M25PXX_DP		0xb9	/* Deep Power-down */
 #define CMD_M25PXX_RES		0xab	/* Release from DP, and Read Signature */
 #define CMD_M25PXX_EN4BYTEADDR	0xb7	/* Enter 4-byte address mode */
+#define CMD_M25PXX_RDLR		0xe8	/* Read Lock Register */
+#define CMD_M25PXX_WRLR		0xe5	/* Write Lock Register */
 
 #define STM_ID_M25P16		0x15
 #define STM_ID_M25P20		0x12
@@ -196,6 +198,29 @@ static int stmicro_wait_ready(struct spi_flash *flash, unsigned long timeout)
 
 	/* Timed out */
 	return -1;
+}
+
+static u8 *stmicro_set_cmd_addr(struct stmicro_spi_flash *stm, u8 *cmd,
+				u32 addr)
+{
+	unsigned long page_addr = addr / stm->params->page_size;
+
+	switch  (stm->params->addr_cycles) {
+	case 4:
+		*cmd++ = page_addr >> 16;
+		*cmd++ = page_addr >> 8;
+		*cmd++ = page_addr;
+		*cmd++ = addr % stm->params->page_size;
+		break;
+	case 3:
+	default:
+		*cmd++ = page_addr >> 8;
+		*cmd++ = page_addr;
+		*cmd++ = addr % stm->params->page_size;
+		break;
+	}
+
+	return cmd;
 }
 
 static int stmicro_read_fast(struct spi_flash *flash,
@@ -431,6 +456,88 @@ static int stmicro_protect(struct spi_flash *flash, int enable)
 	spi_release_bus(flash->spi);
 	return ret;
 }
+
+static int stmicro_read_lock(struct spi_flash *flash, u32 offset, int *lock)
+{
+	u8 cmd[5];
+	u8 data;
+	int ret;
+	struct stmicro_spi_flash *stm = to_stmicro_spi_flash(flash);
+
+	ret = spi_claim_bus(flash->spi);
+	if (ret)
+		return ret;
+
+	cmd[0] = CMD_M25PXX_RDLR;
+	stmicro_set_cmd_addr(stm, &cmd[1], offset);
+	ret = spi_flash_cmd_read(flash->spi, cmd, 1 + stm->params->addr_cycles,
+					&data, 1);
+	if (ret < 0) {
+		debug("SF: STMicro Read Lock register failed\n");
+		return ret;
+	}
+
+	spi_release_bus(flash->spi);
+	*lock = data;
+
+	return 0;
+}
+
+static int stmicro_write_lock(struct spi_flash *flash, u32 offset, int lock)
+{
+	u8 cmd[5];
+	u8 data = lock;
+	int ret;
+	struct stmicro_spi_flash *stm = to_stmicro_spi_flash(flash);
+
+	ret = spi_claim_bus(flash->spi);
+	if (ret)
+		return ret;
+
+	ret = spi_flash_cmd(flash->spi, CMD_M25PXX_WREN, NULL, 0);
+	if (ret < 0) {
+		debug("SF: Write Enable failed\n");
+		return ret;
+	}
+
+	cmd[0] = CMD_M25PXX_WRLR;
+	stmicro_set_cmd_addr(stm, &cmd[1], offset);
+	ret = spi_flash_cmd_write(flash->spi, cmd, 1 + stm->params->addr_cycles,
+					&data, 1);
+	if (ret < 0) {
+		debug("SF: STMicro Write Lock register failed\n");
+		return ret;
+	}
+
+	spi_release_bus(flash->spi);
+
+	return 0;
+}
+
+static int stmicro_lock(struct spi_flash *flash, u32 offset, size_t len,
+			int lock)
+{
+	int ret;
+	u32 cur;
+	u32 end;
+	u32 sector_size;
+	struct stmicro_spi_flash *stm = to_stmicro_spi_flash(flash);
+
+	sector_size
+		= (u32)stm->params->page_size * stm->params->pages_per_sector;
+	cur = (offset / sector_size) * sector_size;
+	end = offset + len;
+
+	while (cur < end) {
+		ret = stmicro_write_lock(flash, cur, lock);
+		if (ret)
+			return ret;
+
+		cur += sector_size;
+	}
+
+	return 0;
+}
 #endif
 
 struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 * idcode)
@@ -466,6 +573,9 @@ struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 * idcode)
 	stm->flash.read = stmicro_read_fast;
 #ifdef CONFIG_SPI_FLASH_PROTECTION
 	stm->flash.protect = stmicro_protect;
+	stm->flash.read_lock = stmicro_read_lock;
+	stm->flash.write_lock = stmicro_write_lock;
+	stm->flash.lock = stmicro_lock;
 #endif
 	stm->flash.size = params->page_size * params->pages_per_sector
 	    * params->nr_sectors;

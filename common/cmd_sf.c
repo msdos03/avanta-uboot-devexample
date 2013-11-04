@@ -177,6 +177,123 @@ usage:
 	puts("Usage: sf protect on/off\n");
 	return 1;
 }
+
+static int do_spi_flash_lock(int argc, char *argv[])
+{
+	int ret;
+	int lock;
+	char *endp;
+	unsigned long offset;
+
+	if (argc < 2)
+		goto usage;
+
+	offset = simple_strtoul(argv[1], &endp, 0);
+	if (*endp)
+		goto usage;
+
+	if (argc < 3)
+		ret = spi_flash_read_lock(flash, offset, &lock);
+	else {
+		if (!strcmp(argv[2], "off"))
+			lock = SPI_FLASH_LOCK_NONE;
+		else if (!strcmp(argv[2], "on"))
+			lock = SPI_FLASH_LOCK_WRITE;
+		else if (!strcmp(argv[2], "never"))
+			lock = SPI_FLASH_LOCK_DOWN;
+		else if (!strcmp(argv[2], "forever"))
+			lock = SPI_FLASH_LOCK_WRITE|SPI_FLASH_LOCK_DOWN;
+		else
+			goto usage;
+
+		ret = spi_flash_write_lock(flash, offset, lock);
+	}
+
+	if (ret) {
+		printf("SPI flash %s failed, error %d\n", argv[0], ret);
+		return 1;
+	}
+	else if (argc < 3) {
+		switch (lock) {
+		case SPI_FLASH_LOCK_NONE:
+			puts("off\n");
+			break;
+		case SPI_FLASH_LOCK_WRITE:
+			puts("on\n");
+			break;
+		case SPI_FLASH_LOCK_DOWN:
+			puts("never\n");
+			break;
+		case SPI_FLASH_LOCK_WRITE|SPI_FLASH_LOCK_DOWN:
+			puts("forever\n");
+			break;
+		default:
+			printf("? (%x)\n", lock);
+			break;
+		}
+	}
+
+	return 0;
+
+usage:
+	puts("Usage: sf lock offset [mode]\n"
+		" modes:\n"
+		"  'off' - unlocked\n"
+		"  'on' - locked\n"
+		"  'never' - unlock until power cycle\n"
+		"  'forever' - lock until power cycle\n");
+
+	return 1;
+}
+
+static int do_spi_flash_lock_range(int argc, char *argv[])
+{
+	int ret;
+	int lock;
+	char *endp;
+	unsigned long offset;
+	unsigned long len;
+
+	if (argc < 4)
+		goto usage;
+
+	offset = simple_strtoul(argv[1], &endp, 0);
+	if (*endp)
+		goto usage;
+
+	len = simple_strtoul(argv[2], &endp, 0);
+	if (*endp)
+		goto usage;
+
+	if (!strcmp(argv[3], "off"))
+		lock = SPI_FLASH_LOCK_NONE;
+	else if (!strcmp(argv[3], "on"))
+		lock = SPI_FLASH_LOCK_WRITE;
+	else if (!strcmp(argv[3], "never"))
+		lock = SPI_FLASH_LOCK_DOWN;
+	else if (!strcmp(argv[3], "forever"))
+		lock = SPI_FLASH_LOCK_WRITE|SPI_FLASH_LOCK_DOWN;
+	else
+		goto usage;
+
+	ret = spi_flash_lock(flash, offset, len, lock);
+	if (ret) {
+		printf("SPI flash %s failed, error %d\n", argv[0], ret);
+		return 1;
+	}
+
+	return 0;
+
+usage:
+	puts("Usage: sf lock-range offset len mode\n"
+		" modes:\n"
+		"  'off' - unlocked\n"
+		"  'on' - locked\n"
+		"  'never' - unlock until power cycle\n"
+		"  'forever' - lock until power cycle\n");
+
+	return 1;
+}
 #endif
 
 static int do_spi_flash(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
@@ -205,6 +322,10 @@ static int do_spi_flash(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 #ifdef CONFIG_SPI_FLASH_PROTECTION
 	if (strcmp(cmd, "protect") == 0)
 		return do_spi_flash_protect(argc - 1, argv + 1);
+	if (strcmp(cmd, "lock") == 0)
+		return do_spi_flash_lock(argc - 1, argv + 1);
+	if (strcmp(cmd, "lock-range") == 0)
+		return do_spi_flash_lock_range(argc - 1, argv + 1);
 #endif
 
 usage:
@@ -225,5 +346,7 @@ U_BOOT_CMD(
 #ifdef CONFIG_SPI_FLASH_PROTECTION
 	"sf protect on			- protect spi flash\n"
 	"sf protect off			- unprotect spi flash\n"
+	"sf lock offset [mode]		- get sector lock or set to `mode'\n"
+	"sf lock-range offset len mode	- set address range lock to `mode'\n"
 #endif
 );

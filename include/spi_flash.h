@@ -23,7 +23,12 @@
 #ifndef _SPI_FLASH_H_
 #define _SPI_FLASH_H_
 
+#include <asm/errno.h>
 #include <spi.h>
+
+#define SPI_FLASH_LOCK_NONE	0x00
+#define SPI_FLASH_LOCK_WRITE	0x01	/* disable sector erase/program */
+#define SPI_FLASH_LOCK_DOWN	0x02	/* disable lock modification */
 
 struct spi_flash_region {
 	unsigned int	count;
@@ -45,6 +50,12 @@ struct spi_flash {
 				size_t len);
 #ifdef CONFIG_SPI_FLASH_PROTECTION
 	int		(*protect)(struct spi_flash *flash, int enable);
+	int		(*read_lock)(struct spi_flash *flash, u32 offset,
+					int *lock);
+	int		(*write_lock)(struct spi_flash *flash, u32 offset,
+					int lock);
+	int		(*lock)(struct spi_flash *flash, u32 offset, size_t len,
+				int lock);
 #endif
 };
 
@@ -73,6 +84,33 @@ static inline int spi_flash_erase(struct spi_flash *flash, u32 offset,
 static inline int spi_flash_protect(struct spi_flash *flash, int enable)
 {
 	return flash->protect(flash, enable);
+}
+
+static inline int spi_flash_read_lock(struct spi_flash *flash, u32 offset,
+					int *lock)
+{
+	if (flash->read_lock)
+		return flash->read_lock(flash, offset, lock);
+
+	return -ENOSYS;
+}
+
+static inline int spi_flash_write_lock(struct spi_flash *flash, u32 offset,
+					int lock)
+{
+	if (flash->write_lock)
+		return flash->write_lock(flash, offset, lock);
+
+	return -ENOSYS;
+}
+
+static inline int spi_flash_lock(struct spi_flash *flash, u32 offset,
+					size_t len, int lock)
+{
+	if (flash->lock)
+		return flash->lock(flash, offset, len, lock);
+
+	return -ENOSYS;
 }
 #endif
 #endif /* _SPI_FLASH_H_ */
