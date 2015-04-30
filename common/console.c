@@ -496,6 +496,12 @@ int console_assign(int file, char *devname)
 	int flag;
 	struct stdio_dev *dev;
 
+#ifdef CONFIG_DISABLE_STDIN
+	if (file == stdin) {
+		devname = "nulldev";
+	}
+#endif
+
 	/* Check for valid file */
 	switch (file) {
 	case stdin:
