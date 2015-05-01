@@ -215,6 +215,9 @@ static __inline__ int abortboot(int bootdelay)
 {
 	int abort = 0;
 
+#if defined(CONFIG_DISABLE_STDIN)
+	printf(" ** STDIN DISABLED **\n");
+#endif
 #ifdef CONFIG_MENUPROMPT
 	printf(CONFIG_MENUPROMPT);
 #else

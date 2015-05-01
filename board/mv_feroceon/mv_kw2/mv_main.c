@@ -188,9 +188,6 @@ void print_mvBanner(void)
 	printf(" ** LOADER **\n"); 
 #endif /* MV_INCLUDE_MONT_EXT */
 //#endif
-#if defined(CONFIG_DISABLE_STDIN)
-	printf(" ** STDIN DISABLED **\n");
-#endif
 	return;
 }
 
