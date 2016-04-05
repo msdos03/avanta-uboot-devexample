@@ -110,7 +110,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DB_CUSTOMER_ID			(BOARD_ID_BASE+0x7)
 #define GFLT200_ID			DB_CUSTOMER_ID
 #define GFLT110_ID			DB_CUSTOMER_ID + 1
-#define MV_MAX_BOARD_ID			(DB_CUSTOMER_ID + 2)
+#define GFLT300_ID			DB_CUSTOMER_ID + 2
+#define MV_MAX_BOARD_ID			(DB_CUSTOMER_ID + 3)
 
 /***************************************************************************
 ** RD-88F6510-SFU
@@ -573,5 +574,74 @@ MPP#	NAME			IN/OUT
 #define GFLT110_GPP_POL_LOW		(BIT23)
 #define GFLT110_GPP_POL_MID		0x0
 
+/***************************************************************************
+** GFLT300
+****************************************************************************/
+#define GFLT300_MPP0_7          0x22222220
+#define GFLT300_MPP8_15         0x05000002
+#define GFLT300_MPP16_23        0x00000000
+#define GFLT300_MPP24_31        0x40004544
+#define GFLT300_MPP32_37        0x00000004
+
+
+/* GPPs
+                                                     MUX  GPIO
+                                                           DIR
+ 0 NC                                                  0   -
+ 1 SPI0_MOSI (out)                                     2
+ 2 SPI0_SCK (out)                                      2
+ 3 SPI0_CSn[0] (out)                                   2
+ 4 SPI0_MISO (in)                                      2
+ 5 I2C0_SDA (inout)                                    2
+ 6 I2C0_SCK (inout)                                    2
+ 7 UA0_TXD (out)                                       2
+
+ 8 UA0_RXD (in)                                        2
+ 9 PON_LED_BLUE (out)                                  0   out  1
+10 PON_LED_RED (out)                                   0   out  0
+11 NC                                                  0   -
+12 NC                                                  0   -
+13 BOARD_VER[0] (in)                                   0   in
+14 GE_LINK_LED (out)                                   5
+15 BOARD_VER[1](out)                                   0   in
+
+16                                                     0   -
+17 SW_RESET  (in)                                      0   in
+18 BOARD_VER[2] (in)                                   0   in
+19 NC                                                  0   -
+20 NC                                                  0   -
+21 POS_TX_DIS  (out)                                   0   out  0
+22 NC                                                  0   -
+23 NC                                                  0   -
+
+24 PTP_TRIG_GEN(out)                                   4
+25 PTP_EVENT_REQ(in)                                   4
+26 GE_DATA_LED (out)                                   5
+27 PTP_CLK_IN (in)                                     4
+28 SPI_WP_L(out)                                       0   out  1
+29 PON_LOS(in)                                         0   in
+30 DOLOS_DETECT_L                                      0   in
+31 UART1_TX(out)                                       4
+
+32 UART1_RX(in)                                        4
+33 ?NC DYING_GASP                                      0
+34 PU                                                  0   -
+35 PD                                                  0   -
+36 PON_RX_PMON(in)                                     0   in
+37 PON_PWR_EN(out)                                     0   out  1
+
+*/
+
+
+#define GFLT300_GPP_OUT_ENA_LOW	(BIT13 | BIT15 | BIT17 | BIT18 | BIT29 | BIT30)
+#define GFLT300_GPP_OUT_ENA_MID	(BIT4)
+
+// BIT09 turns the LED blue.
+// BIT10 turns the LED red.
+#define GFLT300_GPP_OUT_VAL_LOW	(BIT9 | BIT28)
+#define GFLT300_GPP_OUT_VAL_MID	0x0
+
+#define GFLT300_GPP_POL_LOW	0x0
+#define GFLT300_GPP_POL_MID	0x0
 
 #endif /* __INCmvBoardEnvSpech */

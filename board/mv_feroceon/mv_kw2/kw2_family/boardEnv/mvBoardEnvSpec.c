@@ -1553,6 +1553,147 @@ MV_BOARD_INFO gflt110Info = {
 };
 
 
+/***************************************************************************
+** GFLT300
+****************************************************************************/
+
+MV_BOARD_TWSI_INFO gflt300InfoBoardTwsiDev[] = {
+	/* {{MV_BOARD_DEV_CLASS devClass, MV_U8 twsiDevAddr, MV_U8 twsiDevAddrType}} */
+};
+
+MV_BOARD_MAC_INFO gflt300InfoBoardMacInfo[] = {
+	/* {{MV_BOARD_MAC_SPEED boardMacSpeed, MV_U8 boardEthSmiAddr}} */
+	{BOARD_MAC_SPEED_AUTO, 0x0},
+	{BOARD_MAC_SPEED_AUTO, 0x1},
+	{N_A,N_A}
+};
+
+MV_BOARD_MPP_TYPE_INFO gflt300InfoBoardMppTypeInfo[] = {
+	{
+		.boardMppTdm = MV_BOARD_AUTO,
+		.ethSataComplexOpt = ESC_OPT_GEPHY_MAC0,
+		.ethPortsMode = 0x0
+	}
+};
+
+MV_BOARD_GPP_INFO gflt300InfoBoardGppInfo[] = {
+	/* {{MV_BOARD_GPP_CLASS devClass, MV_U8 gppPinNum}} */
+	{BOARD_GPP_LED,  9, .activeLow = 1, .name = "pon-blue"},
+	{BOARD_GPP_LED, 10, .activeLow = 1, .name = "pon-red"},
+};
+
+
+MV_DEV_CS_INFO gflt300InfoBoardDeCsInfo[] = {
+	/*{deviceCS, params, devType, devWidth} */
+#ifdef MV_SPI
+	{SPI_CS0, N_A, BOARD_DEV_SPI_FLASH, 8},		/* SPI DEV */
+#endif
+#if !defined(MV_SPI)
+	{N_A, N_A, N_A, N_A}			/* No device */
+#endif
+};
+
+MV_BOARD_MPP_INFO gflt300InfoBoardMppConfigValue[] = {
+	{{
+	  GFLT300_MPP0_7,
+	  GFLT300_MPP8_15,
+	  GFLT300_MPP16_23,
+	  GFLT300_MPP24_31,
+	  GFLT300_MPP32_37
+	  }
+	 }
+};
+
+
+static MV_VOID gflt300BoardEgigaPhyInit(MV_BOARD_INFO *pBoardInfo)
+{
+	MV_U16 value = 0;
+	/* pass led control to internal phy */
+	MV_REG_WRITE(LED_MATRIX_CTRL_REG(0), 0x82);
+
+	/* link = mpp 14 = c2 = phy led[2] */
+	/* data = mpp 26 = c1 = phy led[1] */
+	mvEthPhyRegWrite(0, 22, 3);
+	mvEthPhyRegRead(0, 16, &value);
+	value = (value & ~0xff) | 0x37;
+	mvEthPhyRegWrite(0, 16, value);
+	mvEthPhyRegWrite(0, 22, 0);
+}
+
+
+static MV_VOID gflt300BoardPreBootOs(MV_BOARD_INFO *pBoardInfo)
+{
+	gfltConfigWatchDog();
+}
+
+MV_BOARD_INFO gflt300Info = {
+	.boardName = "GFLT300",
+	.pBoardEgigaPhyInit = gflt300BoardEgigaPhyInit,
+	.pBoardPreBootOs = gflt300BoardPreBootOs,
+	.numBoardMppTypeValue = MV_ARRAY_SIZE(gflt300InfoBoardMppTypeInfo),
+	.pBoardMppTypeValue = gflt300InfoBoardMppTypeInfo,
+	.numBoardMppConfigValue = MV_ARRAY_SIZE(gflt300InfoBoardMppConfigValue),
+	.pBoardMppConfigValue = gflt300InfoBoardMppConfigValue,
+	.intsGppMaskLow = 0,
+	.intsGppMaskMid = 0,
+	.intsGppMaskHigh = 0,
+	.numBoardDeviceIf = MV_ARRAY_SIZE(gflt300InfoBoardDeCsInfo),
+	.pDevCsInfo = gflt300InfoBoardDeCsInfo,
+	.numBoardTwsiDev = MV_ARRAY_SIZE(gflt300InfoBoardTwsiDev),
+	.pBoardTwsiDev = gflt300InfoBoardTwsiDev,
+	.numBoardMacInfo = MV_ARRAY_SIZE(gflt300InfoBoardMacInfo),
+	.pBoardMacInfo = gflt300InfoBoardMacInfo,
+	.numBoardGppInfo = MV_ARRAY_SIZE(gflt300InfoBoardGppInfo),
+	.pBoardGppInfo = gflt300InfoBoardGppInfo,
+	.activeLedsNumber = 0,
+	.pLedGppPin = NULL,
+	.ledsPolarity = 0,
+
+	/* GPP values */
+	.gppOutEnValLow = GFLT300_GPP_OUT_ENA_LOW,
+	.gppOutEnValMid = GFLT300_GPP_OUT_ENA_MID,
+	.gppOutEnValHigh = 0,
+	.gppOutValLow = GFLT300_GPP_OUT_VAL_LOW,
+	.gppOutValMid = GFLT300_GPP_OUT_VAL_MID,
+	.gppOutValHigh = 0,
+	.gppPolarityValLow = GFLT300_GPP_POL_LOW,
+	.gppPolarityValMid = GFLT300_GPP_POL_MID,
+	.gppPolarityValHigh = 0,
+
+	/* External Switch Configuration */
+	.pSwitchInfo = NULL,
+	.switchInfoNum = 0,
+
+	/* PON configuration. */
+	.ponConfigValue = BOARD_GPON_CONFIG,
+
+	/* TDM configuration */
+	/* We hold a different configuration array for each possible slic that
+	 ** can be connected to board.
+	 ** When modules are scanned, then we select the index of the relevant
+	 ** slic's information array.
+	 ** For RD and Customers boards we only need to initialize a single
+	 ** entry of the arrays below, and set the boardTdmInfoIndex to 0.
+	 */
+	.numBoardTdmInfo = {0},
+	.pBoardTdmInt2CsInfo = {NULL},
+	.boardTdmInfoIndex = -1,
+
+	.pBoardSpecInit = NULL,			/* gflt300BoardSpecInit, */
+
+	.deepIdlePwrUpDelay = 2400,	/* 12uS */
+
+	/* NAND init params */
+	.nandFlashParamsValid = MV_FALSE,
+	.nandFlashReadParams = 0,
+	.nandFlashWriteParams = 0,
+	.nandFlashControl = 0,
+	.pBoardTdmSpiInfo = NULL,
+
+	/* Enable modules auto-detection. */
+	.moduleAutoDetect = MV_FALSE
+};
+
 MV_BOARD_INFO *boardInfoTbl[] = {
 	&db88f6535Info,
 	&rd88f6510Info,
@@ -1563,4 +1704,5 @@ MV_BOARD_INFO *boardInfoTbl[] = {
 	&rd88f6601Info,
 	&gflt200Info,
 	&gflt110Info,
+	&gflt300Info,
 };

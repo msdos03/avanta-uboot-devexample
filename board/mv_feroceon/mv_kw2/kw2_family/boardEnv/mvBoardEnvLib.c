@@ -159,21 +159,24 @@ MV_VOID mvBoardEnvInit(MV_VOID)
 	MV_REG_WRITE(GPP_DATA_OUT_REG(0), BOARD_INFO(boardId)->gppOutValLow);
 	MV_REG_WRITE(GPP_DATA_OUT_REG(1), BOARD_INFO(boardId)->gppOutValMid);
 	if ((boardId != DB_88F6601_BP_ID) && (boardId != RD_88F6601_MC_ID)
-		&& (boardId != GFLT200_ID) && (boardId != GFLT110_ID))
+		&& (boardId != GFLT300_ID) && (boardId != GFLT200_ID)
+		&& (boardId != GFLT110_ID))
 		MV_REG_WRITE(GPP_DATA_OUT_REG(2), BOARD_INFO(boardId)->gppOutValHigh);
 
 	/* set GPP polarity */
 	mvGppPolaritySet(0, 0xFFFFFFFF, BOARD_INFO(boardId)->gppPolarityValLow);
 	mvGppPolaritySet(1, 0xFFFFFFFF, BOARD_INFO(boardId)->gppPolarityValMid);
 	if ((boardId != DB_88F6601_BP_ID) && (boardId != RD_88F6601_MC_ID)
-		&& (boardId != GFLT200_ID) && (boardId != GFLT110_ID))
+		&& (boardId != GFLT300_ID) && (boardId != GFLT200_ID)
+		&& (boardId != GFLT110_ID))
 		mvGppPolaritySet(2, 0xFFFFFFFF, BOARD_INFO(boardId)->gppPolarityValHigh);
 
 	/* Set GPP Out Enable */
 	mvGppTypeSet(0, 0xFFFFFFFF, BOARD_INFO(boardId)->gppOutEnValLow);
 	mvGppTypeSet(1, 0xFFFFFFFF, BOARD_INFO(boardId)->gppOutEnValMid);
 	if ((boardId != DB_88F6601_BP_ID) && (boardId != RD_88F6601_MC_ID)
-		&& (boardId != GFLT200_ID) && (boardId != GFLT110_ID))
+		&& (boardId != GFLT300_ID) && (boardId != GFLT200_ID)
+		&& (boardId != GFLT110_ID))
 		mvGppTypeSet(2, 0xFFFFFFFF, BOARD_INFO(boardId)->gppOutEnValHigh);
 
 	/* Nand CE */
@@ -358,7 +361,8 @@ MV_BOOL mvBoardIsPortInSgmii(MV_U32 ethPortNum)
 	}
 
 	if ((RD_88F6601_MC_ID == mvBoardIdGet()) ||
-		(GFLT200_ID == mvBoardIdGet()) || (GFLT110_ID == mvBoardIdGet()))
+		(GFLT300_ID == mvBoardIdGet()) || (GFLT200_ID == mvBoardIdGet()) ||
+		(GFLT110_ID == mvBoardIdGet()))
 		return MV_FALSE;
 
 	if ((ethPortNum > 0) || (ethCompOpt & ESC_OPT_SGMII_2_SW_P1))
@@ -657,7 +661,8 @@ MV_32 mvBoardSwitchNumPortsGet(MV_VOID)
 		return MV_ERROR;
 	}
 	if ((RD_88F6601_MC_ID == boardId) || (DB_88F6601_BP_ID == boardId)
-		|| (GFLT200_ID == boardId) || (GFLT110_ID == boardId))
+		|| (GFLT300_ID == boardId) || (GFLT200_ID == boardId)
+		|| (GFLT110_ID == boardId))
 	{
 		return 0;
 	}
@@ -1259,7 +1264,8 @@ MV_U32 mvBoardTclkGet(MV_VOID)
 
 	tmpTClkRate = MV_REG_READ(MPP_SAMPLE_AT_RESET(0));
 	if ((RD_88F6601_MC_ID == boardId) || (DB_88F6601_BP_ID == boardId)
-		|| (GFLT200_ID == boardId) || (GFLT110_ID == boardId)) {
+		|| (GFLT300_ID == boardId) || (GFLT200_ID == boardId)
+		|| (GFLT110_ID == boardId)) {
 		tmpTClkRate &= MSAR_TCLCK_6601_MASK;
 		if (tmpTClkRate )
 			return MV_BOARD_TCLK_200MHZ;
@@ -1315,7 +1321,8 @@ MV_U32 mvBoardSysClkGet(MV_VOID)
 	clockSatr = MSAR_CPU_DDR_L2_CLCK_EXTRACT(sar0);
 	i = 0;
 	if ((RD_88F6601_MC_ID == boardId) || (DB_88F6601_BP_ID == boardId)
-		|| (GFLT200_ID == boardId) || (GFLT110_ID == boardId)) {
+		|| (GFLT300_ID == boardId)  || (GFLT200_ID == boardId)
+		|| (GFLT110_ID == boardId)) {
 		while (cpuDdrTbl6601[i].satrValue != -1) {
 			if (cpuDdrTbl6601[i].satrValue == clockSatr) {
 				res = i;
@@ -2362,7 +2369,8 @@ MV_BOOL mvBoardIsGbEPortConnected(MV_U32 ethPortNum)
 		return MV_FALSE;
 	}
 	if ((RD_88F6601_MC_ID == mvBoardIdGet())
-		|| (GFLT200_ID == mvBoardIdGet()) || (GFLT110_ID == mvBoardIdGet())) {
+		|| (GFLT300_ID == mvBoardIdGet()) || (GFLT200_ID == mvBoardIdGet())
+		|| (GFLT110_ID == mvBoardIdGet())) {
 		if (ethPortNum == 0)
 			return MV_TRUE;
 		return MV_FALSE;
