@@ -149,6 +149,7 @@ COBJS-$(CONFIG_YAFFS2) += cmd_yaffs2.o
 COBJS-$(CONFIG_VFD) += cmd_vfd.o
 COBJS-y += sysvar.o
 COBJS-y += cmd_sysvar.o
+COBJS-$(CONFIG_CMD_HNVRAM) += cmd_hnvram.o
 
 # others
 COBJS-$(CONFIG_DDR_SPD) += ddr_spd.o

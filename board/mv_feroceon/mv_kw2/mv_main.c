@@ -378,41 +378,80 @@ void dual_image_vars_set(void)
 	return;
 }
 
+/* This function is used to specify whether to read system variables from hnvram
+ * or the legacy sysvar. For all future FiberJacks (GFLT300 and above) we should
+ * be using hnvram. */
+int use_hnvram(void)
+{
+	if (mvBoardIdGet() == GFLT110_ID)
+		return 0;
+	return 1;
+}
 
-// Try to be compatible with both ginstall and prisminstall.
-// Prismintall sets a BOOT_SIDE sysvar, and ginstall sets
-// ACTIVATED_KERNEL_NAME, which is the same as the TV boxes.
-static void set_boot_variables() {
-	// Try to get the boot partition, either from BOOT_SIDE
-	// (set by prisminstall) or ACTIVATED_KERNEL_NAME (set by ginstall)
-	// First look for BOOT_SIDE.
-	char value[SYSVAR_VALUE];
-	if (sf_getvar("BOOT_SIDE", value, SYSVAR_VALUE) == 0) {
-		printf("BOOT_SIDE = %s ", value);
-		if (value[0] == '2' && value[1] == '\0') {
-			printf("Boot from MTD image2 ...\n");
-			setenv("bootcmd","sf read "LOAD_ADDR_STR" 0xF80000 0xE00000;"
-				   "setenv bootargs ${console} ${mtdparts} debug=1 ${mvNetConfig} ${mvPhoneConfig};"
-				   "bootm "LOAD_ADDR_STR";");
-			return;
-		}
-		if (value[0] == '1' && value[1] == '\0') {
-			printf("Boot from MTD image1 ...\n");
-			setenv("bootcmd","sf read "LOAD_ADDR_STR" 0x180000 0xE00000;"
-				   "setenv bootargs ${console} ${mtdparts} debug=1 ${mvNetConfig} ${mvPhoneConfig};"
-				   "bootm "LOAD_ADDR_STR";");
-			return;
-		}
+char* get_model(void)
+{
+	char *model = NULL;
+	switch(mvBoardIdGet()) {
+		case GFLT110_ID:
+			model = "gflt110";
+			break;
+		case GFLT300_ID:
+			model = "gflt300";
+			break;
+		default:
+			/* Pick the safest default, currently GFLT110 */
+			model = "gflt110";
 	}
+	return model;
+}
 
-	// Now look for ACTIVATED_KERNEL_NAME.  Setenv that value and the bootscript
-	// will branch to the right boot location.
-	if (sf_getvar("ACTIVATED_KERNEL_NAME", value, SYSVAR_VALUE) == 0) {
-		setenv("ACTIVATED_KERNEL_NAME", value);
+static void set_boot_variables(void) {
+	char value[SYSVAR_VALUE];
+	char *env;
+
+	/* If we are reading from hnvram, then get the activated kernel name
+	 * from hnvram, otherwise use sysvar. */
+	if (use_hnvram() == 1) {
+		env = getenv("HNV_ACTIVATED_KERNEL_NAME");
+		if (!env)
+			setenv("HNV_ACTIVATED_KERNEL_NAME", "kernel0");
+		setenv("gfparams",
+			"if test $HNV_ACTIVATED_KERNEL_NAME = kernel1; "
+			"then gfkernel=0x1100000; "
+			"else gfkernel=0x0300000; fi");
 	} else {
-		setenv("ACTIVATED_KERNEL_NAME", "kernel0");
-    }
-	return;
+		if (sf_getvar("ACTIVATED_KERNEL_NAME",
+				value, SYSVAR_VALUE) == 0)
+			setenv("ACTIVATED_KERNEL_NAME", value);
+		else
+			setenv("ACTIVATED_KERNEL_NAME", "kernel0");
+		setenv("gfparams",
+			"if test $ACTIVATED_KERNEL_NAME = kernel1; "
+			"then gfkernel=0xF80000; "
+			"else gfkernel=0x180000; fi");
+	}
+	/* Set the model information to pass down to through a kernel cmdline
+	 * parameter. */
+	setenv("model", get_model());
+
+	setenv("bootcmd",
+		"run gfparams; "
+		"sf read $loadaddr $gfkernel 0xe00000; "
+		"setenv bootargs $console $mtdparts $gfroot $mvNetConfig "
+		"$bootargs_extra; model=$model; "
+		"bootm $loadaddr;");
+}
+
+char* set_mtdparts(void)
+{
+	if (mvBoardIdGet() == GFLT110_ID) {
+		return ("mtdparts=spi_flash:768k(uboot),256k(env),128k(var1),"
+			"128k(var2),128k(sysvar1),128k(sysvar2),14m(image1),"
+			"14m(image2),-(user_data)");
+	}
+	return ("mtdparts=spi_flash:768k(uboot),"
+		"256k(env),2m(hnvram),14m(kernel0),14m(kernel1),"
+		"-(data+jffs2)");
 }
 
 
@@ -465,6 +504,17 @@ void misc_init_r_env(void){
 			setenv("console","console=ttyS0,115200");
 	}
 
+	/* debug boot arguments */
+	env = getenv("bootargs_debug");
+	if (!env)
+		setenv("bootargs_debug", "debug=1 login=1 earlyprintk");
+
+	/* if we are not a GFLT110/120, then load hnvram into the u-boot
+	 * environment. */
+	if (mvBoardIdGet() != GFLT110_ID) {
+		do_hnvram();
+	}
+
 #ifdef CONFIG_MTD_PARTITIONS
 	env = getenv("mtdids");
 	if(!env) {
@@ -472,7 +522,7 @@ void misc_init_r_env(void){
 	}
 	env = getenv("mtdparts");
 	if(!env) {
-		setenv("mtdparts", MTDPARTS_DEFAULT);
+		setenv("mtdparts", set_mtdparts());
 	}
 	setenv("partition", NULL);
 #endif
@@ -841,25 +891,50 @@ ip=${ipaddr}:${serverip}${bootargs_end}; bootm "LOAD_ADDR_STR";");
 	sprintf(ethaddr_1,"00:50:43:%02x:%02x:%02x",xl,xi,xj);
 	sprintf(pon_addr,"00:50:43:%02x:%02x:%02x",xj,xk,xl);
 
+	if (use_hnvram() == 1) {
+		/* Check imported hnvram variables for mac addresses. If they're
+		 * not available in the u-boot environment then use the randomly
+		 * generated ones from above. */
+		env = getenv("HNV_ETH_MAC_ADDR");
+		if (!env)
+			setenv("ethaddr", ethaddr_0);
+		else
+			setenv("ethaddr", env);
 
-	/* MAC addresses */
-	env = getenv("ethaddr");
-	if(!env)
-		setenv("ethaddr",ethaddr_0);
-	/* Override ethaddr_0 from sysvar, only overwrites if sysvar is set. */
-	if (!sf_getvar("ETH_MAC_ADDR", ethaddr_0, sizeof(ethaddr_0)))
-		setenv("ethaddr",ethaddr_0);
+		env = getenv("HNV_PON_MAC_ADDR");
+		if (!env)
+			setenv("mv_pon_addr", pon_addr);
+		else
+			setenv("mv_pon_addr", env);
+	} else {
+		/* Check sysvar for mac addresses. If they're not available,
+		 * then use the ones we randomly generated above. */
+		env = getenv("ethaddr");
+		if (!env) {
+			/* Override ethaddr from sysvar only if there is a
+			 * sysvar variable available to replace it with. */
+			if (sf_getvar("ETH_MAC_ADDR", ethaddr_0,
+					sizeof(ethaddr_0)) != 0)
+				setenv("ethaddr", ethaddr_0);
+			else
+				setenv("ethaddr", ethaddr_0);
+		}
+
+		env = getenv("mv_pon_addr");
+		if (!env) {
+			/* Override mv_pon_addr from sysvar only if there is a
+			 * sysvar variable available to replace it with. */
+			if (sf_getvar("PON_MAC_ADDR", pon_addr,
+					sizeof(pon_addr)) != 0)
+				setenv("mv_pon_addr", pon_addr);
+			else
+				setenv("mv_pon_addr", pon_addr);
+		}
+	}
 
 	env = getenv("eth1addr");
 	if(!env)
 		setenv("eth1addr",ethaddr_1);
-
-	env = getenv("mv_pon_addr");
-	if(!env)
-		setenv("mv_pon_addr",pon_addr);
-	/* Override pon_addr from sysvars, only overwrites if sysvar is set. */
-	if (!sf_getvar("PON_MAC_ADDR", pon_addr, sizeof(pon_addr)))
-		setenv("mv_pon_addr",pon_addr);
 
 	env = getenv("ethmtu");
 	if(!env)
