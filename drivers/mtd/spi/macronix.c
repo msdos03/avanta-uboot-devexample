@@ -133,6 +133,22 @@ static struct macronix_spi_flash_params macronix_spi_flash_table[] = {
 	},
 };
 
+static int macronix_rdsr(struct spi_flash *flash)
+{
+	struct spi_slave *spi = flash->spi;
+	int ret;
+	u8 status;
+	u8 buf[1];
+	u8 cmd[1];
+
+	cmd[0] = CMD_MX25XX_RDSR;
+	spi_flash_read_common(flash, cmd, 1, buf, 1);
+
+	printf("RDSR:%x \n", buf[0]);
+
+	return 0;
+}
+
 static int macronix_wait_ready(struct spi_flash *flash, unsigned long timeout)
 {
 	struct spi_slave *spi = flash->spi;
@@ -224,7 +240,7 @@ static int macronix_write(struct spi_flash *flash,
 	ret = 0;
 	for (actual = 0; actual < len; actual += chunk_len) {
 		chunk_len = min(len - actual, page_size - byte_addr);
-		
+
 		cmd[0] = CMD_MX25XX_PP;
 		switch  (mcx->params->addr_cycles) {
 			case 4:
@@ -365,6 +381,8 @@ int macronix_protect(struct spi_flash *flash, int enable)
 	u8 cmd[2];
 	u8 buf[1];
 
+
+	debug("marcronix_protect: %d\n", enable);
 	ret = spi_claim_bus(flash->spi);
 	if (ret) {
 		debug("SF: Unable to claim SPI bus\n");
@@ -372,16 +390,24 @@ int macronix_protect(struct spi_flash *flash, int enable)
 	}
 	cmd[0] = CMD_MX25XX_RDSR;
 	spi_flash_read_common(flash, cmd, 1, buf, 1);
-	
+
 
 	debug("SF: RDSR value 0x%x\n", buf[1]);
 	ret = 0;
 
 	cmd[0] = CMD_MX25XX_WRSR;
-	if (enable == 1)
+
+	switch(enable) {
+	case 1:
 		cmd[1] = MX_SRWD | MX_PROTECT_ALL;
-	else
+		break;
+	case 0:
 		cmd[1] = MX_SRWD;
+		break;
+	default:
+	case -1:
+		cmd[1] = 0;
+	}
 
 	ret = spi_flash_cmd(flash->spi, CMD_MX25XX_WREN, NULL, 0);
 	if (ret < 0) {
@@ -407,6 +433,13 @@ int macronix_protect(struct spi_flash *flash, int enable)
 	spi_release_bus(flash->spi);
 	return ret;
 }
+
+
+int macronix_lock(struct spi_flash *flash, int enable)
+{
+	debug("macronix_lock\n");
+	return 0;
+}
 #endif
 
 struct spi_flash *spi_flash_probe_macronix(struct spi_slave *spi, u8 *idcode)
@@ -415,7 +448,7 @@ struct spi_flash *spi_flash_probe_macronix(struct spi_slave *spi, u8 *idcode)
 	struct macronix_spi_flash *mcx;
 	unsigned int i;
 	u16 id = idcode[2] | idcode[1] << 8;
-		
+
 	for (i = 0; i < ARRAY_SIZE(macronix_spi_flash_table); i++) {
 		params = &macronix_spi_flash_table[i];
 		if (params->idcode == id)
@@ -442,10 +475,12 @@ struct spi_flash *spi_flash_probe_macronix(struct spi_slave *spi, u8 *idcode)
 	mcx->flash.read = macronix_read_fast;
 #ifdef CONFIG_SPI_FLASH_PROTECTION
 	mcx->flash.protect = macronix_protect;
+	mcx->flash.lock = macronix_lock;
 #endif
 	mcx->flash.size = (params->page_size * params->pages_per_sector
 	    * params->sectors_per_block * params->nr_blocks);
 
+	macronix_rdsr(&mcx->flash);
 	/* enable 4-byte addressing if the device exceeds 16MiB */
 	if (mcx->flash.size > 0x1000000) {
 		int ret;
@@ -457,7 +492,7 @@ struct spi_flash *spi_flash_probe_macronix(struct spi_slave *spi, u8 *idcode)
 			printf("SF: Unable to claim SPI bus\n");
 			goto probe_done;
 		}
-	
+
 		ret = spi_flash_cmd(mcx->flash.spi, CMD_MX25XX_EN4B, NULL, 0);
 		if (ret < 0) {
 			printf("SF: Enabling 4-Byte address mode failed\n");

@@ -1335,10 +1335,12 @@ extern struct spi_flash *flash;
 
 static MV_VOID gflt200BoardPreBootOs(MV_BOARD_INFO *pBoardInfo)
 {
+#ifdef CONFIG_SPI_FLASH_PROTECTION
 	spi_flash_lock(flash, SYSVAR_RO_OFFSET0, SYSVAR_BLOCK_SIZE,
 			SPI_FLASH_LOCK_WRITE|SPI_FLASH_LOCK_DOWN);
 	spi_flash_lock(flash, SYSVAR_RO_OFFSET1, SYSVAR_BLOCK_SIZE,
 			SPI_FLASH_LOCK_WRITE|SPI_FLASH_LOCK_DOWN);
+#endif
 	gfltConfigWatchDog();
 }
 

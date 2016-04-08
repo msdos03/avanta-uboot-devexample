@@ -165,7 +165,8 @@ static int do_spi_flash_protect(int argc, char *argv[])
 		ret = spi_flash_protect(flash, 1);
 	if (strcmp(cmd, "off") == 0)
 		ret = spi_flash_protect(flash, 0);
-
+	if (strcmp(cmd, "all_off") == 0)
+		ret = spi_flash_protect(flash, -1);
 	if (ret) {
 		printf("SPI flash %s failed\n", argv[0]);
 		return 1;
@@ -174,7 +175,7 @@ static int do_spi_flash_protect(int argc, char *argv[])
 	return 0;
 
 usage:
-	puts("Usage: sf protect on/off\n");
+	puts("Usage: sf protect on/off/all_off\n");
 	return 1;
 }
 
