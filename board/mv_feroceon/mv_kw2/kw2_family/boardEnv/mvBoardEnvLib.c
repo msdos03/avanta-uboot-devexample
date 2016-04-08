@@ -2776,7 +2776,10 @@ MV_U32 mvBoardIdGet(MV_VOID)
 #elif defined(GFLT200)
 		tmpBoardId = GFLT200_ID;
 #elif defined(GFLT110)
-		tmpBoardId = GFLT110_ID;
+		if (MV_REG_READ(MV_GPP_REGS_OFFSET_0 + 0x10 ) & BIT15)
+			tmpBoardId = GFLT110_ID;
+		else
+			tmpBoardId = GFLT300_ID;
 #endif
 		gBoardId = tmpBoardId;
 	}

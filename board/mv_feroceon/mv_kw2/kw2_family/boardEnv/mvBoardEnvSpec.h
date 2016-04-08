@@ -551,6 +551,7 @@ MPP#	NAME			IN/OUT
  6 I2C0_SCK (inout)
  7 UA0_TXD (out)
  8 UA0_RXD (in)
+15 BOARD_VER[1] on GFLT300 (in)
 20 LED_PON
 21 PON_BEN (out)
 24 XVR_Tx_IND
@@ -563,7 +564,7 @@ MPP#	NAME			IN/OUT
 
 
 */
-#define GFLT110_GPP_OUT_ENA_LOW	(BIT0 | BIT14 | BIT16 | BIT17 | BIT18 | BIT19 | BIT22 | BIT23 | BIT24 | BIT27| BIT30 | BIT31)
+#define GFLT110_GPP_OUT_ENA_LOW	(BIT0 | BIT14 | BIT15 | BIT16 | BIT17 | BIT18 | BIT19 | BIT22 | BIT23 | BIT24 | BIT27| BIT30 | BIT31)
 #define GFLT110_GPP_OUT_ENA_MID	(BIT0 | BIT3 | BIT4)
 
 // BIT12 turns the LED blue.
@@ -603,7 +604,7 @@ MPP#	NAME			IN/OUT
 12 NC                                                  0   -
 13 BOARD_VER[0] (in)                                   0   in
 14 GE_LINK_LED (out)                                   5
-15 BOARD_VER[1](out)                                   0   in
+15 BOARD_VER[1](in)                                    0   in
 
 16                                                     0   -
 17 SW_RESET  (in)                                      0   in
@@ -618,7 +619,7 @@ MPP#	NAME			IN/OUT
 25 PTP_EVENT_REQ(in)                                   4
 26 GE_DATA_LED (out)                                   5
 27 PTP_CLK_IN (in)                                     4
-28 SPI_WP_L(out)                                       0   out  1
+28 SPI_WP_L(out)(in for safety)                        0   in
 29 PON_LOS(in)                                         0   in
 30 DOLOS_DETECT_L                                      0   in
 31 UART1_TX(out)                                       4
@@ -638,7 +639,7 @@ MPP#	NAME			IN/OUT
 
 // BIT09 turns the LED blue.
 // BIT10 turns the LED red.
-#define GFLT300_GPP_OUT_VAL_LOW	(BIT9 | BIT28)
+#define GFLT300_GPP_OUT_VAL_LOW	(BIT9)
 #define GFLT300_GPP_OUT_VAL_MID	0x0
 
 #define GFLT300_GPP_POL_LOW	0x0
