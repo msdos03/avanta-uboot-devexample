@@ -1706,5 +1706,6 @@ MV_BOARD_INFO *boardInfoTbl[] = {
 	&rd88f6601Info,
 	&gflt200Info,
 	&gflt110Info,
+	NULL,  /* unsupported RD_88F6601_MC2L_ID */
 	&gflt300Info,
 };

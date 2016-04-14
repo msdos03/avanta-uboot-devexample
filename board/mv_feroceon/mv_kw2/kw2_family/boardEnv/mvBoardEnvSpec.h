@@ -110,8 +110,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DB_CUSTOMER_ID			(BOARD_ID_BASE+0x7)
 #define GFLT200_ID			DB_CUSTOMER_ID
 #define GFLT110_ID			DB_CUSTOMER_ID + 1
-#define GFLT300_ID			DB_CUSTOMER_ID + 2
-#define MV_MAX_BOARD_ID			(DB_CUSTOMER_ID + 3)
+#define RD_88F6601_MC2L_ID		DB_CUSTOMER_ID + 2   /* for an upstream kernel */
+#define GFLT300_ID			DB_CUSTOMER_ID + 3
+#define MV_MAX_BOARD_ID			(DB_CUSTOMER_ID + 4)
 
 /***************************************************************************
 ** RD-88F6510-SFU
