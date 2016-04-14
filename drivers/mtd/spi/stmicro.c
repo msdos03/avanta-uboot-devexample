@@ -57,7 +57,7 @@
 #define STM_ID_M25P80		0x14
 
 #define STM_ID_N25Q256		0x19
- 
+
 #define STMICRO_SR_WIP		(1 << 0)	/* Write-in-Progress */
 #ifdef	MV88F6601
 #define STM_ID_M25Q128		0x18	/* for A-MC */
@@ -427,10 +427,18 @@ static int stmicro_protect(struct spi_flash *flash, int enable)
 	ret = 0;
 
 	cmd[0] = CMD_M25PXX_WRSR;
-	if (enable == 1)
+
+	switch(enable) {
+	case 1:
 		cmd[1] = STM_SRWD | STM_PROTECT_ALL;
-	else
+		break;
+	case 0:
 		cmd[1] = STM_SRWD;
+		break;
+	default:
+	case -1:
+		cmd[1] = 0;
+	}
 
 	ret = spi_flash_cmd(flash->spi, CMD_M25PXX_WREN, NULL, 0);
 	if (ret < 0) {
@@ -540,6 +548,22 @@ static int stmicro_lock(struct spi_flash *flash, u32 offset, size_t len,
 }
 #endif
 
+static int stmicro_rdsr(struct spi_flash *flash)
+{
+	struct spi_slave *spi = flash->spi;
+	int ret;
+	u8 status;
+	u8 buf[1];
+	u8 cmd[1];
+
+	cmd[0] = CMD_M25PXX_RDSR;
+	spi_flash_read_common(flash, cmd, 1, buf, 1);
+
+	printf("RDSR:%x \n", buf[0]);
+
+	return 0;
+}
+
 struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 * idcode)
 {
 	const struct stmicro_spi_flash_params *params;
@@ -580,6 +604,7 @@ struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 * idcode)
 	stm->flash.size = params->page_size * params->pages_per_sector
 	    * params->nr_sectors;
 
+	stmicro_rdsr(&stm->flash);
 	if (stm->params->addr_cycles == 4) {
 		int ret;
 
