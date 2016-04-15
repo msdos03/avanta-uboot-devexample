@@ -388,23 +388,6 @@ int use_hnvram(void)
 	return 1;
 }
 
-char* get_model(void)
-{
-	char *model = NULL;
-	switch(mvBoardIdGet()) {
-		case GFLT110_ID:
-			model = "gflt110";
-			break;
-		case GFLT300_ID:
-			model = "gflt300";
-			break;
-		default:
-			/* Pick the safest default, currently GFLT110 */
-			model = "gflt110";
-	}
-	return model;
-}
-
 static void set_boot_variables(void) {
 	char value[SYSVAR_VALUE];
 	char *env;
@@ -430,16 +413,12 @@ static void set_boot_variables(void) {
 			"then gfkernel=0xF80000; "
 			"else gfkernel=0x180000; fi");
 	}
-	/* Set the model information to pass down to through a kernel cmdline
-	 * parameter. */
-	setenv("model", get_model());
 
 	setenv("bootcmd",
 		"run gfparams; "
 		"sf read $loadaddr $gfkernel 0xe00000; "
 		"setenv bootargs $console $mtdparts $gfroot $mvNetConfig "
-		"$bootargs_extra; model=$model; "
-		"bootm $loadaddr;");
+		"$bootargs_extra; bootm $loadaddr;");
 }
 
 char* set_mtdparts(void)
