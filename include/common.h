@@ -691,6 +691,11 @@ int	pcmcia_init (void);
  */
 void show_boot_progress(int val);
 
+/* Include hnvram functions. */
+#ifdef CONFIG_CMD_HNVRAM
+int do_hnvram(void);
+#endif
+
 /* Multicore arch functions */
 #ifdef CONFIG_MP
 int cpu_status(int nr);
