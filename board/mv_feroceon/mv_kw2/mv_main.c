@@ -400,8 +400,8 @@ static void set_boot_variables(void) {
 			setenv("HNV_ACTIVATED_KERNEL_NAME", "kernel0");
 		setenv("gfparams",
 			"if test $HNV_ACTIVATED_KERNEL_NAME = kernel1; "
-			"then gfkernel=0x1100000; "
-			"else gfkernel=0x0300000; fi");
+			"then gfkernel=0x1100000; gfroot=rootfs1; "
+			"else gfkernel=0x0300000; gfroot=rootfs0; fi");
 	} else {
 		if (sf_getvar("ACTIVATED_KERNEL_NAME",
 				value, SYSVAR_VALUE) == 0)
@@ -410,14 +410,14 @@ static void set_boot_variables(void) {
 			setenv("ACTIVATED_KERNEL_NAME", "kernel0");
 		setenv("gfparams",
 			"if test $ACTIVATED_KERNEL_NAME = kernel1; "
-			"then gfkernel=0xF80000; "
-			"else gfkernel=0x180000; fi");
+			"then gfkernel=0xF80000; gfroot=rootfs1; "
+			"else gfkernel=0x180000; gfroot=rootfs0; fi");
 	}
 
 	setenv("bootcmd",
 		"run gfparams; "
 		"sf read $loadaddr $gfkernel 0xe00000; "
-		"setenv bootargs $console $mtdparts $gfroot $mvNetConfig "
+		"setenv bootargs $console $mtdparts root=$gfroot $mvNetConfig "
 		"$bootargs_extra; bootm $loadaddr;");
 }
 
