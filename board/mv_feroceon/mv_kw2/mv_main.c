@@ -425,8 +425,8 @@ char* set_mtdparts(void)
 {
 	if (mvBoardIdGet() == GFLT110_ID) {
 		return ("mtdparts=spi_flash:768k(uboot),256k(env),128k(var1),"
-			"128k(var2),128k(sysvar1),128k(sysvar2),14m(image1),"
-			"14m(image2),-(user_data)");
+			"128k(var2),128k(sysvar1),128k(sysvar2),14m(kernel0),"
+			"14m(kernel1),-(user_data)");
 	}
 	return ("mtdparts=spi_flash:768k(uboot),"
 		"256k(env),2m(hnvram),14m(kernel0),14m(kernel1),"
