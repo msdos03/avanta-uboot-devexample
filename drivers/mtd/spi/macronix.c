@@ -397,17 +397,10 @@ int macronix_protect(struct spi_flash *flash, int enable)
 
 	cmd[0] = CMD_MX25XX_WRSR;
 
-	switch(enable) {
-	case 1:
+	if (enable == 1)
 		cmd[1] = MX_SRWD | MX_PROTECT_ALL;
-		break;
-	case 0:
-		cmd[1] = MX_SRWD;
-		break;
-	default:
-	case -1:
+	else
 		cmd[1] = 0;
-	}
 
 	ret = spi_flash_cmd(flash->spi, CMD_MX25XX_WREN, NULL, 0);
 	if (ret < 0) {
