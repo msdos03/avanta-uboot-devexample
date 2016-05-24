@@ -418,7 +418,7 @@ static void set_boot_variables(void) {
 		"run gfparams; "
 		"sf read $loadaddr $gfkernel 0xe00000; "
 		"setenv bootargs $console $mtdparts root=$gfroot $mvNetConfig "
-		"$bootargs_extra; bootm $loadaddr;");
+		"$bootargs_extra; sf protect off; bootm $loadaddr;");
 }
 
 char* set_mtdparts(void)
