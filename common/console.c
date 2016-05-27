@@ -295,6 +295,10 @@ void fprintf(int file, const char *fmt, ...)
 
 int getc(void)
 {
+#if defined(CONFIG_DISABLE_STDIN)
+	return 0;
+#endif
+
 #ifdef CONFIG_DISABLE_CONSOLE
 	if (gd->flags & GD_FLG_DISABLE_CONSOLE)
 		return 0;
@@ -311,6 +315,10 @@ int getc(void)
 
 int tstc(void)
 {
+#if defined(CONFIG_DISABLE_STDIN)
+	return 0;
+#endif
+
 #ifdef CONFIG_DISABLE_CONSOLE
 	if (gd->flags & GD_FLG_DISABLE_CONSOLE)
 		return 0;
@@ -496,7 +504,7 @@ int console_assign(int file, char *devname)
 	int flag;
 	struct stdio_dev *dev;
 
-#ifdef CONFIG_DISABLE_STDIN
+#if defined(CONFIG_DISABLE_STDIN)
 	if (file == stdin) {
 		devname = "nulldev";
 	}
