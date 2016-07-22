@@ -840,51 +840,23 @@ ip=${ipaddr}:${serverip}${bootargs_end}; bootm "LOAD_ADDR_STR";");
 		setenv("disaMvPnp","no");
 
 #if (defined(MV_INCLUDE_GIG_ETH) || defined(MV_INCLUDE_UNM_ETH))
-	/* Generate random ip and mac address */
-	/* Read RTC to create pseudo-random data for enc */
-	struct rtc_time tm;
-	unsigned int xi, xj, xk, xl;
 	char ethaddr_0[30];
-	char ethaddr_1[30];
 	char pon_addr[30];
 
-	rtc_get(&tm);
-	xi = ((tm.tm_yday + tm.tm_sec)% 254);
-	/* No valid ip with one of the fileds has the value 0 */
-	if (xi == 0)
-		xi+=2;
-
-	xj = ((tm.tm_yday + tm.tm_min)%254);
-	/* No valid ip with one of the fileds has the value 0 */
-	if (xj == 0)
-		xj+=2;
-
-	/* Check if the ip address is the same as the server ip */
-	if ((xj == 1) && (xi == 11))
-		xi+=2;
-
-	xk = (tm.tm_min * tm.tm_sec)%254;
-	xl = (tm.tm_hour * tm.tm_sec)%254;
-
-	sprintf(ethaddr_0,"00:50:43:%02x:%02x:%02x",xk,xi,xj);
-	sprintf(ethaddr_1,"00:50:43:%02x:%02x:%02x",xl,xi,xj);
-	sprintf(pon_addr,"00:50:43:%02x:%02x:%02x",xj,xk,xl);
-
 	if (use_hnvram() == 1) {
-		/* Check imported hnvram variables for mac addresses. If they're
-		 * not available in the u-boot environment then use the randomly
-		 * generated ones from above. */
-		env = getenv("HNV_ETH_MAC_ADDR");
+		env = getenv("HNV_MAC_ADDR");
 		if (!env)
-			setenv("ethaddr", ethaddr_0);
+			strcpy(ethaddr_0, "00:11:22:33:44:55");
 		else
-			setenv("ethaddr", env);
+			strcpy(ethaddr_0, env);
+		setenv("ethaddr", ethaddr_0);
 
-		env = getenv("HNV_PON_MAC_ADDR");
+		env = getenv("HNV_MAC_ADDR_PON");
 		if (!env)
-			setenv("mv_pon_addr", pon_addr);
+			strcpy(pon_addr, "00:11:22:33:44:56");
 		else
-			setenv("mv_pon_addr", env);
+			strcpy(pon_addr, env);
+		setenv("mv_pon_addr", pon_addr);
 	} else {
 		/* Check sysvar for mac addresses. If they're not available,
 		 * then use the ones we randomly generated above. */
@@ -894,7 +866,7 @@ ip=${ipaddr}:${serverip}${bootargs_end}; bootm "LOAD_ADDR_STR";");
 			 * sysvar variable available to replace it with. */
 			if (sf_getvar("ETH_MAC_ADDR", ethaddr_0,
 					sizeof(ethaddr_0)) != 0)
-				setenv("ethaddr", ethaddr_0);
+				setenv("ethaddr", "00:11:22:33:44:55");
 			else
 				setenv("ethaddr", ethaddr_0);
 		}
@@ -905,23 +877,15 @@ ip=${ipaddr}:${serverip}${bootargs_end}; bootm "LOAD_ADDR_STR";");
 			 * sysvar variable available to replace it with. */
 			if (sf_getvar("PON_MAC_ADDR", pon_addr,
 					sizeof(pon_addr)) != 0)
-				setenv("mv_pon_addr", pon_addr);
+				setenv("mv_pon_addr", "00:11:22:33:44:56");
 			else
 				setenv("mv_pon_addr", pon_addr);
 		}
 	}
 
-	env = getenv("eth1addr");
-	if(!env)
-		setenv("eth1addr",ethaddr_1);
-
 	env = getenv("ethmtu");
 	if(!env)
 		setenv("ethmtu","1500");
-
-	env = getenv("eth1mtu");
-	if(!env)
-		setenv("eth1mtu","1500");
 
 	/* Set mvNetConfig env parameter */
 	env = getenv("mvNetConfig");
