@@ -65,7 +65,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mvOs.h"
 #include "eth-phy/mvEthPhy.h"
 
+typedef enum
+{
+  PHY_1000BASE_X_1G = 0,
+  PHY_1000BASE_X_2_5G, // 1
+  PHY_SGMII_1G,  // 2
+  PHY_SGMII_2_5G, // 3
+} MV_GMAC_MODE;
+
 void mvBoardEgigaPhyInit(MV_VOID); 
+void mvBoardGMACModeSet(MV_GMAC_MODE mode, int port, MV_BOOL polarityInv);
 
 // void mvEthSwitchRegWrite(MV_U32 ethPortNum, MV_U32 phyAddr,
 //                                  MV_U32 regOffs, MV_U16 data);

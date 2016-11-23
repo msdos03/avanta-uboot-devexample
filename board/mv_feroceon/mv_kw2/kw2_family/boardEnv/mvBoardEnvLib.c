@@ -2310,6 +2310,10 @@ MV_VOID mvBoardMppModuleTypePrint(MV_VOID)
 			mvOsOutput("       LP SERDES connected to external PHY.\n");
 		else
 			mvOsOutput("       LP SERDES connected to SFP.\n");
+		/* SERDES speed */
+		mvOsOutput("       LP SERDES configured at %sGbps\n",
+		    (ethConfig & ESC_OPT_SGMII_2_5)?"2.5":"1");
+
 		return;
 	}
 	else if (ethConfig & (ESC_OPT_GEPHY_MAC0 | ESC_OPT_GEPHY_MAC1 | ESC_OPT_GEPHY_SW_P0 | ESC_OPT_GEPHY_SW_P5 )) {

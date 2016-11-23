@@ -296,5 +296,279 @@ void mvBoardEgigaPhyInit(void)
 			if (eeeEnable == MV_TRUE)
 				mvNetaGmacLpiSet(port, 1);
 		}
+                #define A_MC_DEBUG
+#ifdef A_MC_DEBUG
+    printf("MTL: Configuring GMAC Mode. ethComplex: 0x%x\n", ethComplex);
+#endif
+    /* Disable SMI polling on the port using SGMII if it is also using GEPHY on MAC0*/
+		if (((ethComplex & ESC_OPT_SGMII) || (ethComplex & ESC_OPT_SGMII_2_5)) && (ethComplex & ESC_OPT_GEPHY_MAC0))
+		{
+		  MV_U32 port = (ethComplex & ESC_OPT_GEPHY_MAC0) ? 1 : 0;
+		  MV_GMAC_MODE mode = (ethComplex & ESC_OPT_SGMII) ? PHY_SGMII_1G: PHY_SGMII_2_5G;
+
+#ifdef A_MC_DEBUG
+	    printf("MTL: Configuring GMAC Mode. mode:%d port:%d\n", mode, port);
+#endif
+      mvBoardGMACModeSet(mode, port, MV_FALSE);
+
+                }
+
 	}
+}
+
+/***********************************************************
+ * GMAC mode configuration			   *
+ ***********************************************************/
+void mvBoardGMACModeSet(MV_GMAC_MODE mode, int port, MV_BOOL polarityInv)
+{
+  MV_U32 reg;
+  MV_U32 i;
+
+  if (mode == PHY_1000BASE_X_1G)
+  {
+    /* for 1000base-X link */
+    printf("MTL: Init 1000base-X@1G on MAC %d..\n", port);
+
+    // disable port
+    reg = MV_REG_READ(GE_MAC_CTRL_REG(port));
+    MV_REG_WRITE(GE_MAC_CTRL_REG(port), reg &= ~(1 << 0));
+
+    // disable SMI polling
+    reg = MV_REG_READ(ETH_UNIT_CTRL_REG(port));
+    MV_REG_WRITE(ETH_UNIT_CTRL_REG(port), reg &= ~(1 << 1));
+
+    // enable SGMII AutoNeg clock
+    reg = MV_REG_READ(ONEMS_CLK_DIVIDER_CTRL_REG(port));
+    MV_REG_WRITE(ONEMS_CLK_DIVIDER_CTRL_REG(port), reg |= (1 << 31));
+
+    // PCS enable
+    reg = MV_REG_READ(PORT_MAC_CTRL_REG2(port));
+    MV_REG_WRITE(PORT_MAC_CTRL_REG2(port), reg |= (1 << 3));
+
+    // AN reg: set InBandAnEn, clear InBandAnByPassEn
+    MV_REG_WRITE(PORT_AUTO_NEG_CTRL_REG(port), 0x9044);
+
+    if (polarityInv == MV_TRUE)
+    {
+      // Invert TXD_INV
+      reg = MV_REG_READ(SYNC_PATTERN_REG);
+      MV_REG_WRITE(SYNC_PATTERN_REG, reg |= (1 << 10));
+    }
+
+    // Enable 1000base-X AN
+    reg = MV_REG_READ(GE_MAC_CTRL_REG(port));
+    MV_REG_WRITE(GE_MAC_CTRL_REG(port), reg |= (1 << 1));
+
+    // Recalibrate SERDES
+    reg = MV_REG_READ(KVCO_CALIBRATION_CTRL_REG);
+    MV_REG_WRITE(KVCO_CALIBRATION_CTRL_REG, reg |= (1 << 15));
+    mvOsDelay(2);
+    MV_REG_WRITE(KVCO_CALIBRATION_CTRL_REG, reg &= (1 << 15));
+
+    // enable port
+    reg = MV_REG_READ(GE_MAC_CTRL_REG(port));
+    MV_REG_WRITE(GE_MAC_CTRL_REG(port), reg |= (1 << 0));
+
+  }
+  else if (mode == PHY_1000BASE_X_2_5G)
+  {
+    /* for 1000base-X link */
+    printf("MTL: Init 1000base-X@2,5G on MAC %d..\n", port);
+
+    // disable port
+    reg = MV_REG_READ(GE_MAC_CTRL_REG(port));
+    MV_REG_WRITE(GE_MAC_CTRL_REG(port), reg &= ~(1 << 0));
+
+    // PCS enable
+    reg = MV_REG_READ(PORT_MAC_CTRL_REG2(port));
+    MV_REG_WRITE(PORT_MAC_CTRL_REG2(port), reg |= (1 << 3));
+
+    // enable SGMII AutoNeg clock
+    reg = MV_REG_READ(ONEMS_CLK_DIVIDER_CTRL_REG(port));
+    MV_REG_WRITE(ONEMS_CLK_DIVIDER_CTRL_REG(port), reg |= (1 << 31));
+
+    // Reset LP serdes
+    reg = MV_REG_READ(SOFTWARE_RESET_CTRL_REG);
+    MV_REG_WRITE(SOFTWARE_RESET_CTRL_REG, reg |= (1 << 24));
+    MV_REG_WRITE(SOFTWARE_RESET_CTRL_REG, reg &= ~(1 << 24));
+
+    // Clear SERDES config data
+    MV_REG_WRITE(SERDES_CONFIG_REG(port), 0);
+
+    // Reserved bits
+    reg = MV_REG_READ(ETHERNET_COMPLEX_CTRL_REG_0);
+    MV_REG_WRITE(ETHERNET_COMPLEX_CTRL_REG_0, reg &= ~(1 << 3));
+
+    reg = MV_REG_READ(0x18804);
+    MV_REG_WRITE(0x18804, reg |= (1 << 25));
+
+    // Config Power and PLL
+    MV_REG_WRITE(POWER_PLL_CTRL_REG, 0xF880);
+
+    // SERDES config data
+    MV_REG_WRITE(SERDES_CONFIG_REG(port), 0xCC0);
+
+    // Generation 1 register 0
+    MV_REG_WRITE(GENERATION_1_SETTING_0_REG, 0x8F9);
+    // Generation 1 register 1
+    MV_REG_WRITE(GENERATION_1_SETTING_1_REG, 0x9055);
+
+    // digital loopback register
+    MV_REG_WRITE(DIGITAL_LOOPBACK_ENABLE_REG, 0x430);
+
+    // PHY isolation mode
+    MV_REG_WRITE(PHY_ISOLATION_MODE_CTRL_REG, 0x0566);
+    // PHY isolation mode
+    MV_REG_WRITE(PHY_ISOLATION_MODE_CTRL_REG, 0x0166);
+
+    // digital loopback register
+    MV_REG_WRITE(DIGITAL_LOOPBACK_ENABLE_REG, 0x0072);
+
+    //Polling on PLL ready - register 0xF10724A4 bit 2 should be 1
+    MV_REG_READ(SERDES_STATUS_REG(port));
+    // sleep 1
+    mvOsDelay(1);
+    MV_REG_WRITE(SERDES_CONFIG_REG(port), 0xCD0);
+
+    //Polling on RX Done - register 0xF10724A4 bit 0 should be 1
+    MV_REG_READ(SERDES_STATUS_REG(port));
+    // sleep 1
+    mvOsDelay(1);
+    MV_REG_WRITE(SERDES_CONFIG_REG(port), 0xCC0);
+
+    // Recalibrate SERDES
+    reg = MV_REG_READ(KVCO_CALIBRATION_CTRL_REG);
+    MV_REG_WRITE(KVCO_CALIBRATION_CTRL_REG, reg |= (1 << 15));
+    mvOsDelay(2);
+    MV_REG_WRITE(KVCO_CALIBRATION_CTRL_REG, reg &= (1 << 15));
+
+    // Enable port, set port type, Set frame size limit to 767** Check this!
+    MV_REG_WRITE(GE_MAC_CTRL_REG(port), 0x8BFF);
+
+    if (polarityInv == MV_TRUE)
+    {
+      // Invert tx polarity
+      reg = MV_REG_READ(SYNC_PATTERN_REG);
+      MV_REG_WRITE(SYNC_PATTERN_REG, reg |= (1 << 10));
+    }
+
+    // Set Impedance calibration values
+    MV_REG_WRITE(IMPEDANCE_CALIBRATION_CTRL_REG, 0x9044);
+
+    // Set Eth limit to 3G
+    MV_REG_WRITE(PORT_BUCKET_REFILL_REG(port), 0x100B9B);
+    for (i = 0; i < 8; i++)
+    {
+      MV_REG_WRITE(QUEUE_BUCKET_REFILL_REG(port, i), 0x100B9B);
+    }
+  }
+  else if (mode == PHY_SGMII_1G)
+  {
+    printf("MTL: Init SGMII@1G on MAC %d..\n", port);
+
+    //Set 1G and 100M modes adn full duplex
+    MV_REG_WRITE(PORT_AUTO_NEG_CTRL_REG(port), 0x9062);
+
+    //disable port, set packet size
+    MV_REG_WRITE(GE_MAC_CTRL_REG(port), 0x8B9C);
+
+    // Recalibrate SERDES
+    reg = MV_REG_READ(KVCO_CALIBRATION_CTRL_REG);
+    MV_REG_WRITE(KVCO_CALIBRATION_CTRL_REG, reg |= (1 << 15));
+    mvOsDelay(2);
+    MV_REG_WRITE(KVCO_CALIBRATION_CTRL_REG, reg &= (1 << 15));
+
+    //enable port
+    reg = MV_REG_READ(GE_MAC_CTRL_REG(port));
+    MV_REG_WRITE(GE_MAC_CTRL_REG(port), reg |= 1);
+
+    if (polarityInv == MV_TRUE)
+    {
+      // Invert tx polarity
+      reg = MV_REG_READ(SYNC_PATTERN_REG);
+      MV_REG_WRITE(SYNC_PATTERN_REG, reg |= (1 << 10));
+    }
+
+  }
+  else if (mode == PHY_SGMII_2_5G)
+  {
+    printf("MTL: Init SGMII@2,5G on MAC %d..\n", port);
+    // disable port
+    reg = MV_REG_READ(GE_MAC_CTRL_REG(port));
+    MV_REG_WRITE(GE_MAC_CTRL_REG(port), reg &= ~(0x1));
+    // working with PCS
+    reg = MV_REG_READ(PORT_MAC_CTRL_REG2(port));
+    MV_REG_WRITE(PORT_MAC_CTRL_REG2(port), reg |= (1 << 3));
+    //Enable 1ms clock generation
+    reg = MV_REG_READ(ONEMS_CLK_DIVIDER_CTRL_REG(port));
+    MV_REG_WRITE(ONEMS_CLK_DIVIDER_CTRL_REG(port), reg |= (1 << 31));
+    //LP Serdes reset
+    reg = MV_REG_READ(SOFTWARE_RESET_CTRL_REG);
+    MV_REG_WRITE(SOFTWARE_RESET_CTRL_REG, reg |= (1 << 24));
+    MV_REG_WRITE(SOFTWARE_RESET_CTRL_REG, reg &= ~(1 << 24));
+    //Serdes config data
+    MV_REG_WRITE(SERDES_CONFIG_REG(port), 0);
+    // Reserved bits
+    reg = MV_REG_READ(ETHERNET_COMPLEX_CTRL_REG_0);
+    MV_REG_WRITE(ETHERNET_COMPLEX_CTRL_REG_0, reg &= ~(1 << 3));
+    // ?? Unknown register
+    reg = MV_REG_READ(0x18804);
+    MV_REG_WRITE(0x18804, reg |= (1 << 31));
+    // PHY mode and power up
+    MV_REG_WRITE(POWER_PLL_CTRL_REG, 0xF880);
+    // SERDES configuration
+    MV_REG_WRITE(SERDES_CONFIG_REG(port), 0xCC0);
+    // SERDES configuration
+    MV_REG_WRITE(GENERATION_1_SETTING_0_REG, 0x8F9);
+    // SERDES configuration
+    MV_REG_WRITE(GENERATION_1_SETTING_1_REG, 0x9055);
+    // Digital loopback enable
+    MV_REG_WRITE(DIGITAL_LOOPBACK_ENABLE_REG, 0x430);
+    // PHY isolation mode
+    MV_REG_WRITE(PHY_ISOLATION_MODE_CTRL_REG, 0x0566);
+    // PHY RX initialization
+    MV_REG_WRITE(PHY_ISOLATION_MODE_CTRL_REG, 0x0166);
+    // Digital loopback enable
+    MV_REG_WRITE(DIGITAL_LOOPBACK_ENABLE_REG, 0x0072);
+
+    // Polling on PLL ready - register 0xF10724A4 bit 2 should be 1
+    // SERDES status
+    MV_REG_READ(SERDES_STATUS_REG(port));
+    mvOsDelay(1);
+    MV_REG_WRITE(SERDES_CONFIG_REG(port), 0xCD0);
+
+    // Polling on RX Done - register 0xF10724A4 bit 0 should be 1
+    MV_REG_READ(SERDES_STATUS_REG(port));
+    mvOsDelay(1);
+    MV_REG_WRITE(SERDES_CONFIG_REG(port), 0xCC0);
+
+    // Disable autoneg. set speed and full duplex
+    MV_REG_WRITE(PORT_AUTO_NEG_CTRL_REG(port), 0x9062);
+    // Disable port, set packet size
+    MV_REG_WRITE(GE_MAC_CTRL_REG(port), 0x8B9C);
+
+    // Recalibrate SERDES
+    reg = MV_REG_READ(KVCO_CALIBRATION_CTRL_REG);
+    MV_REG_WRITE(KVCO_CALIBRATION_CTRL_REG, reg |= (1 << 15));
+    mvOsDelay(2);
+    MV_REG_WRITE(KVCO_CALIBRATION_CTRL_REG, reg &= (1 << 15));
+
+    // Enable port
+    reg = MV_REG_READ(GE_MAC_CTRL_REG(port));
+    MV_REG_WRITE(GE_MAC_CTRL_REG(port), reg |= (1));
+
+    if (polarityInv == MV_TRUE)
+    {
+      // Invert Tx polarity
+      reg = MV_REG_READ(SYNC_PATTERN_REG);
+      MV_REG_WRITE(SYNC_PATTERN_REG, reg |= (1 << 10));
+    }
+
+    // Set Eth limit to 3G
+    MV_REG_WRITE(PORT_BUCKET_REFILL_REG(port), 0x100B9B);
+    for (i = 0; i < 8; i++)
+    {
+      MV_REG_WRITE(QUEUE_BUCKET_REFILL_REG(port, i), 0x100B9B);
+    }
+  }
 }
