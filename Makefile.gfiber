@@ -1,0 +1,74 @@
+#
+# Google makefile to build uboot for marvell gflt400 (Bolt)
+#
+
+export ARCH=arm
+export TOP=$(PWD)
+export CROSS_TOOLDIR=$(TOP)/../../toolchains/prism/bin
+export CROSS_PREFIX=arm-marvell-linux-uclibcgnueabi-
+export CROSS_COMPILE=$(CROSS_TOOLDIR)/$(CROSS_PREFIX)
+
+
+LOADERBIN_GFLT400 = ../../loader-bin/marvell/gflt400
+GFLT400 = gflt400-dev gflt400-prod gflt400-openbox
+
+
+all:		clean $(GFLT400)
+
+# don't run parallel, the several builds would mix .o files
+.NOTPARALLEL:
+
+clean:
+	make clean
+	rm -rf output
+
+clobber: clean
+	-make distclean
+	rm -rf output
+
+gfiber_private.pem:
+	@echo "$@ is required to sign binaries. Use the following command and put it next to Makefile.gfiber:"
+	@echo "blaze --batch run //isp/fiber/drm:drm_keystore_client -- --key_type signing_private_key --output gfiber_private.pem"
+	exit 1
+
+#
+# GENERATE_DIGEST(DIR, NAME)
+#
+define GENERATE_DIGEST
+	@echo "Generating digest for $(1)/$(2)"
+	openssl dgst -sign gfiber_private.pem -sha512 -binary -keyform \
+		PEM $(1)/$(2).bin > $(1)/$(2).sig
+endef
+
+install: gfiber_private.pem
+	mkdir -p $(LOADERBIN_GFLT400)
+	cp output/gflt400-dev/*-spi.bin $(LOADERBIN_GFLT400)/u-boot-spi-dev.bin
+	cp output/gflt400-prod/*-spi.bin $(LOADERBIN_GFLT400)/u-boot-spi-prod.bin
+	cp output/gflt400-openbox/*-spi.bin $(LOADERBIN_GFLT400)/u-boot-spi-openbox.bin
+	$(call GENERATE_DIGEST,$(LOADERBIN_GFLT400),u-boot-spi-dev)
+	$(call GENERATE_DIGEST,$(LOADERBIN_GFLT400),u-boot-spi-prod)
+	$(call GENERATE_DIGEST,$(LOADERBIN_GFLT400),u-boot-spi-openbox)
+
+gflt400-dev:
+	make -f Makefile clean
+	make -f Makefile ARCH=arm SPIBOOT=1 SPI=1 DDR3=1 LARGEKERNEL=1 gflt400_config
+	make -f Makefile ARCH=arm SPIBOOT=1 SPI=1 DDR3=1 LARGEKERNEL=1
+	mkdir -p output/$@
+	mv u-boot* output/gflt400-dev/
+
+gflt400-prod:
+	make -f Makefile clean
+	make -f Makefile ARCH=arm SPIBOOT=1 SPI=1 DDR3=1 LARGEKERNEL=1 gflt400_config
+	echo "#define CONFIG_DISABLE_INPUT" >> include/config.h
+	echo "#define CONFIG_BOOT_DELAY 0" >> include/config.h
+	make -f Makefile ARCH=arm SPIBOOT=1 SPI=1 DDR3=1 LARGEKERNEL=1
+	mkdir -p output/$@
+	mv u-boot* output/gflt400-prod/
+
+gflt400-openbox:
+	make -f Makefile clean
+	make -f Makefile ARCH=arm SPIBOOT=1 SPI=1 DDR3=1 LARGEKERNEL=1 gflt400_config
+	echo "#define CONFIG_DISABLE_INPUT" >> include/config.h
+	make -f Makefile ARCH=arm SPIBOOT=1 SPI=1 DDR3=1 LARGEKERNEL=1
+	mkdir -p output/$@
+	mv u-boot* output/gflt400-openbox/
