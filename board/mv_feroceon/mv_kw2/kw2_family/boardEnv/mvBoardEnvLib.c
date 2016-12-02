@@ -2296,7 +2296,8 @@ MV_VOID mvBoardMppModuleTypePrint(MV_VOID)
 		mvOsOutput("       3xFE PHY Module.\n");
 
 	/* Internal FE/GE Phy */
-	if (DB_88F6601_BP_ID == mvBoardIdGet()) {
+	if (DB_88F6601_BP_ID == mvBoardIdGet() ||
+            GFLT400_ID == mvBoardIdGet() ) {
 		if (ethConfig & ESC_OPT_GEPHY_MAC0) {
 			mvOsOutput("       GE-PHY on MAC0.\n");
 			mvOsOutput("       LP SERDES on MAC1.\n");

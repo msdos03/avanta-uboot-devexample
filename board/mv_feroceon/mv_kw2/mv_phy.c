@@ -489,6 +489,14 @@ void mvBoardGMACModeSet(MV_GMAC_MODE mode, int port, MV_BOOL polarityInv)
       MV_REG_WRITE(SYNC_PATTERN_REG, reg |= (1 << 10));
     }
 
+    // Configuring this bit sets eth1 into SGMII, which Marvell's patch does do
+    // for 2.5G (right below), but not for 1G. So we had to add it manually
+    if (mvBoardIdGet() == GFLT400_ID)
+    {
+      reg = MV_REG_READ(PORT_MAC_CTRL_REG2(port));
+      MV_REG_WRITE(PORT_MAC_CTRL_REG2(port), reg |= (1 << 3));
+      printf("MTL: Init SGMII@1G on MAC %d: 0x%x=0x%x\n", port, PORT_MAC_CTRL_REG2(port), reg |= (1 << 3));
+    }
   }
   else if (mode == PHY_SGMII_2_5G)
   {
