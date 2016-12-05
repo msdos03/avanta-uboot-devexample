@@ -52,6 +52,8 @@
 /* these keys are stored in binary format for historical reasons */
 const char *hnvram_binary_keys[] = {
 	"LOADER_VERSION",
+	"ACTIVATED_KERNEL_NUM",
+	"HW_VER",
 	"HDCP_KEY",
 	"DTCP_KEY",
 };
