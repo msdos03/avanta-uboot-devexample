@@ -2723,6 +2723,8 @@ MV_U32 mvBoardIdGet(MV_VOID)
 		tmpBoardId = RD_88F6601_MC_ID;
 #elif defined(DB_CUSTOMER)
 		tmpBoardId = DB_CUSTOMER_ID;
+#elif defined(F660)
+		tmpBoardId = F660_ID;
 #endif
 		gBoardId = tmpBoardId;
 	}

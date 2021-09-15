@@ -2932,6 +2932,57 @@ endif
 #########################################################################
 ## END of Marvell KW2 based Socs
 #########################################################################
+
+#########################################################################
+## ZTE F660 (Marvell KW2 SoC based) System
+#########################################################################
+f660_config: unconfig
+	@mkdir -p $(obj)include
+
+	@$(MKCONFIG) -a rd88f6560gw arm arm926ejs config_kw2 mv_feroceon feroceon
+	@echo "MV_OUTPUT = f660" >> $(obj)include/config.mk
+
+	@echo "#define MV88F6560" > $(obj)include/config.h 
+	@echo "  * Configured for MV88F6560"
+
+	@echo "#define F660" >> $(obj)include/config.h
+	@echo "#define MV_BOOTSIZE_512K" >> $(obj)include/config.h
+	@echo "#define MV_BOOTROM" >> $(obj)include/config.h
+	@echo "MV_DDR_FREQ=400_128m" >> $(obj)include/config.mk
+	@echo "NAND_TECH=S" >> $(obj)include/config.mk
+	@echo "  * Configured for F660"
+
+	@echo "  * Little Endian byte ordering ";
+
+	@echo "DDR_TYPE=ddr3" >> $(obj)include/config.mk
+	@echo "  * DDR3 Support"
+
+	@echo "#define MV_USB" >> $(obj)include/config.h
+	@echo "  * With USB support"
+
+	@echo "#define MV_NAND_BOOT" >> $(obj)include/config.h
+	@echo "NAND_BOOT = y" >> $(obj)include/config.mk
+	@echo "  * Boot from NAND support"
+
+	@echo "#define MV_NAND" >> $(obj)include/config.h
+	@echo "  * NAND support"
+
+	@echo "#define MV_SMALL_PAGE" >> $(obj)include/config.h
+
+
+	@cat f660_extra.h >> $(obj)include/config.h
+
+
+	@echo "CONFIG_NAND_SP = y" >> $(obj)include/config.mk
+	@echo "  * Small Page NAND support"
+	@echo "BLK_SIZE=16" >> $(obj)include/config.mk
+
+	@echo "#include <configs/mv_kw2.h>" >> $(obj)include/config.h
+
+#########################################################################
+## END of ZTE F660 System
+#########################################################################
+
 #########################################################################
 ## 74xx/7xx Systems
 #########################################################################

@@ -1097,6 +1097,158 @@ MV_BOARD_INFO db88f6601Info = {
 };
 
 /***************************************************************************
+** ZTE-F660
+****************************************************************************/
+
+#define F660_BOARD_NAND_READ_PARAMS	0x000C0282
+#define F660_BOARD_NAND_WRITE_PARAMS	0x00010305
+/* NAND care support for small page chips */
+#define F660_BOARD_NAND_CONTROL		0x01c00543
+
+MV_BOARD_TWSI_INFO f660InfoBoardTwsiDev[] = {
+	/* {{MV_BOARD_DEV_CLASS devClass, MV_U8 twsiDevAddr, MV_U8 twsiDevAddrType}} */
+};
+
+MV_BOARD_MAC_INFO f660InfoBoardMacInfo[] = {
+	/* {{MV_BOARD_MAC_SPEED boardMacSpeed, MV_U8 boardEthSmiAddr}} */
+	{BOARD_MAC_SPEED_1000M, 0x8}
+	,
+	{BOARD_MAC_SPEED_AUTO, 0x9},
+	{N_A,N_A}
+};
+
+MV_BOARD_MPP_TYPE_INFO f660InfoBoardMppTypeInfo[] = {
+	{
+	 .boardMppTdm = MV_BOARD_TDM_2CH,
+	 .ethSataComplexOpt = ESC_OPT_MAC0_2_SW_P4 | ESC_OPT_GEPHY_SW_P0 | ESC_OPT_FE3PHY,
+	 .ethPortsMode = 0x0
+	}
+};
+
+MV_BOARD_GPP_INFO f660InfoBoardGppInfo[] = {
+	/* {{MV_BOARD_GPP_CLASS devClass, MV_U8 gppPinNum}} */
+};
+
+MV_DEV_CS_INFO f660InfoBoardDeCsInfo[] = {
+	/*{deviceCS, params, devType, devWidth} */
+	{NAND_NOR_CS, N_A, BOARD_DEV_NAND_FLASH, 8}	/* NAND DEV */
+};
+
+MV_BOARD_MPP_INFO f660InfoBoardMppConfigValue[] = {
+	{{
+	  F660_MPP0_7,
+	  F660_MPP8_15,
+	  F660_MPP16_23,
+	  F660_MPP24_31,
+	  F660_MPP32_39,
+	  F660_MPP40_47,
+	  F660_MPP48_55,
+	  F660_MPP56_63,
+	  F660_MPP64_71,
+	  F660_MPP72_79,
+	  F660_MPP80_87,
+	  F660_MPP88_88
+	  }
+	 }
+};
+
+MV_BOARD_SWITCH_INFO f660InfoBoardSwitchValue[] = {
+	{
+	 .switchIrq = 29,	/* set to -1 for timer operation */
+	 .switchPort = {1, 2, 3, 0, -1, -1, -1, -1},
+	 .cpuPort = 4,
+	 .connectedPort = {4, -1, -1},
+	 .smiScanMode = 2,
+	 .quadPhyAddr = 0,
+	 .forceLinkMask = 0x0
+	 }
+};
+
+MV_U8 f660LedGppPin[] = { };
+
+MV_BOARD_TDM_INFO f660Tdm880[] = { {0}, {1} };
+
+MV_BOARD_TDM_SPI_INFO f660TdmSpiInfo[] = { {1} };
+
+MV_BOARD_SPEC_INIT f660BoardSpecInit[] = {
+	{
+		.reg = PMU_POWER_IF_POLARITY_REG,
+		.mask = (BIT1),
+		.val = 0
+	},
+	{
+		.reg = TBL_TERM,
+		.val = TBL_TERM
+	}
+};
+
+MV_BOARD_INFO f660Info = {
+	.boardName = "F660",
+	.numBoardMppTypeValue = MV_ARRAY_SIZE(f660InfoBoardMppTypeInfo),
+	.pBoardMppTypeValue = f660InfoBoardMppTypeInfo,
+	.numBoardMppConfigValue = MV_ARRAY_SIZE(f660InfoBoardMppConfigValue),
+	.pBoardMppConfigValue = f660InfoBoardMppConfigValue,
+	.intsGppMaskLow = 0,
+	.intsGppMaskMid = 0,
+	.intsGppMaskHigh = 0,
+	.numBoardDeviceIf = MV_ARRAY_SIZE(f660InfoBoardDeCsInfo),
+	.pDevCsInfo = f660InfoBoardDeCsInfo,
+	.numBoardTwsiDev = MV_ARRAY_SIZE(f660InfoBoardTwsiDev),
+	.pBoardTwsiDev = f660InfoBoardTwsiDev,
+	.numBoardMacInfo = MV_ARRAY_SIZE(f660InfoBoardMacInfo),
+	.pBoardMacInfo = f660InfoBoardMacInfo,
+	.numBoardGppInfo = MV_ARRAY_SIZE(f660InfoBoardGppInfo),
+	.pBoardGppInfo = f660InfoBoardGppInfo,
+	.activeLedsNumber = MV_ARRAY_SIZE(f660LedGppPin),
+	.pLedGppPin = f660LedGppPin,
+	.ledsPolarity = 0,
+
+	/* GPP values */
+	.gppOutEnValLow = F660_GPP_OUT_ENA_LOW,
+	.gppOutEnValMid = F660_GPP_OUT_ENA_MID,
+	.gppOutEnValHigh = F660_GPP_OUT_ENA_HIGH,
+	.gppOutValLow = F660_GPP_OUT_VAL_LOW,
+	.gppOutValMid = F660_GPP_OUT_VAL_MID,
+	.gppOutValHigh = F660_GPP_OUT_VAL_HIGH,
+	.gppPolarityValLow = F660_GPP_POL_LOW,
+	.gppPolarityValMid = F660_GPP_POL_MID,
+	.gppPolarityValHigh = F660_GPP_POL_HIGH,
+
+	/* External Switch Configuration */
+	.pSwitchInfo = f660InfoBoardSwitchValue,
+	.switchInfoNum = MV_ARRAY_SIZE(f660InfoBoardSwitchValue),
+
+	/* PON configuration. */
+	.ponConfigValue = BOARD_GPON_CONFIG,
+
+	/* TDM configuration */
+	/* We hold a different configuration array for each possible slic that
+	 ** can be connected to board.
+	 ** When modules are scanned, then we select the index of the relevant
+	 ** slic's information array.
+	 ** For RD and Customers boards we only need to initialize a single
+	 ** entry of the arrays below, and set the boardTdmInfoIndex to 0.
+	 */
+	.numBoardTdmInfo = {2},
+	.pBoardTdmInt2CsInfo = { f660Tdm880 },
+	.boardTdmInfoIndex = 0,
+
+	.pBoardSpecInit = f660BoardSpecInit,
+
+	.deepIdlePwrUpDelay = 2400, /* 12 uS */
+
+	/* NAND init params */
+	.nandFlashParamsValid = MV_TRUE,
+	.nandFlashReadParams = F660_BOARD_NAND_READ_PARAMS,
+	.nandFlashWriteParams = F660_BOARD_NAND_WRITE_PARAMS,
+	.nandFlashControl = F660_BOARD_NAND_CONTROL,
+	.pBoardTdmSpiInfo = f660TdmSpiInfo,
+
+	/* Disable modules auto-detection. */
+	.moduleAutoDetect = MV_FALSE
+};
+
+/***************************************************************************
 ** Customer board place holder
 ****************************************************************************/
 
@@ -1164,6 +1316,7 @@ MV_BOARD_INFO *boardInfoTbl[] = {
 	&db88f6560PCACPInfo,
 	&db88f6601Info,
 	&rd88f6601Info,
+	&f660Info,
 	&dbCustomerInfo,
 };
 
