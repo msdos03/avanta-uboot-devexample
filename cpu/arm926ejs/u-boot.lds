@@ -58,7 +58,7 @@ SECTIONS
 	.got : { *(.got) }
 
 
-	. = _start + 0x80000;
+	. = _start + 0xA0000;
         .reset_vector_sect : { board/mv_feroceon/USP/jump.o (.reset_vector_sect) }
 
 	. = ALIGN(4);
@@ -69,7 +69,7 @@ SECTIONS
 	.u_boot_cmd : { *(.u_boot_cmd) }
 	__u_boot_cmd_end = .;
 
-	. = _start + 0x8FFF0;
+	. = _start + 0xAFFF0;
 	__bss_start = .;
 	.bss : { *(.bss) }
 	_end = .;
