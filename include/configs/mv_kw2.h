@@ -529,7 +529,7 @@ extern unsigned int mvTclkGet(void);
 	#endif /* MV_NAND_BOOT */
 
 //	#define CONFIG_MV_NFC_SUPPORT
-//	#define CONFIG_MV_LEGACY_NAND
+	#define CONFIG_MV_LEGACY_NAND
 
 	#ifdef CONFIG_MV_NFC_SUPPORT
 		#define CONFIG_MV_MTD_MLC_NAND_SUPPORT
