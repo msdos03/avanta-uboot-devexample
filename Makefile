@@ -2939,7 +2939,7 @@ endif
 f660_config: unconfig
 	@mkdir -p $(obj)include
 
-	@$(MKCONFIG) -a rd88f6560gw arm arm926ejs config_kw2 mv_feroceon feroceon
+	@$(MKCONFIG) -a f660 arm arm926ejs config_kw2 mv_feroceon feroceon
 	@echo "MV_OUTPUT = f660" >> $(obj)include/config.mk
 
 	@echo "#define MV88F6560" > $(obj)include/config.h 
@@ -2969,6 +2969,12 @@ f660_config: unconfig
 
 	@echo "#define MV_SMALL_PAGE" >> $(obj)include/config.h
 
+	@echo "  * Legacy NAND Flash Controller Support";
+	@echo "#define CONFIG_MV_LEGACY_NAND" >> $(obj)include/config.h
+
+	@echo "#define MV_JFFS2" >> $(obj)include/config.h
+	@echo "MV_JFFS2_SUPPORT = y" >> $(obj)include/config.mk
+	@echo "  * JFFS2 support"
 
 	@cat f660_extra.h >> $(obj)include/config.h
 
